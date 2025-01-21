@@ -20,4 +20,9 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cc
 
 .PHONY: clean
 clean:
-	rm -rf $(OBJ_DIR) $(TARGET)
+	rm -rf $(OBJ_DIR) $(TARGET) 
+
+.PHONY: restart
+restart:
+	make -j8
+	./$(TARGET)

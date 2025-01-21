@@ -1,12 +1,26 @@
-#include"server.h"
-#include"employee_handler.h"
+#include "server.h"
+#include "employee_handler.h"
 void setRoutes(httplib::Server &server, MySQLConnector &conn)
 {
     std::string baseUrl = "/v1";
-    server.Post(baseUrl + "/login", [&](const httplib::Request &req, httplib::Response &res) {
-login(req, res, conn);});
-server.Post(baseUrl + "/register", [&](const httplib::Request &req, httplib::Response &res) {
-reg(req, res, conn);
-});
-return;
+    server.Post(baseUrl + "/login", [&](const httplib::Request &req, httplib::Response &res)
+                { login(req, res, conn); });
+    server.Post(baseUrl + "/register", [&](const httplib::Request &req, httplib::Response &res)
+                { reg(req, res, conn); });
+
+    server.Get(baseUrl + "/employees", [&](const httplib::Request &req, httplib::Response &res)
+               { getAllEmployee(req, res, conn); });
+
+    // 修改密码
+    server.Put(baseUrl + "/changePassword", [&](const httplib::Request &req, httplib::Response &res)
+               { changePassword(req, res, conn); });
+
+    // 更新员工信息
+    server.Put(baseUrl + "/updateEmployee/:id", [&](const httplib::Request &req, httplib::Response &res)
+               { updateEmployee(req, res, conn); });
+
+    // 删除员工
+    server.Delete(baseUrl + "/deleteEmployee/:id", [&](const httplib::Request &req, httplib::Response &res)
+                  { deleteEmployee(req, res, conn); });
+    return;
 }
