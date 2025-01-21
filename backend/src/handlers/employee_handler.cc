@@ -266,3 +266,52 @@ void deleteEmployee(const httplib::Request &req, httplib::Response &res, MySQLCo
         res.set_content(response_data.dump(), "application/json");
     }
 }
+
+void getEmployee(const httplib::Request &req, httplib::Response &res, MySQLConnector &conn)
+{
+    try
+    {
+        // 从请求路径参数中获取用户 ID
+        std::string userId = req.path_params.at("id");
+        std::cout << "User ID: " << userId << std::endl;
+
+        // 检查用户是否存在且状态为 1
+        if (conn.query("SELECT id FROM employee WHERE id=? AND status=1", {userId}).empty())
+        {
+            throw std::runtime_error("Employee not found");
+        }
+
+        // 查询用户详细信息
+        std::vector<std::vector<std::string>> result = conn.query(
+            "SELECT id, username, real_name, phone, email,last_login_time FROM employee WHERE id=?", {userId});
+
+        // 将查询结果构建为 JSON
+        nlohmann::json response_data;
+        response_data["message"] = "Get employee successful";
+
+        if (!result.empty())
+        {
+            // 数据库结果的第一行是查询到的记录
+            const auto &row = result[0];
+            response_data["data"] = {
+                {"id", row[0]},
+                {"username", row[1]},
+                {"real_name", row[2]},
+                {"phone", row[3]},
+                {"email", row[4]},
+                {"last_login_time", row[5]}};
+        }
+
+        // 设置响应状态和内容
+        res.status = 200;
+        res.set_content(response_data.dump(), "application/json");
+    }
+    catch (const std::exception &e)
+    {
+        res.status = 400;
+        std::cout << __FILE__ << ": ERROR: " << e.what() << std::endl;
+        nlohmann::json response_data;
+        response_data["message"] = e.what();
+        res.set_content(response_data.dump(), "application/json");
+    }
+}

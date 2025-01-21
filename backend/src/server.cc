@@ -1,5 +1,6 @@
 #include "server.h"
 #include "employee_handler.h"
+#include "permission_handler.h"
 void setRoutes(httplib::Server &server, MySQLConnector &conn)
 {
     std::string baseUrl = "/v1";
@@ -22,5 +23,14 @@ void setRoutes(httplib::Server &server, MySQLConnector &conn)
     // 删除员工
     server.Delete(baseUrl + "/deleteEmployee/:id", [&](const httplib::Request &req, httplib::Response &res)
                   { deleteEmployee(req, res, conn); });
+
+    // 获取单个员工
+    server.Get(baseUrl + "/employee/:id", [&](const httplib::Request &req, httplib::Response &res)
+               { getEmployee(req, res, conn); });
+
+    // 获取权限列表
+    server.Get(baseUrl + "/permissions", [&](const httplib::Request &req, httplib::Response &res)
+               { getPermissions(req, res, conn); });
+
     return;
 }
