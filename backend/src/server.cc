@@ -32,5 +32,9 @@ void setRoutes(httplib::Server &server, MySQLConnector &conn)
     server.Get(baseUrl + "/permissions", [&](const httplib::Request &req, httplib::Response &res)
                { getPermissions(req, res, conn); });
 
+    // 创建角色
+    server.Post(baseUrl + "/createRole", [&](const httplib::Request &req, httplib::Response &res)
+                { createRole(req, res, conn); });
+
     return;
 }
