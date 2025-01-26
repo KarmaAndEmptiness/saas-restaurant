@@ -126,7 +126,6 @@ const handleLogout = () => {
 
 <style scoped>
 .main-container {
-  height: 100vh;
   display: flex;
   flex-direction: column;
 }
@@ -185,4 +184,5 @@ const handleLogout = () => {
 .fade-leave-to {
   opacity: 0;
 }
+
 </style>
