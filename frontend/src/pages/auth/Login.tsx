@@ -3,6 +3,8 @@ import { Form, Input, Button, Checkbox, Card, message, Space, Image } from 'antd
 import { UserOutlined, LockOutlined, SafetyOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
+import * as authApi from '@/api/auth';
+import type { LoginParams } from '@/api/auth';
 
 const LoginContainer = styled.div`
   min-height: 100vh;
@@ -124,11 +126,8 @@ const SystemTitle = styled.div`
   }
 `;
 
-interface LoginForm {
-  username: string;
-  password: string;
+interface LoginForm extends Omit<LoginParams, 'sessionId'> {
   remember: boolean;
-  captcha: string;
 }
 
 const Login: React.FC = () => {
@@ -139,11 +138,10 @@ const Login: React.FC = () => {
 
   const refreshCaptcha = async () => {
     try {
-      const response = await fetch('/api/auth/captcha');
-      const data = await response.json();
-      setCaptchaUrl(data.captchaUrl);
-      setSessionId(data.sessionId);
-    } catch (error) {
+      const { captchaUrl, sessionId } = await authApi.getCaptcha();
+      setCaptchaUrl(captchaUrl);
+      setSessionId(sessionId);
+    } catch {
       message.error('获取验证码失败，请刷新页面重试');
     }
   };
@@ -155,29 +153,27 @@ const Login: React.FC = () => {
   const onFinish = async (values: LoginForm) => {
     try {
       setLoading(true);
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...values,
-          sessionId,
-        }),
+      const { token, user } = await authApi.login({
+        ...values,
+        sessionId,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || '登录失败');
-      }
-
-      const data = await response.json();
-      localStorage.setItem('token', data.token);
+      // 存储认证信息
+      localStorage.setItem('token', token);
+      localStorage.setItem('userRole', user.role);
+      
       message.success('登录成功');
-      navigate('/dashboard');
-    } catch (error: any) {
-      console.error('登录失败:', error);
-      message.error(error.message || '用户名或密码错误');
+
+      // 根据角色跳转到对应的子系统
+      const roleDefaultPaths: Record<string, string> = {
+        admin: '/admin/staff',
+        cashier: '/cashier/transaction',
+        finance: '/finance/statistics',
+        marketing: '/marketing/analysis',
+      };
+
+      navigate(roleDefaultPaths[user.role] || '/login');
+    } catch (error) {
       refreshCaptcha();
     } finally {
       setLoading(false);
