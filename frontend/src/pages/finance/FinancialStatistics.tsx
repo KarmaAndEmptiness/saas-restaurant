@@ -66,7 +66,7 @@ interface PieChartDatum {
 
 const FinancialStatistics: React.FC = () => {
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs, dayjs.Dayjs]>([
-    dayjs().subtract(30, 'days'),
+    dayjs('2024-01-01'),
     dayjs(),
   ]);
   const [selectedStore, setSelectedStore] = useState<string>('all');
@@ -117,11 +117,11 @@ const FinancialStatistics: React.FC = () => {
       }
       
       // 确保支付数据格式正确
-      if (paymentResponse.data) {
+  if (paymentResponse.data) {
         const formattedPaymentData = paymentResponse.data.map((item: PaymentData) => ({
-          method: String(item.method || '未知'),
-          amount: Number(item.amount || 0),
-          percentage: Number(item.percentage || 0),
+          method: item.method,
+          amount: item.amount,
+          percentage: item.percentage,
         }));
         console.log('Payment data:', formattedPaymentData); // 添加日志
         setPaymentData(formattedPaymentData);
@@ -271,7 +271,7 @@ const FinancialStatistics: React.FC = () => {
       },
     },
     tooltip: {
-      formatter: (datum: any) => {
+      formatter: (datum: PieChartDatum) => {
         if (!datum?.method) return { name: '', value: '' };
         const amount = datum.amount || 0;
         return {

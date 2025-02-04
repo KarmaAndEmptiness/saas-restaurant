@@ -1,290 +1,218 @@
 // src/mocks/db.ts
 import { factory, primaryKey, nullable } from '@mswjs/data';
-import dayjs from 'dayjs';
-
 export const db = factory({
+
+  // 权限管理
+  permission: {
+    id: primaryKey(String), // 主键ID
+    name: String, // 权限名称
+    code: String, // 权限代码
+    description: String, // 权限描述
+    type: String, // 权限类型：'menu' | 'operation'
+  },
+  // 角色管理
+  role: {
+    id: primaryKey(String), // 主键ID
+    name: String, // 角色名称
+    description: String, // 角色描述
+    permissions: Array, // 角色权限列表
+    userCount: Number, // 用户数量
+  },
+
   // 用户管理
   user: {
-    id: primaryKey(String),
-    username: String,
-    password: String,
-    name: String,
-    role: String,
-    email: String,
-    status: String,
+    id: primaryKey(String), // 主键ID
+    username: String, // 用户名
+    password: String, // 密码
+    name: String, // 姓名
+    role: String, // 角色
+    email: String, // 邮箱
+    status: String, // 状态
   },
   
   // 员工管理（管理人员后台）
   staff: {
-    id: primaryKey(String),
-    name: String,
-    role: String, // 'admin' | 'cashier' | 'finance' | 'marketing'
-    email: String,
-    phone: String,
-    status: String,
-    department: String,
-    joinDate: String,
-  },
-
-  // 角色管理
-  role: {
-    id: primaryKey(String),
-    name: String,
-    description: String,
-    permissions: Array,
-    userCount: Number,
-  },
-
-  // 权限管理
-  permission: {
-    id: primaryKey(String),
-    name: String,
-    code: String,
-    description: String,
-    type: String, // 'menu' | 'operation'
+    id: primaryKey(String), // 主键ID
+    name: String, // 姓名
+    role: String, // 角色：'admin' | 'cashier' | 'finance' | 'marketing'
+    email: String, // 邮箱
+    phone: String, // 电话
+    status: String, // 状态
+    department: String, // 部门
+    joinDate: String, // 入职日期
   },
 
   // 系统日志
   log: {
-    id: primaryKey(String),
-    timestamp: String,
-    type: String, // 'info' | 'warning' | 'error' | 'success'
-    action: String,
-    operator: String,
-    operatorRole: String,
-    ip: String,
-    details: String,
+    id: primaryKey(String), // 主键ID
+    timestamp: String, // 时间戳
+    type: String, // 日志类型：'info' | 'warning' | 'error' | 'success'
+    action: String, // 操作
+    operator: String, // 操作员
+    operatorRole: String, // 操作员角色
+    ip: String, // IP地址
+    details: String, // 详情
   },
 
   // 会员数据（收银前台）
   member: {
-    id: primaryKey(String),
-    name: String,
-    phone: String,
-    email: String,
-    gender: String,
-    birthday: String,
-    status: String,
-    createTime: String,
+    id: primaryKey(String), // 主键ID
+    name: String, // 姓名
+    phone: String, // 电话
+    email: String, // 邮箱
+    gender: String, // 性别
+    birthday: String, // 生日
+    status: String, // 状态
+    createTime: String, // 创建时间
   },
 
   // 订单记录（收银/财务）
   order: {
-    id: primaryKey(String),
-    memberId: String,
-    amount: Number,
-    status: String,
+    id: primaryKey(String), // 主键ID
+    memberId: String, // 会员ID
+    amount: Number, // 金额
+    status: String, // 状态
   },
 
   // 营销活动
   campaign: {
-    id: primaryKey(String),
-    name: String,
-    description: String,
-    type: String,
-    startDate: String,
-    endDate: String,
-    status: String,
-    rules: Object,
+    id: primaryKey(String), // 主键ID
+    name: String, // 活动名称
+    description: String, // 活动描述
+    type: String, // 活动类型
+    startDate: String, // 开始日期
+    endDate: String, // 结束日期
+    status: String, // 状态
+    rules: Object, // 活动规则
   },
 
   // 活动效果数据
   campaignEffect: {
-    id: primaryKey(String),
-    campaignId: String,
-    date: String,
-    uv: Number,
-    pv: Number,
-    conversion: Number,
+    id: primaryKey(String), // 主键ID
+    campaignId: String, // 活动ID
+    date: String, // 日期
+    uv: Number, // 独立访客数
+    pv: Number, // 页面浏览量
+    conversion: Number, // 转化率
   },
 
   // 转化指标
   conversionMetric: {
-    id: primaryKey(String),
-    campaignId: String,
-    campaignName: String,
-    conversion: Number,
-    participantCount: Number,
-    totalRevenue: Number,
+    id: primaryKey(String), // 主键ID
+    campaignId: String, // 活动ID
+    campaignName: String, // 活动名称
+    conversion: Number, // 转化率
+    participantCount: Number, // 参与人数
+    totalRevenue: Number, // 总收入
+    date: String, // 日期
   },
 
   // 会员分析数据
   memberAnalytics: {
-    id: primaryKey(String),
-    date: String,
-    totalMembers: Number,
-    newMembers: Number,
-    activeMembers: Number,
-    inactiveMembers: Number,
+    id: primaryKey(String), // 主键ID
+    date: String, // 日期
+    totalMembers: Number, // 总会员数
+    newMembers: Number, // 新增会员数
+    activeMembers: Number, // 活跃会员数
+    inactiveMembers: Number, // 不活跃会员数
   },
 
   // 会员增长趋势
   memberGrowth: {
-    id: primaryKey(String),
-    date: String,
-    count: Number,
+    id: primaryKey(String), // 主键ID
+    date: String, // 日期
+    count: Number, // 数量
   },
 
   // 门店管理
   store: {
-    id: primaryKey(String),
-    name: String,
-    address: String,
-    phone: String,
+    id: primaryKey(String), // 主键ID
+    name: String, // 门店名称
+    address: String, // 地址
+    phone: String, // 电话
   },
 
   // 销售记录
   sale: {
-    id: primaryKey(String),
-    date: String,
-    amount: Number,
-    type: String,
+    id: primaryKey(String), // 主键ID
+    date: String, // 日期
+    amount: Number, // 金额
+    type: String, // 类型
   },
 
   // 支付记录
   payment: {
-    id: primaryKey(String),
-    method: String,
-    amount: Number,
-    percentage: Number,
+    id: primaryKey(String), // 主键ID
+    method: String, // 支付方式
+    amount: Number, // 金额
+    percentage: Number, // 百分比
   },
 
   // 每日记录
   dailyRecord: {
-    id: primaryKey(String),
-    date: String,
-    totalSales: Number,
-    orderCount: Number,
-    averageOrder: Number,
-    profit: Number,
-    growth: Object, // { sales: number, orders: number }
+    id: primaryKey(String), // 主键ID
+    date: String, // 日期
+    totalSales: Number, // 总销售额
+    orderCount: Number, // 订单数量
+    averageOrder: Number, // 平均订单金额
+    profit: Number, // 利润
+    growth: Object, // 增长数据：{ sales: number, orders: number }
   },
 
   // 结算记录
   settlement: {
-    id: primaryKey(String),
-    storeId: String,
-    storeName: String,
-    period: Object, // { start: string, end: string }
-    totalAmount: Number,
-    settledAmount: Number,
-    commission: Number,
-    status: String, // 'pending' | 'completed'
-    items: Array, // [{ date: string, amount: number, commission: number, bankAccount: string, bankName: string, remark: string }]
+    id: primaryKey(String), // 主键ID
+    storeId: String, // 门店ID
+    storeName: String, // 门店名称
+    period: Object, // 结算周期：{ start: string, end: string }
+    totalAmount: Number, // 总金额
+    settledAmount: Number, // 已结算金额
+    commission: Number, // 佣金
+    status: String, // 状态：'pending' | 'completed'
+    items: Array, // 结算项列表：[{ date: string, amount: number, commission: number, bankAccount: string, bankName: string, remark: string }]
   },
 
   // 报表配置
   reportConfig: {
-    id: primaryKey(String),
-    name: String,
-    type: String,
-    metrics: Array,
-    filters: Object,
-    schedule: nullable(Object),
+    id: primaryKey(String), // 主键ID
+    name: String, // 报表名称
+    type: String, // 报表类型
+    metrics: Array, // 指标列表
+    filters: Object, // 过滤条件
+    schedule: nullable(Object), // 调度配置
   },
 
   // 积分账户
   points: {
-    id: primaryKey(String),
-    memberId: String,
-    balance: Number,
+    id: primaryKey(String), // 主键ID
+    memberId: String, // 会员ID
+    balance: Number, // 积分余额
   },
 
   // 积分历史记录
   pointsHistory: {
-    id: primaryKey(String),
-    memberId: String,
-    type: String,
-    points: Number,
-    balance: Number,
-    description: String,
-    createTime: String,
-    operator: String,
+    id: primaryKey(String), // 主键ID
+    memberId: String, // 会员ID
+    type: String, // 类型
+    points: Number, // 积分
+    balance: Number, // 余额
+    description: String, // 描述
+    createTime: String, // 创建时间
+    operator: String, // 操作员
   },
 
   // 交易记录
   transaction: {
-    id: primaryKey(String),
-    memberId: String,
-    amount: Number,
-    type: String,
-    paymentMethod: String,
-    items: Array,
-    usePoints: Number,
-    createTime: String,
-    status: String,
-  },
-});
-
-// 添加默认用户
-db.user.create({
-  id: '1',
-  username: 'admin',
-  password: '123456',
-  name: '管理员',
-  role: 'admin',
-  email: 'admin@example.com',
-  status: 'active',
-});
-db.user.create({
-  id: '2',
-  username:'cashier',
-  password:'123456',
-  name:'收银员',
-  role:'cashier',
-  email:'cashier@example.com',
-  status:'active',
-});
-db.user.create({
-  id: '3',
-  username:'finance',
-  password:'123456',
-  name:'财务主管',
-  role:'finance',
-  email:'finance@example.com',
-  status:'active',
-});
-db.user.create({
-  id: '4',
-  username:'marketing',
-  password:'123456',
-  name:'营销经理',
-  role:'marketing',
-  email:'marketing@example.com',
-  status:'active',
-});
-
-// 添加默认角色
-db.role.create({
-  id: '1',
-  name: '超级管理员',
-  description: '系统最高权限角色',
-  permissions: ['system:all', 'staff:manage', 'finance:manage', 'marketing:manage'],
-  userCount: 1,
-});
-
-db.role.create({
-  id: '2',
-  name: '收银员',
-  description: '负责前台收银操作',
-  permissions: ['cashier:basic', 'member:view'],
-  userCount: 3,
-});
-
-db.role.create({
-  id: '3',
-  name: '财务主管',
-  description: '负责财务管理',
-  permissions: ['finance:manage', 'report:view'],
-  userCount: 2,
-});
-
-db.role.create({
-  id: '4',
-  name: '营销经理',
-  description: '负责会员营销',
-  permissions: ['marketing:manage', 'member:manage'],
-  userCount: 2,
+    id: primaryKey(String), // 主键ID
+    memberId: String, // 会员ID
+    amount: Number, // 金额
+    type: String, // 类型
+    paymentMethod: String, // 支付方式
+    items: Array, // 商品列表
+    usePoints: Number, // 使用积分
+    createTime: String, // 创建时间
+    status: String, // 状态
+  }
 });
 
 // 添加默认权限
@@ -350,6 +278,98 @@ db.permission.create({
   code: 'report:view',
   description: '查看报表信息',
   type: 'operation',
+});
+
+// 添加默认角色
+db.role.create({
+  id: '1',
+  name: '超级管理员',
+  description: '系统最高权限角色',
+  permissions: ['system:all', 'staff:manage', 'finance:manage', 'marketing:manage'],
+  userCount: 1,
+});
+
+db.role.create({
+  id: '2',
+  name: '收银员',
+  description: '负责前台收银操作',
+  permissions: ['cashier:basic', 'member:view'],
+  userCount: 3,
+});
+
+db.role.create({
+  id: '3',
+  name: '财务主管',
+  description: '负责财务管理',
+  permissions: ['finance:manage', 'report:view'],
+  userCount: 2,
+});
+
+db.role.create({
+  id: '4',
+  name: '营销经理',
+  description: '负责会员营销',
+  permissions: ['marketing:manage', 'member:manage'],
+  userCount: 2,
+});
+
+// 添加默认用户
+db.user.create({
+  id: '1',
+  username: 'admin',
+  password: '123456',
+  name: '管理员',
+  role: 'admin',
+  email: 'admin@example.com',
+  status: 'active',
+});
+db.user.create({
+  id: '2',
+  username:'cashier',
+  password:'123456',
+  name:'收银员',
+  role:'cashier',
+  email:'cashier@example.com',
+  status:'active',
+});
+db.user.create({
+  id: '3',
+  username:'finance',
+  password:'123456',
+  name:'财务主管',
+  role:'finance',
+  email:'finance@example.com',
+  status:'active',
+});
+db.user.create({
+  id: '4',
+  username:'marketing',
+  password:'123456',
+  name:'营销经理',
+  role:'marketing',
+  email:'marketing@example.com',
+  status:'active',
+});
+
+db.staff.create({
+  id: '1',
+  name: '张三',
+  role: 'admin',
+  email: 'zhangsan@example.com',
+  phone: '12345678901',
+  status: 'active',
+  department: '管理部',
+  joinDate: '2024-01-01',
+});
+db.staff.create({
+  id: '2',
+  name: '李四',
+  role: 'cashier',
+  email: 'lisi@example.com',
+  phone: '12345678902',
+  status: 'active',
+  department: '财务部',
+  joinDate: '2024-01-02',
 });
 
 // 添加示例日志
@@ -786,117 +806,280 @@ db.transaction.create({
 db.campaign.create({
   id: '1',
   name: '新春特惠活动',
-  description: '春节期间全场商品8折优惠',
+  description: '春节期间全场商品8折优惠，新老顾客同享',
   type: 'discount',
-  startDate: '2024-02-01',
+  startDate: '2024-01-15',
   endDate: '2024-02-15',
   status: 'active',
   rules: {
     targetAudience: ['all'],
     discount: 20,
-    participantCount: 150,
-    conversionRate: 0.35,
+    participantCount: 1580,
+    conversionRate: 35,
   },
 });
 
 db.campaign.create({
   id: '2',
-  name: '会员积分翻倍',
-  description: '消费即可获得双倍积分',
+  name: '会员积分翻倍月',
+  description: '黄金、白银会员消费即可获得双倍积分奖励',
   type: 'points',
-  startDate: '2024-01-15',
-  endDate: '2024-02-15',
+  startDate: '2024-02-01',
+  endDate: '2024-02-29',
   status: 'active',
   rules: {
     targetAudience: ['gold', 'silver'],
     discount: 0,
-    participantCount: 80,
-    conversionRate: 0.45,
+    participantCount: 980,
+    conversionRate: 42,
   },
 });
 
 db.campaign.create({
   id: '3',
   name: '生日特权月',
-  description: '会员生日当月享受特别优惠',
+  description: '会员生日当月享受特别优惠及精美礼品',
   type: 'gift',
   startDate: '2024-01-01',
   endDate: '2024-12-31',
   status: 'active',
   rules: {
-    targetAudience: ['gold'],
+    targetAudience: ['gold', 'silver'],
     discount: 15,
-    participantCount: 45,
-    conversionRate: 0.6,
+    participantCount: 450,
+    conversionRate: 68,
   },
 });
 
-// 添加示例活动效果数据
-for (let i = 0; i < 30; i++) {
-  const date = dayjs().subtract(i, 'days').format('YYYY-MM-DD');
-  db.campaignEffect.create({
-    id: `effect_${i}_1`,
-    campaignId: '1',
-    date,
-    uv: Math.floor(Math.random() * 500) + 500,
-    pv: Math.floor(Math.random() * 1000) + 1000,
-    conversion: Math.random() * 0.3 + 0.1,
-  });
+db.campaign.create({
+  id: '4',
+  name: '五一促销活动',
+  description: '五一假期全场特惠，多重好礼等你来',
+  type: 'discount',
+  startDate: '2024-05-01',
+  endDate: '2024-05-07',
+  status: 'scheduled',
+  rules: {
+    targetAudience: ['all'],
+    discount: 15,
+    participantCount: 0,
+    conversionRate: 0,
+  },
+});
+
+db.campaign.create({
+  id: '5',
+  name: '618购物节',
+  description: '年中大促，折扣力度空前',
+  type: 'discount',
+  startDate: '2024-06-01',
+  endDate: '2024-06-18',
+  status: 'scheduled',
+  rules: {
+    targetAudience: ['all'],
+    discount: 30,
+    participantCount: 0,
+    conversionRate: 0,
+  },
+});
+
+db.campaign.create({
+  id: '6',
+  name: '会员专属积分兑换',
+  description: '积分兑换心仪好礼，优惠多多',
+  type: 'points',
+  startDate: '2024-03-01',
+  endDate: '2024-03-31',
+  status: 'scheduled',
+  rules: {
+    targetAudience: ['gold', 'silver', 'bronze'],
+    discount: 0,
+    participantCount: 0,
+    conversionRate: 0,
+  },
+});
+
+db.campaign.create({
+  id: '7',
+  name: '开年送福利',
+  description: '新年第一波折扣来袭',
+  type: 'discount',
+  startDate: '2024-01-01',
+  endDate: '2024-01-10',
+  status: 'ended',
+  rules: {
+    targetAudience: ['all'],
+    discount: 25,
+    participantCount: 2150,
+    conversionRate: 48,
+  },
+});
+
+db.campaign.create({
+  id: '8',
+  name: '元旦狂欢节',
+  description: '元旦期间消费满额送好礼',
+  type: 'gift',
+  startDate: '2023-12-30',
+  endDate: '2024-01-02',
+  status: 'ended',
+  rules: {
+    targetAudience: ['all'],
+    discount: 0,
+    participantCount: 1680,
+    conversionRate: 55,
+  },
+});
+
+// 添加转化指标数据
+const campaigns = ['新春特惠活动', '会员积分翻倍月', '生日特权月', '五一促销活动'];
+const baseData = [
+  { conversion: 0.35, participantCount: 1580, totalRevenue: 158000 },
+  { conversion: 0.42, participantCount: 980, totalRevenue: 196000 },
+  { conversion: 0.68, participantCount: 450, totalRevenue: 89000 },
+  { conversion: 0, participantCount: 0, totalRevenue: 0 }
+];
+
+// 生成最近7天的转化指标数据
+for (let i = 0; i < campaigns.length; i++) {
+  for (let j = 0; j < 7; j++) {
+    const date = new Date();
+    date.setDate(date.getDate() - j);
+    const dateStr = date.toISOString().split('T')[0];
+    
+    // 添加随机波动
+    const randomFactor = 0.9 + Math.random() * 0.2; // 0.9-1.1之间的随机数
+    
+    db.conversionMetric.create({
+      id: `${i + 1}-${j}`,
+      campaignId: String(i + 1),
+      campaignName: campaigns[i],
+      conversion: baseData[i].conversion * randomFactor,
+      participantCount: Math.round(baseData[i].participantCount * randomFactor),
+      totalRevenue: Math.round(baseData[i].totalRevenue * randomFactor),
+      date: dateStr,
+    });
+  }
+}
+
+// 添加更多的活动效果数据，确保每个活动都有足够的数据点
+const generateMoreEffectData = (campaignId: string, baseUV: number, basePV: number, baseConversion: number) => {
+  const days = 30;
+  const result = [];
   
-  db.campaignEffect.create({
-    id: `effect_${i}_2`,
-    campaignId: '2',
-    date,
-    uv: Math.floor(Math.random() * 300) + 300,
-    pv: Math.floor(Math.random() * 600) + 600,
-    conversion: Math.random() * 0.4 + 0.2,
-  });
-}
+  for (let i = 0; i < days; i++) {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    const dateStr = date.toISOString().split('T')[0];
+    
+    // 添加一些随机波动和趋势
+    const trend = 1 + (i / days) * 0.2; // 添加上升趋势
+    const randomFactor = (0.9 + Math.random() * 0.2) * trend; // 0.9-1.1之间的随机数，并考虑趋势
+    
+    result.push({
+      id: `${campaignId}-${dateStr}`,
+      campaignId,
+      date: dateStr,
+      uv: Math.round(baseUV * randomFactor),
+      pv: Math.round(basePV * randomFactor),
+      conversion: baseConversion * randomFactor,
+    });
+  }
+  
+  return result;
+};
 
-// 添加示例转化指标
-db.conversionMetric.create({
-  id: '1',
-  campaignId: '1',
-  campaignName: '新春特惠活动',
-  conversion: 0.35,
-  participantCount: 150,
-  totalRevenue: 45000,
+// 为每个活动生成更多的效果数据
+[
+  { id: '1', baseUV: 1000, basePV: 2000, baseConversion: 0.35 },
+  { id: '2', baseUV: 800, basePV: 1500, baseConversion: 0.42 },
+  { id: '3', baseUV: 500, basePV: 1000, baseConversion: 0.68 },
+  { id: '4', baseUV: 0, basePV: 0, baseConversion: 0 }
+].forEach(({ id, baseUV, basePV, baseConversion }) => {
+  const data = generateMoreEffectData(id, baseUV, basePV, baseConversion);
+  data.forEach(item => db.campaignEffect.create(item));
 });
 
-db.conversionMetric.create({
-  id: '2',
-  campaignId: '2',
-  campaignName: '会员积分翻倍',
-  conversion: 0.45,
-  participantCount: 80,
-  totalRevenue: 32000,
+// 清除旧的会员分析数据
+db.memberAnalytics.deleteMany({
+  where: {
+    id: {
+      contains: '',
+    },
+  },
 });
 
-db.conversionMetric.create({
-  id: '3',
-  campaignId: '3',
-  campaignName: '生日特权月',
-  conversion: 0.6,
-  participantCount: 45,
-  totalRevenue: 18000,
+db.memberGrowth.deleteMany({
+  where: {
+    id: {
+      contains: '',
+    },
+  },
 });
 
-// 添加示例会员分析数据
-db.memberAnalytics.create({
-  id: '1',
-  date: dayjs().format('YYYY-MM-DD'),
-  totalMembers: 1200,
-  newMembers: 50,
-  activeMembers: 800,
-  inactiveMembers: 400,
-});
+// 添加会员分析数据
+const generateMemberAnalytics = () => {
+  const months = 12;
+  const baseMembers = {
+    total: 1000,
+    new: 30,
+    active: 700,
+    inactive: 300,
+  };
 
-// 添加示例会员增长趋势
-for (let i = 0; i < 6; i++) {
-  const date = dayjs().subtract(i, 'months').format('YYYY-MM-DD');
-  db.memberGrowth.create({
-    id: `growth_${i}`,
-    date,
-    count: Math.floor(Math.random() * 50) + 30,
-  });
-}
+  for (let i = 0; i < months; i++) {
+    const date = new Date();
+    date.setMonth(date.getMonth() - i);
+    const dateStr = date.toISOString().split('T')[0];
+
+    // 添加增长趋势
+    const growthFactor = 1 + (0.05 * (months - i)); // 越近期增长越多
+    
+    db.memberAnalytics.create({
+      id: `analytics-${i}`,
+      date: dateStr,
+      totalMembers: Math.round(baseMembers.total * growthFactor),
+      newMembers: Math.round(baseMembers.new * (1 + Math.random() * 0.5)), // 随机波动
+      activeMembers: Math.round(baseMembers.active * growthFactor),
+      inactiveMembers: Math.round(baseMembers.inactive * (1 + i * 0.1)), // 缓慢增长
+    });
+  }
+};
+
+// 生成会员增长趋势数据
+const generateMemberGrowth = () => {
+  const days = 180; // 半年的数据
+  const baseGrowth = 20;
+
+  for (let i = 0; i < days; i++) {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    const dateStr = date.toISOString().split('T')[0];
+
+    // 添加周末峰值和工作日波动
+    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+    const randomFactor = 0.8 + Math.random() * 0.4; // 0.8-1.2之间的随机波动
+    const weekendBonus = isWeekend ? 1.5 : 1; // 周末1.5倍
+    // 添加月初促销效应
+    const isMonthStart = date.getDate() <= 5;
+    const monthStartBonus = isMonthStart ? 1.3 : 1; // 月初1.3倍
+    // 添加季节性波动
+    const month = date.getMonth();
+    const seasonalFactor = 1 + Math.sin((month / 12) * Math.PI * 2) * 0.2; // ±20%的季节性波动
+
+    const dailyGrowth = Math.round(
+      baseGrowth * randomFactor * weekendBonus * monthStartBonus * seasonalFactor
+    );
+
+    db.memberGrowth.create({
+      id: `growth-${i}`,
+      date: dateStr,
+      count: dailyGrowth,
+    });
+  }
+};
+
+// 生成数据
+generateMemberAnalytics();
+generateMemberGrowth();
+

@@ -34,7 +34,11 @@ interface SettlementRecord {
   };
   amount: number;        // 结算金额
   status: 'pending' | 'completed' | 'failed';  // 结算状态：待处理、已完成或失败
-  details: Record<string, unknown>;  // 结算详情
+  details: {
+    bankAccount: string;
+    bankName: string;
+    remark: string;
+  };
 }
 
 export interface Store {
@@ -136,7 +140,7 @@ export const getSettlementDetails = (id: string) => {
 };
 
 export const updateSettlementStatus = (id: string, status: SettlementRecord['status']) => {
-  return request(`/finance/settlements/${id}/status`, {
+  return request(`/finance/settlements/status/${id}`, {
     method: 'PUT',
     data: { status },
   });

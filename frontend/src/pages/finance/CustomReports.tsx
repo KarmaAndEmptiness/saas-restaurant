@@ -29,7 +29,6 @@ import {
   getReportConfigs, 
   createReportConfig, 
   generateReport, 
-  getReportHistory,
   exportFinancialReport,
   type ReportConfig 
 } from '../../api/finance';

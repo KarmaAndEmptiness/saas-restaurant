@@ -69,6 +69,7 @@ const Transaction: React.FC = () => {
     try {
       const response = await searchMembers(phone);
       const members = response.data;
+      console.log(members);
       if (members && members.length > 0) {
         const memberData = members[0];
         // 获取会员积分

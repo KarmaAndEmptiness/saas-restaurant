@@ -80,9 +80,10 @@ export const getMemberBehavior = (params: MemberAnalyticsParams) => {
 };
 
 // 效果分析相关API
-export const getCampaignEffects = (campaignId: string) => {
+export const getCampaignEffects = (campaignId: string, startDate: string, endDate: string) => {
   return request(`/marketing/campaign-effects/${campaignId}`, {
     method: 'GET',
+    params: { startDate, endDate },
   });
 };
 

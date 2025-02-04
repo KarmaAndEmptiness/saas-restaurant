@@ -22,7 +22,7 @@ import {
   CameraOutlined,
   UploadOutlined,
 } from '@ant-design/icons';
-import type { UploadFile } from 'antd/es/upload/interface';
+import type { UploadFile, UploadChangeParam } from 'antd/es/upload/interface';
 import type { RcFile } from 'antd/es/upload';
 import dayjs from 'dayjs';
 import { registerMember, searchMembers } from '../../api/cashier';
@@ -55,6 +55,7 @@ const MemberRegistration: React.FC = () => {
   const checkPhoneExist = debounce(async (phone: string) => {
     try {
       const response = await searchMembers(phone);
+      console.log(response);
       const members = response.data;
       if (members && members.length > 0) {
         return Promise.reject(new Error('该手机号已被注册'));
@@ -112,16 +113,35 @@ const MemberRegistration: React.FC = () => {
       reader.onerror = (error) => reject(error);
     });
 
-  const beforeUpload = (file: RcFile) => {
-    const isImage = file.type.startsWith('image/');
-    if (!isImage) {
-      message.error('只能上传图片文件！');
-    }
-    const isLt2M = file.size / 1024 / 1024 < 2;
-    if (!isLt2M) {
-      message.error('图片大小不能超过2MB！');
-    }
-    return isImage && isLt2M;
+  const uploadProps = {
+    name: 'file',
+    action: '/cashier/member',
+    headers: {
+      authorization: 'authorization-text',
+    },
+    onChange(info: UploadChangeParam<UploadFile>) {
+      if (info.file.status === 'done') {
+        message.success(`${info.file.name} 上传成功`);
+        // 设置头像URL
+        const uploadedFile = fileList[0];
+        if (uploadedFile && uploadedFile.response) {
+          uploadedFile.url = uploadedFile.response.url;
+        }
+      } else if (info.file.status === 'error') {
+        message.error(`${info.file.name} 上传失败`);
+      }
+    },
+    beforeUpload: (file: RcFile) => {
+      const isImage = file.type.startsWith('image/');
+      if (!isImage) {
+        message.error('只能上传图片文件！');
+      }
+      const isLt2M = file.size / 1024 / 1024 < 2;
+      if (!isLt2M) {
+        message.error('图片大小不能超过2MB！');
+      }
+      return isImage && isLt2M;
+    },
   };
 
   const uploadButton = (
@@ -255,11 +275,11 @@ const MemberRegistration: React.FC = () => {
             <div style={{ textAlign: 'center' }}>
               <Form.Item label="会员头像">
                 <Upload
+                  {...uploadProps}
                   listType="picture-card"
                   fileList={fileList}
                   onPreview={handlePreview}
                   onChange={handleChange}
-                  beforeUpload={beforeUpload}
                   maxCount={1}
                 >
                   {fileList.length >= 1 ? null : uploadButton}

@@ -42,7 +42,7 @@ export interface LogItem {
 // 员工管理 API
 export const staff = {
   /** 获取员工列表 */
-  list: () => request.get<{ data: StaffMember[] }>('/admin/staff'),
+  list: () => request.get<StaffMember[]>('/admin/staff'),
 
   /** 添加员工 */
   create: (data: Omit<StaffMember, 'id'>) => 

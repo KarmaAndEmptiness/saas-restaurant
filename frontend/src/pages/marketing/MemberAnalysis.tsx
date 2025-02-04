@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PageContainer } from '@ant-design/pro-components';
-import { Card, Col, Row, Statistic, DatePicker, Space, message } from 'antd';
+import { Card, Col, Row, Statistic, DatePicker, Space, message, Spin } from 'antd';
 import { Column } from '@ant-design/plots';
 import { getMemberAnalytics } from '../../api/marketing';
 import dayjs, { Dayjs } from 'dayjs';
@@ -19,6 +19,11 @@ interface MemberStats {
 interface GrowthTrendItem {
   date: string;
   count: number;
+}
+
+interface ChartDatum {
+  month: string;
+  value: number;
 }
 
 const MemberAnalysis: React.FC = () => {
@@ -68,10 +73,10 @@ const MemberAnalysis: React.FC = () => {
     xField: 'month',
     yField: 'value',
     label: {
-      position: 'middle',
+      position: 'top',
       style: {
-        fill: '#FFFFFF',
-        opacity: 0.6,
+        fill: '#595959',
+        opacity: 0.9,
       },
     },
     xAxis: {
@@ -83,6 +88,18 @@ const MemberAnalysis: React.FC = () => {
     meta: {
       value: {
         alias: '会员数',
+      },
+    },
+    color: '#1890ff',
+    columnStyle: {
+      radius: [8, 8, 0, 0], // 设置柱状图的圆角
+    },
+    tooltip: {
+      formatter: (datum: ChartDatum) => {
+        return {
+          name: '新增会员',
+          value: datum.value + ' 人',
+        };
       },
     },
   };
@@ -100,68 +117,73 @@ const MemberAnalysis: React.FC = () => {
 
   return (
     <PageContainer title="会员数据分析">
-      <Row gutter={16}>
-        <Col span={6}>
-          <Card bordered={false} loading={loading}>
-            <Statistic
-              title="总会员数"
-              value={memberStats.totalMembers}
-              precision={0}
-              valueStyle={{ color: '#1890ff' }}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card bordered={false} loading={loading}>
-            <Statistic
-              title="本月新增"
-              value={memberStats.newMembers}
-              precision={0}
-              valueStyle={{ color: '#52c41a' }}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card bordered={false} loading={loading}>
-            <Statistic
-              title="活跃会员"
-              value={memberStats.activeMembers}
-              precision={0}
-              valueStyle={{ color: '#faad14' }}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card bordered={false} loading={loading}>
-            <Statistic
-              title="沉睡会员"
-              value={memberStats.inactiveMembers}
-              precision={0}
-              valueStyle={{ color: '#f5222d' }}
-            />
-          </Card>
-        </Col>
-      </Row>
-      
-      <Card 
-        title="会员增长趋势" 
-        style={{ marginTop: 24 }}
-        bordered={false}
-        loading={loading}
-        extra={
-          <Space>
-            <DatePicker.RangePicker
-              onChange={handleDateRangeChange}
-              defaultValue={[
-                dayjs().subtract(6, 'month'),
-                dayjs()
-              ]}
-            />
-          </Space>
-        }
-      >
-        <Column {...config} height={300} />
-      </Card>
+      <Spin spinning={loading}>
+        <Row gutter={16}>
+          <Col span={6}>
+            <Card bordered={false}>
+              <Statistic
+                title="总会员数"
+                value={memberStats.totalMembers}
+                precision={0}
+                valueStyle={{ color: '#1890ff' }}
+                suffix="人"
+              />
+            </Card>
+          </Col>
+          <Col span={6}>
+            <Card bordered={false}>
+              <Statistic
+                title="本月新增"
+                value={memberStats.newMembers}
+                precision={0}
+                valueStyle={{ color: '#52c41a' }}
+                suffix="人"
+              />
+            </Card>
+          </Col>
+          <Col span={6}>
+            <Card bordered={false}>
+              <Statistic
+                title="活跃会员"
+                value={memberStats.activeMembers}
+                precision={0}
+                valueStyle={{ color: '#faad14' }}
+                suffix="人"
+              />
+            </Card>
+          </Col>
+          <Col span={6}>
+            <Card bordered={false}>
+              <Statistic
+                title="沉睡会员"
+                value={memberStats.inactiveMembers}
+                precision={0}
+                valueStyle={{ color: '#f5222d' }}
+                suffix="人"
+              />
+            </Card>
+          </Col>
+        </Row>
+        
+        <Card 
+          title="会员增长趋势" 
+          style={{ marginTop: 24 }}
+          bordered={false}
+          extra={
+            <Space>
+              <DatePicker.RangePicker
+                onChange={handleDateRangeChange}
+                defaultValue={[
+                  dayjs().subtract(6, 'month'),
+                  dayjs()
+                ]}
+              />
+            </Space>
+          }
+        >
+          <Column {...config} height={300} />
+        </Card>
+      </Spin>
     </PageContainer>
   );
 };

@@ -2,7 +2,6 @@ import { http, HttpResponse } from 'msw';
 import { db } from './db';
 import type { Role, StaffMember } from '@/api/admin';
 import type { LoginParams } from '@/api/auth';
-import type { FinancialStatsResponse } from '@/api/finance';
 import dayjs from 'dayjs';
 
 // 生成随机验证码
@@ -138,6 +137,23 @@ export const handlers = [
     });
     return HttpResponse.json({ id: staff.id }, { status: 201 });
   }),
+  //更新员工
+  http.put('/api/admin/staff/:id', async ({ params, request }) => {
+    const data = await request.json() as Partial<StaffMember>;
+    const staff = db.staff.update({
+      where: { id: { equals: params.id as string } },
+      data,
+    });
+    return HttpResponse.json(staff);
+  }),
+  //删除员工
+  http.delete('/api/admin/staff/:id', ({ params }) => {
+    db.staff.delete({
+      where: { id: { equals: params.id as string } },
+    });
+    return new HttpResponse(null, { status: 204 });
+  }),
+  
 
   // --- 收银前台 ---
   // 会员开卡
@@ -194,31 +210,8 @@ export const handlers = [
 
   // 获取支付方式统计
   http.get('/api/finance/payment-stats', () => {
-    const stats = db.payment.getAll().map(item => ({
-      method: String(item.method || '未知'),
-      amount: Number(item.amount || 0),
-      percentage: Number(item.percentage || 0),
-    }));
-    
-    // 如果没有数据，返回默认数据
-    if (!stats.length) {
-      return HttpResponse.json({
-        data: [
-          { method: '支付宝', amount: 5000, percentage: 45 },
-          { method: '微信支付', amount: 4000, percentage: 35 },
-          { method: '现金', amount: 2000, percentage: 20 },
-        ]
-      });
-    }
-    
-    // 确保所有数值都是有效的数字
-    const validStats = stats.map(item => ({
-      ...item,
-      amount: Number(item.amount) || 0,
-      percentage: Number(item.percentage) || 0,
-    }));
-    
-    return HttpResponse.json({ data: validStats });
+    const stats = db.payment.getAll();    
+    return HttpResponse.json({ data: stats });
   }),
 
   // 获取每日记录
@@ -290,11 +283,61 @@ export const handlers = [
       total: formattedSettlements.length 
     });
   }),
+  //  PUT /api/finance/settlements/status/1
+  http.put('/api/finance/settlements/status/:id', ({ params }) => {
+    const settlement = db.settlement.update({
+      where: { id: { equals: params.id as string } },
+      data: { status: 'completed' }
+    });
+    return HttpResponse.json(settlement);
+  }),
 
+  // POST /api/finance/settlements
+  http.post('/api/finance/settlements', async ({ request }) => {
+    const data = await request.json() as {
+      storeId: string;
+      period: {
+        start: string;
+        end: string;
+      };
+      amount: number;
+      status: string;
+      details: {
+        bankAccount: string;
+        bankName: string;
+        remark: string;
+      };
+    };
+
+    const settlement = db.settlement.create({
+      id: String(Date.now()),
+      storeId: data.storeId,
+      storeName: "测试门店", // 在实际应用中应该从数据库查询
+      period: data.period,
+      totalAmount: data.amount,
+      commission: data.amount * 0.03, // 3% 手续费
+      settledAmount: data.amount * 0.97,
+      status: data.status,
+      items: [{
+        bankAccount: data.details.bankAccount,
+        bankName: data.details.bankName,
+        remark: data.details.remark
+      }]
+    });
+
+    return HttpResponse.json(settlement, { status: 201 });
+  }),
   // --- 会员营销 ---
   // 获取营销活动列表
   http.get('/api/marketing/campaigns', () => {
-    const campaigns = db.campaign.getAll();
+    const campaigns = db.campaign.getAll().map(campaign => ({
+      ...campaign,
+      rules: {
+        ...campaign.rules,
+        // 确保转化率是数字而不是百分比
+        conversionRate: Number(campaign.rules.conversionRate) / 100,
+      }
+    }));
     return HttpResponse.json({ data: campaigns });
   }),
 
@@ -318,6 +361,11 @@ export const handlers = [
     const campaign = db.campaign.create({
       id: String(Date.now()),
       ...data,
+      rules: {
+        ...data.rules,
+        // 存储时将转化率转换为百分比
+        conversionRate: data.rules.conversionRate * 100,
+      }
     });
 
     return HttpResponse.json({ data: campaign }, { status: 201 });
@@ -342,7 +390,14 @@ export const handlers = [
 
     const campaign = db.campaign.update({
       where: { id: { equals: String(params.id) } },
-      data,
+      data: {
+        ...data,
+        rules: {
+          ...data.rules,
+          // 存储时将转化率转换为百分比
+          conversionRate: data.rules.conversionRate * 100,
+        }
+      },
     });
 
     return HttpResponse.json({ data: campaign });
@@ -358,11 +413,16 @@ export const handlers = [
   }),
 
   // 获取活动效果数据
-  http.get('/api/marketing/campaigns/:id/effects', ({ params }) => {
-    const effects = db.campaignEffect.findMany({
-      where: { campaignId: { equals: String(params.id) } },
+  http.get('/api/marketing/campaign-effects/:id', ({ params, request }) => {
+    const url = new URL(request.url);
+    const startDate = url.searchParams.get('startDate');
+    const endDate = url.searchParams.get('endDate');
+    let effects = db.campaignEffect.findMany({
+      where: { campaignId: { equals: String(params.id) }},
     });
-
+    if (startDate && endDate) {
+      effects = effects.filter(effect => effect.date >= startDate && effect.date <= endDate);
+    }
     return HttpResponse.json({ data: effects });
   }),
 
@@ -370,11 +430,15 @@ export const handlers = [
   http.get('/api/marketing/conversion-metrics', ({ request }) => {
     const url = new URL(request.url);
     const campaignId = url.searchParams.get('campaignId');
-    
+    const startDate = url.searchParams.get('startDate');
+    const endDate = url.searchParams.get('endDate');
     let metrics = db.conversionMetric.getAll();
     
     if (campaignId) {
       metrics = metrics.filter(metric => metric.campaignId === campaignId);
+    }
+    if (startDate && endDate) {
+      metrics = metrics.filter(metric => metric.date >= startDate && metric.date <= endDate);
     }
 
     return HttpResponse.json({ data: metrics });
@@ -393,11 +457,17 @@ export const handlers = [
           equals: dayjs().format('YYYY-MM-DD')
         }
       }
-    });
+    }) || {
+      totalMembers: 0,
+      newMembers: 0,
+      activeMembers: 0,
+      inactiveMembers: 0,
+    };
 
     // 获取会员增长趋势
     let growthTrend = db.memberGrowth.getAll();
     
+    // 根据日期筛选
     if (startDate && endDate) {
       growthTrend = growthTrend.filter(item => 
         item.date >= startDate && 
@@ -405,13 +475,39 @@ export const handlers = [
       );
     }
 
+    // 按日期排序
+    growthTrend.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    interface MonthlyGrowth {
+      month: string;
+      count: number;
+    }
+
+    // 合并相同月份的数据
+    const monthlyGrowth = growthTrend.reduce((acc: MonthlyGrowth[], curr) => {
+      const month = dayjs(curr.date).format('YYYY-MM');
+      const existing = acc.find(item => item.month === month);
+      if (existing) {
+        existing.count += curr.count;
+      } else {
+        acc.push({
+          month: month,
+          count: curr.count,
+        });
+      }
+      return acc;
+    }, []);
+
     return HttpResponse.json({
       data: {
-        totalMembers: analytics?.totalMembers || 0,
-        newMembers: analytics?.newMembers || 0,
-        activeMembers: analytics?.activeMembers || 0,
-        inactiveMembers: analytics?.inactiveMembers || 0,
-        growthTrend,
+        totalMembers: analytics.totalMembers,
+        newMembers: analytics.newMembers,
+        activeMembers: analytics.activeMembers,
+        inactiveMembers: analytics.inactiveMembers,
+        growthTrend: monthlyGrowth.map(item => ({
+          date: item.month,
+          count: item.count,
+        })),
       }
     });
   }),
@@ -558,7 +654,7 @@ export const handlers = [
   http.get('/api/cashier/members/search', ({ request }) => {
     const url = new URL(request.url);
     const phone = url.searchParams.get('phone') || '';
-    
+    console.log(phone);
     const members = db.member.getAll().filter(member => 
       member.phone.includes(phone)
     );
@@ -569,6 +665,7 @@ export const handlers = [
   // 获取会员积分余额
   http.get('/api/cashier/points/balance/:memberId', ({ params }) => {
     const memberId = String(params.memberId);
+    console.log(memberId);
     const member = db.member.findFirst({
       where: { id: { equals: memberId } }
     });
@@ -694,5 +791,29 @@ export const handlers = [
     });
     
     return HttpResponse.json({ data: member });
+  }),
+
+  // 会员头像上传
+  http.post('/cashier/member', async ({ request }) => {
+    try {
+      const formData = await request.formData();
+      const file = formData.get('file') as File;
+      
+      // 模拟文件上传成功
+      return HttpResponse.json({
+        url: URL.createObjectURL(file),
+        status: 'success',
+        message: '头像上传成功'
+      });
+    } catch (error) {
+      console.log(error);
+      return new HttpResponse(
+        JSON.stringify({ 
+          status: 'error',
+          message: '头像上传失败'
+        }), 
+        { status: 500 }
+      );
+    }
   }),
 ];

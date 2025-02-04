@@ -62,7 +62,7 @@ export const getMember = (id: string) => {
 export const searchMembers = (query: string) => {
   return request('/cashier/members/search', {
     method: 'GET',
-    params: { query },
+    params: { phone: query },
   });
 };
 
@@ -89,7 +89,7 @@ export const getTransactionDetails = (id: string) => {
 
 // 积分管理相关API
 export const getPointsBalance = (memberId: string) => {
-  return request(`/cashier/points/${memberId}/balance`, {
+  return request(`/cashier/points/balance/${memberId}`, {
     method: 'GET',
   });
 };
@@ -102,7 +102,7 @@ export const operatePoints = (data: PointsOperation) => {
 };
 
 export const getPointsHistory = (memberId: string) => {
-  return request(`/cashier/points/${memberId}/history`, {
+  return request(`/cashier/points/history/${memberId}`, {
     method: 'GET',
   });
 }; 

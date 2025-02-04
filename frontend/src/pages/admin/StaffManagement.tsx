@@ -72,7 +72,7 @@ const StaffManagement: React.FC = () => {
     setLoading(true);
     try {
       const response = await staff.list();
-      setStaffList(response.data.data);
+      setStaffList(response.data);
     } catch (error) {
       console.error('获取员工列表失败:', error);
       message.error('获取员工列表失败');
@@ -133,7 +133,7 @@ const StaffManagement: React.FC = () => {
     setLoading(true);
     try {
       const response = await staff.list();
-      let filteredStaff = response.data.data;
+      let filteredStaff = response.data;
 
       // 根据搜索条件筛选
       if (values.name) {

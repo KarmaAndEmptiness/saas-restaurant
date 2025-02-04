@@ -213,7 +213,7 @@ const PointsManagement: React.FC = () => {
       children: (
         <Timeline
           mode="left"
-          items={pointsRecords.map(record => ({
+          items={pointsRecords?.map(record => ({
             color: record.type === 'earn' ? 'green' : record.type === 'redeem' ? 'orange' : 'blue',
             label: record.createTime,
             children: (

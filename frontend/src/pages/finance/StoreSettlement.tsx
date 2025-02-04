@@ -43,10 +43,7 @@ interface Settlement {
   id: string;
   storeId: string;
   storeName: string;
-  period: {
-    start: string;
-    end: string;
-  };
+  period: string;
   amount: number;
   commission: number;
   actualAmount: number;
@@ -70,8 +67,8 @@ const StoreSettlement: React.FC = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedSettlement, setSelectedSettlement] = useState<Settlement | null>(null);
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs, dayjs.Dayjs]>([
-    dayjs().startOf('month'),
-    dayjs().endOf('month'),
+    dayjs('2024-01-01'),
+    dayjs(),
   ]);
   const [form] = Form.useForm<SettlementForm>();
 
@@ -105,17 +102,23 @@ const StoreSettlement: React.FC = () => {
     try {
       // 更新结算信息
       await updateSettlementStatus(selectedSettlement.id, 'completed');
+      
+      const [startDate, endDate] = selectedSettlement.period.split(' 至 ');
+      
       // 创建结算记录
       await createSettlement({
         storeId: selectedSettlement.storeId,
-        period: selectedSettlement.period,
+        period: {
+          start: startDate,
+          end: endDate
+        },
         amount: selectedSettlement.amount,
         status: 'completed',
         details: {
           bankAccount: values.bankAccount,
           bankName: values.bankName,
-          remark: values.remark,
-        },
+          remark: values.remark || ''
+        }
       });
       message.success('结算成功！');
       setModalVisible(false);
@@ -159,7 +162,7 @@ const StoreSettlement: React.FC = () => {
               {record.storeName}
             </Descriptions.Item>
             <Descriptions.Item label="结算周期" span={2}>
-              {record.period.start} 至 {record.period.end}
+              {record.period}
             </Descriptions.Item>
             <Descriptions.Item label="总金额">
               ¥{record.amount.toFixed(2)}
