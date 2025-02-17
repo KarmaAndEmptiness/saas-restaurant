@@ -142,14 +142,26 @@ const StaffManagement: React.FC = () => {
         );
       }
       if (values.role) {
-        filteredStaff = filteredStaff.filter((staff: StaffMember) => 
-          staff.role === values.role
-        );
+        if (values.role === 'all') {
+          filteredStaff = filteredStaff.filter((staff: StaffMember) => 
+            staff.role === 'admin' || staff.role === 'cashier' || staff.role === 'finance' || staff.role === 'marketing'
+          );
+        } else {
+          filteredStaff = filteredStaff.filter((staff: StaffMember) => 
+            staff.role === values.role
+          );
+        }
       }
       if (values.status) {
-        filteredStaff = filteredStaff.filter((staff: StaffMember) => 
-          staff.status === values.status
-        );
+        if (values.status === 'all') {
+          filteredStaff = filteredStaff.filter((staff: StaffMember) => 
+            staff.status === 'active' || staff.status === 'inactive'
+          );
+        } else {
+          filteredStaff = filteredStaff.filter((staff: StaffMember) => 
+            staff.status === values.status
+          );
+        }
       }
 
       setStaffList(filteredStaff);
@@ -291,6 +303,7 @@ const StaffManagement: React.FC = () => {
             </Form.Item>
             <Form.Item name="role" label="角色">
               <Select style={{ width: 120 }} placeholder="请选择角色">
+                <Option value="all">全部</Option>
                 <Option value="admin">管理员</Option>
                 <Option value="cashier">收银员</Option>
                 <Option value="finance">财务</Option>
@@ -299,6 +312,7 @@ const StaffManagement: React.FC = () => {
             </Form.Item>
             <Form.Item name="status" label="状态">
               <Select style={{ width: 120 }} placeholder="请选择状态">
+                <Option value="all">全部</Option>
                 <Option value="active">在职</Option>
                 <Option value="inactive">离职</Option>
               </Select>

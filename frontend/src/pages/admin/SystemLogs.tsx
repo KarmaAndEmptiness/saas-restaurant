@@ -96,7 +96,11 @@ const SystemLogs: React.FC = () => {
         params.endTime = values.dateRange[1].format('YYYY-MM-DD HH:mm:ss');
       }
       if (values.type) {
-        params.type = values.type;
+        if (values.type === 'all') {
+          params.type = '';
+        } else {
+          params.type = values.type;
+        }
       }
       if (values.operator) {
         params.operator = values.operator;
@@ -215,6 +219,7 @@ const SystemLogs: React.FC = () => {
             </Form.Item>
             <Form.Item name="type" label="日志级别">
               <Select style={{ width: 120 }} placeholder="请选择级别">
+                <Option value="all">全部</Option>
                 <Option value="info">信息</Option>
                 <Option value="warning">警告</Option>
                 <Option value="error">错误</Option>

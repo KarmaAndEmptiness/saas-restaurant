@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Button, Checkbox, Card, message, Space, Image } from 'antd';
+import { Form, Input, Button, Checkbox, Card, message, Space } from 'antd';
 import { UserOutlined, LockOutlined, SafetyOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 import * as authApi from '@/api/auth';
 import type { LoginParams } from '@/api/auth';
+interface LoginForm extends LoginParams {
+  remember?: boolean;
+}
 
 const LoginContainer = styled.div`
   min-height: 100vh;
@@ -62,7 +65,7 @@ const LoginCard = styled(Card)`
   }
 `;
 
-const StyledForm = styled(Form)`
+const StyledForm = styled(Form<LoginForm>)`
   .ant-input-affix-wrapper {
     border-radius: 8px;
     height: 46px;
@@ -126,15 +129,15 @@ const SystemTitle = styled.div`
   }
 `;
 
-interface LoginForm extends Omit<LoginParams, 'sessionId'> {
-  remember: boolean;
-}
+
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [captchaUrl, setCaptchaUrl] = useState('');
   const [sessionId, setSessionId] = useState('');
+
+  const [form] = Form.useForm<LoginForm>();
 
   const refreshCaptcha = async () => {
     try {
@@ -174,6 +177,7 @@ const Login: React.FC = () => {
 
       navigate(roleDefaultPaths[user.role] || '/login');
     } catch (error) {
+      console.log(error);
       refreshCaptcha();
     } finally {
       setLoading(false);
@@ -189,9 +193,11 @@ const Login: React.FC = () => {
         </SystemTitle>
         
         <StyledForm
+          form={form}
           name="login"
           initialValues={{ remember: true }}
           onFinish={onFinish}
+          size="large"
         >
           <Form.Item
             name="username"

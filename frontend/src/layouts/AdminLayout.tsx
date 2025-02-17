@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { Layout, Menu, Avatar, Dropdown, theme, Button } from 'antd';
+import { Layout, Menu, Avatar, Dropdown, 
+  // theme,
+   Button } from 'antd';
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -61,9 +63,9 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const {
-    token: { colorBgContainer },
-  } = theme.useToken();
+  // const {
+  //   token: { colorPrimary },
+  // } = theme.useToken();
 
   const handleMenuClick = (key: string) => {
     navigate(key);

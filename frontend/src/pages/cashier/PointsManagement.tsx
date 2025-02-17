@@ -1,42 +1,33 @@
 import React, { useState } from 'react';
 import {
   Card,
-  Input,
-  Button,
   Table,
-  Tag,
+  Button,
   Space,
-  Modal,
+  Input,
   Form,
-  InputNumber,
-  Select,
-  message,
+  Modal,
   Row,
   Col,
   Statistic,
-  Tabs,
+  Tag,
+  message,
   Timeline,
-  Tooltip,
+  Tabs,
+  InputNumber,
 } from 'antd';
 import {
   SearchOutlined,
+  GiftOutlined,
+  UserOutlined,
   PlusOutlined,
   MinusOutlined,
-  SwapOutlined,
-  GiftOutlined,
-  ShoppingOutlined,
-  UserOutlined,
   ClockCircleOutlined,
+  SwapOutlined,
 } from '@ant-design/icons';
 import type { TableProps } from 'antd';
-import dayjs from 'dayjs';
-import { 
-  searchMembers, 
-  getPointsBalance, 
-  getPointsHistory,
-  operatePoints,
-  type Member 
-} from '../../api/cashier';
+import { searchMembers, getPointsBalance, getPointsHistory, operatePoints } from '../../api/cashier';
+import type { Member } from '../../api/cashier';
 import { debounce } from 'lodash';
 
 interface PointsHistoryRecord {

@@ -102,7 +102,6 @@ export const handlers = [
     if (operator) {
       logs = logs.filter(log => log.operator.includes(operator));
     }
-
     return HttpResponse.json({ data: logs });
   }),
 
@@ -134,6 +133,7 @@ export const handlers = [
     const staff = db.staff.create({
       id: Math.random().toString(36).substring(7),
       ...newStaff,
+      joinDate: dayjs().format('YYYY-MM-DD'),
     });
     return HttpResponse.json({ id: staff.id }, { status: 201 });
   }),
@@ -654,7 +654,6 @@ export const handlers = [
   http.get('/api/cashier/members/search', ({ request }) => {
     const url = new URL(request.url);
     const phone = url.searchParams.get('phone') || '';
-    console.log(phone);
     const members = db.member.getAll().filter(member => 
       member.phone.includes(phone)
     );

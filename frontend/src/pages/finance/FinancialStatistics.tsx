@@ -123,7 +123,6 @@ const FinancialStatistics: React.FC = () => {
           amount: item.amount,
           percentage: item.percentage,
         }));
-        console.log('Payment data:', formattedPaymentData); // 添加日志
         setPaymentData(formattedPaymentData);
       }
       
