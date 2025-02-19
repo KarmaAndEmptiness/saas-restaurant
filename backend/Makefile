@@ -1,14 +1,3 @@
-# Dependency installation target with individual checks
-deps:
-	@MISSING_PACKAGES=""
-	@dpkg -s libssl-dev >/dev/null 2>&1 || MISSING_PACKAGES="$$MISSING_PACKAGES libssl-dev"
-	@dpkg -s libboost-all-dev >/dev/null 2>&1 || MISSING_PACKAGES="$$MISSING_PACKAGES libboost-all-dev"
-	@dpkg -s nlohmann-json3-dev >/dev/null 2>&1 || MISSING_PACKAGES="$$MISSING_PACKAGES nlohmann-json3-dev"
-	@if [ "$$MISSING_PACKAGES" != "" ]; then \
-		echo "Installing missing packages: $$MISSING_PACKAGES"; \
-		apt-get update && apt-get install -y $$MISSING_PACKAGES; \
-	fi
-
 CXX := g++
 CXXFLAGS := -std=c++17 -Wall -Wextra -Werror -g -I./include -I/usr/local/include
 LDFLAGS := -lpthread -lssl -lcrypto -lboost_system
@@ -27,15 +16,9 @@ TARGET := $(BIN_DIR)/server
 # 确保目录存在
 $(shell mkdir -p $(BUILD_DIR) $(BIN_DIR))
 
-# Default target
-.DEFAULT_GOAL := $(TARGET)
-
 .PHONY: all clean run
 
-# Separate dependency installation
-install_deps: deps
-
-all: install_deps $(TARGET)
+all: $(TARGET)
 
 $(TARGET): $(OBJS)
 	$(CXX) $(OBJS) -o $@ $(LDFLAGS)
