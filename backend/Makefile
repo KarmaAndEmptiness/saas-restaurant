@@ -1,28 +1,38 @@
-CC=g++
-CXXFLAGS= -Wall -std=c++11 -Iinclude -Isrc -Isrc/utils -Isrc/handlers
-LDFLAGS= -lmysqlclient -lmysqlcppconn -lsodium -lssl -lcrypto
+# 添加依赖检查
+# REQUIRED_PACKAGES := libssl-dev libboost-all-dev nlohmann-json-dev
+# $(shell apt-get update && apt-get install -y $(REQUIRED_PACKAGES))
 
-TARGET=restaurant_server
+CXX := g++
+CXXFLAGS := -std=c++17 -Wall -Wextra -Werror -g -I./include -I/usr/local/include
+LDFLAGS := -lpthread -lssl -lcrypto -lboost_system
 
-SRC_DIR=src
-OBJ_DIR=obj
+# 目录结构
+SRC_DIR := src
+BUILD_DIR := build
+BIN_DIR := bin
+INCLUDE_DIR := include
 
+# 源文件和目标文件
+SRCS := $(shell find $(SRC_DIR) -name '*.cpp')
+OBJS := $(SRCS:$(SRC_DIR)/%.cpp=$(BUILD_DIR)/%.o)
+TARGET := $(BIN_DIR)/server
 
-SRCS=$(wildcard $(SRC_DIR)/*.cc) $(wildcard $(SRC_DIR)/*/*.cc)
-OBJS=$(patsubst $(SRC_DIR)/%.cc,$(OBJ_DIR)/%.o,$(SRCS))
+# 确保目录存在
+$(shell mkdir -p $(BUILD_DIR) $(BIN_DIR))
+
+.PHONY: all clean run
+
+all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CC) -o $@ $^ $(LDFLAGS) 
+	$(CXX) $(OBJS) -o $@ $(LDFLAGS)
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cc
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(dir $@)
-	$(CC) $(CXXFLAGS) -c -o $@ $<
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-.PHONY: clean
 clean:
-	rm -rf $(OBJ_DIR) $(TARGET) 
+	rm -rf $(BUILD_DIR) $(BIN_DIR)
 
-.PHONY: restart
-restart:
-	make -j8
-	./$(TARGET)
+run: $(TARGET)
+	./$(TARGET) 

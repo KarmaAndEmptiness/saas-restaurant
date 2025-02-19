@@ -1,6 +1,5 @@
 /*
-!include/
-!src/
-!data/
+!include
+!src
 !Makefile
-!.gitignore
+!.vscode
