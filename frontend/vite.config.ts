@@ -8,6 +8,7 @@ export default defineConfig({
       'Service-Worker-Allowed': '/'
     },
   },
+  base: '/restaurant/',
   preview: {
     allowedHosts: ['localhost', '127.0.0.1', '0.0.0.0', 'holaworld.ggff.net', 'haloworld.ggff.net'],
   },

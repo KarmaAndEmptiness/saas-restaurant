@@ -31,11 +31,11 @@ const EffectAnalysis = lazy(() => import('../pages/marketing/EffectAnalysis'));
 
 // 加载组件
 const LoadingComponent = () => (
-  <div style={{ 
-    display: 'flex', 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    height: '100vh' 
+  <div style={{
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '100vh'
   }}>
     <Spin size="large" tip="加载中..." />
   </div>
@@ -45,7 +45,7 @@ const LoadingComponent = () => (
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const token = localStorage.getItem('token');
   const userRole = localStorage.getItem('userRole'); // 从localStorage获取用户角色
-  
+
   if (!token) {
     return <Navigate to="/login" replace />;
   }
@@ -60,7 +60,7 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
     };
     return <Navigate to={roleDefaultPaths[userRole as string] || '/login'} replace />;
   }
-  
+
   return <Suspense fallback={<LoadingComponent />}>{children}</Suspense>;
 };
 
@@ -185,4 +185,6 @@ export const router = createBrowserRouter([
     path: '/',
     element: <Navigate to="/login" replace />,
   },
-]); 
+], {
+  basename: '/restaurant/'
+}); 
