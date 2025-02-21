@@ -31,7 +31,6 @@ request.interceptors.response.use(
   (error) => {
     if (error.response) {
       const { status, data } = error.response;
-      
       switch (status) {
         case 401:
           // 未登录或 token 过期

@@ -33,5 +33,5 @@ clean:
 run: $(TARGET)
 	./$(TARGET) 
 reload:
-	make -j4
+	make -j6
 	./$(TARGET) 
