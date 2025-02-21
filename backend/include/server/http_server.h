@@ -4,12 +4,7 @@
 #include <memory>
 #include "httplib.h"
 #include "middleware/middleware.h"
-#include "controllers/auth_controller.h"
-#include "controllers/cashier_controller.h"
-#include "controllers/admin_controller.h"
-#include "controllers/finance_controller.h"
-#include "controllers/marketing_controller.h"
-
+#include "routers/auth_router.h"
 namespace server
 {
     class HttpServer
@@ -27,12 +22,8 @@ namespace server
         // 初始化路由
         void InitializeRoutes();
 
-        std::unique_ptr<httplib::Server> server_;
-        std::unique_ptr<controllers::AuthController> auth_controller_;
-        std::unique_ptr<controllers::CashierController> cashier_controller_;
-        std::unique_ptr<controllers::AdminController> admin_controller_;
-        std::unique_ptr<controllers::FinanceController> finance_controller_;
-        std::unique_ptr<controllers::MarketingController> marketing_controller_;
+        std::shared_ptr<httplib::Server> server_;
+        std::unique_ptr<router::AuthRouter> auth_router_;
         std::vector<std::unique_ptr<middleware::Middleware>> middlewares_;
         void HandleRequest(const httplib::Request &req, httplib::Response &res);
 

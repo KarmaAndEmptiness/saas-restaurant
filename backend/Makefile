@@ -16,7 +16,7 @@ TARGET := $(BIN_DIR)/server
 # 确保目录存在
 $(shell mkdir -p $(BUILD_DIR) $(BIN_DIR))
 
-.PHONY: all clean run
+.PHONY: all clean run relod
 
 all: $(TARGET)
 
@@ -31,4 +31,7 @@ clean:
 	rm -rf $(BUILD_DIR) $(BIN_DIR)
 
 run: $(TARGET)
+	./$(TARGET) 
+reload:
+	make -j4
 	./$(TARGET) 

@@ -16,18 +16,18 @@ namespace controllers
             auto request_data = json::parse(req.body);
             std::string username = request_data["username"];
             std::string password = request_data["password"];
-            std::string captcha = request_data["captcha"];
-            std::string session_id = request_data["sessionId"];
+            // std::string captcha = request_data["captcha"];
+            // std::string session_id = request_data["sessionId"];
 
             // 验证登录
-            if (!auth_service_->ValidateLogin(username, password, captcha, session_id))
-            {
-                res.status = 401;
-                json error = {
-                    {"message", "用户名或密码错误"}};
-                res.body = error.dump();
-                return;
-            }
+            // if (!auth_service_->ValidateLogin(username, password))
+            // {
+            //     res.status = 401;
+            //     json error = {
+            //         {"message", "用户名或密码错误"}};
+            //     res.body = error.dump();
+            //     return;
+            // }
 
             // 创建用户对象
             auto user = models::User::CreateMockUser(username);
@@ -82,7 +82,7 @@ namespace controllers
             {"sessionId", session_id},
             {"captchaUrl", captcha_url}};
 
-        res.body = response.dump();
+        res.set_content(response.dump(), "application/json");
     }
 
     void AuthController::HandleGetUserInfo(const httplib::Request &req, httplib::Response &res)

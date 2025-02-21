@@ -5,15 +5,9 @@ int main()
 {
     try
     {
-        // 检查配置文件是否存在且格式正确
-        // 例如：
-        // if (!std::ifstream("config.json")) {
-        //     std::cerr << "配置文件不存在" << std::endl;
-        //     return 1;
-        // }
-        // server::HttpServer server("config.json");
         server::HttpServer server;
-        server.Start(8080);
+
+        server.Start(3000);
 
         std::cout << "Press ENTER to exit." << std::endl;
         std::string line;
