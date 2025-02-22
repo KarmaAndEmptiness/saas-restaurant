@@ -125,7 +125,7 @@ const PermissionManagement: React.FC = () => {
   const handlePermissionUpdate = async (checkedKeys: Key[] | { checked: Key[]; halfChecked: Key[] }) => {
     if (!selectedRole) return;
     try {
-      const permissions = Array.isArray(checkedKeys) 
+      const permissions = Array.isArray(checkedKeys)
         ? checkedKeys.map(String)
         : checkedKeys.checked.map(String);
       await roles.updatePermissions(selectedRole.id, permissions);

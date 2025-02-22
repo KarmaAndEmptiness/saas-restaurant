@@ -9,7 +9,8 @@ namespace server
 {
     HttpServer::HttpServer()
         : server_(std::make_shared<httplib::Server>()),
-          auth_router_(std::make_unique<router::AuthRouter>(server_))
+          auth_router_(std::make_unique<router::AuthRouter>(server_)),
+          admin_router_(std::make_unique<router::AdminRouter>(server_))
     {
         server_->set_pre_routing_handler([](const httplib::Request &req, httplib::Response &res)
                                          {
@@ -33,83 +34,8 @@ namespace server
         {
             // 认证相关路由
             auth_router_->InitializeRoutes();
-
-            // 收银模块路由
-            // // 商品相关
-            // server_->Get("/api/cashier/products/search",
-            //              [this](const httplib::Request &req, httplib::Response &res)
-            //              {
-            //                  cashier_controller_->HandleSearchProducts(req, res);
-            //              });
-
-            // server_->Get("/api/cashier/products/",
-            //              [this](const httplib::Request &req, httplib::Response &res)
-            //              {
-            //                  cashier_controller_->HandleGetProductByCode(req, res);
-            //              });
-
-            // // 交易相关
-            // server_->Post("/api/cashier/transactions",
-            //               [this](const httplib::Request &req, httplib::Response &res)
-            //               {
-            //                   cashier_controller_->HandleCreateTransaction(req, res);
-            //               });
-
-            // server_->Get("/api/cashier/transactions/history",
-            //              [this](const httplib::Request &req, httplib::Response &res)
-            //              {
-            //                  cashier_controller_->HandleGetTransactionHistory(req, res);
-            //              });
-
-            // server_->Get("/api/cashier/transactions/receipt",
-            //              [this](const httplib::Request &req, httplib::Response &res)
-            //              {
-            //                  cashier_controller_->HandleGenerateReceipt(req, res);
-            //              });
-
-            // // 会员相关
-            // server_->Get("/api/cashier/members/card",
-            //              [this](const httplib::Request &req, httplib::Response &res)
-            //              {
-            //                  cashier_controller_->HandleGetMemberByCard(req, res);
-            //              });
-
-            // server_->Get("/api/cashier/members/phone",
-            //              [this](const httplib::Request &req, httplib::Response &res)
-            //              {
-            //                  cashier_controller_->HandleGetMemberByPhone(req, res);
-            //              });
-
-            // server_->Post("/api/cashier/members",
-            //               [this](const httplib::Request &req, httplib::Response &res)
-            //               {
-            //                   cashier_controller_->HandleCreateMember(req, res);
-            //               });
-
-            // server_->Get("/api/cashier/members/search",
-            //              [this](const httplib::Request &req, httplib::Response &res)
-            //              {
-            //                  cashier_controller_->HandleSearchMembers(req, res);
-            //              });
-
-            // // 积分相关
-            // server_->Post("/api/cashier/points/calculate-discount",
-            //               [this](const httplib::Request &req, httplib::Response &res)
-            //               {
-            //                   cashier_controller_->HandleCalculatePointsDiscount(req, res);
-            //               });
-
-            // server_->Get("/api/cashier/members/transactions",
-            //              [this](const httplib::Request &req, httplib::Response &res)
-            //              {
-            //                  cashier_controller_->HandleGetMemberTransactions(req, res);
-            //              });
-
-            // server_->Post("/api/cashier/members/points",
-            //               [this](const httplib::Request &req, httplib::Response &res)
-            //               {
-            //                   cashier_controller_->HandleUpdateMemberPoints(req, res);
-            //               });
+            // 管理员相关路由
+            admin_router_->InitializeRoutes();
         }
         catch (const std::exception &e)
         {

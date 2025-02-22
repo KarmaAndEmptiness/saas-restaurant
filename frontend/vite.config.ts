@@ -2,10 +2,17 @@ import { defineConfig } from 'vite'
 import path from 'path'
 
 export default defineConfig({
-  // ... existing code ...
   server: {
     headers: {
       'Service-Worker-Allowed': '/'
+    },
+    allowedHosts: ['localhost', '127.0.0.1', '0.0.0.0', 'holaworld.ggff.net', 'haloworld.ggff.net'],
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080/api',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
     },
   },
   base: '/restaurant/',

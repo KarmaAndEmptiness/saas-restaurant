@@ -141,10 +141,11 @@ const Login: React.FC = () => {
 
   const refreshCaptcha = async () => {
     try {
-      const { captchaUrl, sessionId } = await authApi.getCaptcha();
-      setCaptchaUrl(captchaUrl);
-      setSessionId(sessionId);
-    } catch {
+      const { data } = await authApi.getCaptcha();
+      setCaptchaUrl(data.captchaUrl);
+      setSessionId(data.sessionId);
+    } catch (error) {
+      console.log(error);
       message.error('获取验证码失败，请刷新页面重试');
     }
   };
@@ -156,15 +157,15 @@ const Login: React.FC = () => {
   const onFinish = async (values: LoginForm) => {
     try {
       setLoading(true);
-      const { token, user } = await authApi.login({
+      const { data } = await authApi.login({
         ...values,
         sessionId,
       });
 
       // 存储认证信息
-      localStorage.setItem('token', token);
-      localStorage.setItem('userRole', user.role);
-      
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('userRole', data.user.role);
+
       message.success('登录成功');
 
       // 根据角色跳转到对应的子系统
@@ -175,7 +176,7 @@ const Login: React.FC = () => {
         marketing: '/marketing/analysis',
       };
 
-      navigate(roleDefaultPaths[user.role] || '/login');
+      navigate(roleDefaultPaths[data.user.role] || '/login');
     } catch (error) {
       console.log(error);
       refreshCaptcha();
@@ -191,7 +192,7 @@ const Login: React.FC = () => {
           <h1>智慧餐饮管理系统</h1>
           <p>Smart Restaurant Management System</p>
         </SystemTitle>
-        
+
         <StyledForm
           form={form}
           name="login"
@@ -206,9 +207,9 @@ const Login: React.FC = () => {
               { min: 3, message: '用户名至少3个字符' }
             ]}
           >
-            <Input 
-              prefix={<UserOutlined />} 
-              placeholder="请输入用户名" 
+            <Input
+              prefix={<UserOutlined />}
+              placeholder="请输入用户名"
               size="large"
             />
           </Form.Item>
@@ -256,9 +257,9 @@ const Login: React.FC = () => {
           </Form.Item>
 
           <Form.Item>
-            <Button 
-              type="primary" 
-              htmlType="submit" 
+            <Button
+              type="primary"
+              htmlType="submit"
               className="login-form-button"
               loading={loading}
               size="large"

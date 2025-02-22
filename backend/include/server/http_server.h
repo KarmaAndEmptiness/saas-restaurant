@@ -5,6 +5,7 @@
 #include "httplib.h"
 #include "middleware/middleware.h"
 #include "routers/auth_router.h"
+#include "routers/admin_router.h"
 namespace server
 {
     class HttpServer
@@ -24,6 +25,7 @@ namespace server
 
         std::shared_ptr<httplib::Server> server_;
         std::unique_ptr<router::AuthRouter> auth_router_;
+        std::unique_ptr<router::AdminRouter> admin_router_;
         std::vector<std::unique_ptr<middleware::Middleware>> middlewares_;
         void HandleRequest(const httplib::Request &req, httplib::Response &res);
 

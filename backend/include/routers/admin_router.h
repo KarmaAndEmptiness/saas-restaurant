@@ -7,11 +7,11 @@ namespace router
     class AdminRouter
     {
     public:
-        AdminRouter(std::unique_ptr<httplib::Server> server);
+        AdminRouter(std::shared_ptr<httplib::Server> server);
         void InitializeRoutes();
 
     private:
-        std::unique_ptr<httplib::Server> server_;
+        std::shared_ptr<httplib::Server> server_;
         std::unique_ptr<controllers::AdminController> admin_controller_;
     };
 }

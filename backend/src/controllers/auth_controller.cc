@@ -44,21 +44,21 @@ namespace controllers
                   {"name", user.GetName()},
                   {"role", user.GetRole()}}}};
 
-            res.body = response.dump();
+            res.set_content(response.dump(), "application/json");
         }
         catch (const json::parse_error &e)
         {
             std::cerr << "Error: " << __FILE__ << ":" << __LINE__ << " " << e.what() << std::endl;
             res.status = 400;
             json error = {{"message", "JSON解析错误"}};
-            res.body = error.dump();
+            res.set_content(error.dump(), "application/json");
         }
         catch (const std::exception &e)
         {
             std::cerr << "Error: " << __FILE__ << ":" << __LINE__ << " " << e.what() << std::endl;
             res.status = 400;
             json error = {{"message", "请求格式错误"}};
-            res.body = error.dump();
+            res.set_content(error.dump(), "application/json");
         }
     }
 
@@ -93,7 +93,7 @@ namespace controllers
         {
             res.status = 401;
             json error = {{"message", "未授权访问"}};
-            res.body = error.dump();
+            res.set_content(error.dump(), "application/json");
             return;
         }
 
@@ -102,7 +102,7 @@ namespace controllers
         {
             res.status = 401;
             json error = {{"message", "token无效"}};
-            res.body = error.dump();
+            res.set_content(error.dump(), "application/json");
             return;
         }
 
@@ -114,7 +114,7 @@ namespace controllers
             {"role", user->GetRole()},
             {"permissions", {"admin", "user"}}};
 
-        res.body = response.dump();
+        res.set_content(response.dump(), "application/json");
     }
 
     void AuthController::HandleRefreshToken(const httplib::Request &req, httplib::Response &res)
@@ -129,26 +129,26 @@ namespace controllers
             {
                 res.status = 401;
                 json error = {{"message", "token刷新失败"}};
-                res.body = error.dump();
+                res.set_content(error.dump(), "application/json");
                 return;
             }
 
             json response = {{"token", new_token}};
-            res.body = response.dump();
+            res.set_content(response.dump(), "application/json");
         }
         catch (const json::parse_error &e)
         {
             std::cerr << "Error: " << __FILE__ << ":" << __LINE__ << " " << e.what() << std::endl;
             res.status = 400;
             json error = {{"message", "JSON解析错误"}};
-            res.body = error.dump();
+            res.set_content(error.dump(), "application/json");
         }
         catch (const std::exception &e)
         {
             std::cerr << "Error: " << __FILE__ << ":" << __LINE__ << " " << e.what() << std::endl;
             res.status = 400;
             json error = {{"message", "请求格式错误"}};
-            res.body = error.dump();
+            res.set_content(error.dump(), "application/json");
         }
     }
 

@@ -26,14 +26,14 @@ export interface CaptchaResult {
 /**
  * 获取验证码
  */
-export async function getCaptcha(): Promise<CaptchaResult> {
+export async function getCaptcha(): Promise<{ data: CaptchaResult }> {
   return request.get('/auth/captcha');
 }
 
 /**
  * 用户登录
  */
-export async function login(params: LoginParams): Promise<LoginResult> {
+export async function login(params: LoginParams): Promise<{ data: LoginResult }> {
   return request.post('/auth/login', params);
 }
 

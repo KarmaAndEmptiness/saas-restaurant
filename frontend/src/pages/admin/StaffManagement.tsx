@@ -137,28 +137,28 @@ const StaffManagement: React.FC = () => {
 
       // 根据搜索条件筛选
       if (values.name) {
-        filteredStaff = filteredStaff.filter((staff: StaffMember) => 
+        filteredStaff = filteredStaff.filter((staff: StaffMember) =>
           staff.name.toLowerCase().includes(values.name.toLowerCase())
         );
       }
       if (values.role) {
         if (values.role === 'all') {
-          filteredStaff = filteredStaff.filter((staff: StaffMember) => 
+          filteredStaff = filteredStaff.filter((staff: StaffMember) =>
             staff.role === 'admin' || staff.role === 'cashier' || staff.role === 'finance' || staff.role === 'marketing'
           );
         } else {
-          filteredStaff = filteredStaff.filter((staff: StaffMember) => 
+          filteredStaff = filteredStaff.filter((staff: StaffMember) =>
             staff.role === values.role
           );
         }
       }
       if (values.status) {
         if (values.status === 'all') {
-          filteredStaff = filteredStaff.filter((staff: StaffMember) => 
+          filteredStaff = filteredStaff.filter((staff: StaffMember) =>
             staff.status === 'active' || staff.status === 'inactive'
           );
         } else {
-          filteredStaff = filteredStaff.filter((staff: StaffMember) => 
+          filteredStaff = filteredStaff.filter((staff: StaffMember) =>
             staff.status === values.status
           );
         }

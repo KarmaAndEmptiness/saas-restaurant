@@ -2,7 +2,7 @@ import axios from 'axios';
 import { message } from 'antd';
 
 const request = axios.create({
-  baseURL: '/api',
+  baseURL: 'http://holaworld.ggff.net/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -26,7 +26,7 @@ request.interceptors.request.use(
 // 响应拦截器
 request.interceptors.response.use(
   (response) => {
-    return response.data;
+    return response;
   },
   (error) => {
     if (error.response) {
