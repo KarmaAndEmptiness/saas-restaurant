@@ -26,7 +26,7 @@ namespace services
             mock_report_configs_.push_back(models::ReportConfig::CreateMockConfig(i));
         }
     }
-
+    // 获取财务统计数据
     models::FinancialStats FinanceService::GetFinancialStats(
         const std::string &start_date,
         const std::string &end_date,
@@ -56,7 +56,7 @@ namespace services
             order_count,
             average_order_value);
     }
-
+    // 获取销售趋势数据
     std::vector<std::pair<std::string, double>> FinanceService::GetSalesTrend(
         const std::string &start_date,
         const std::string &end_date,
@@ -87,7 +87,7 @@ namespace services
 
         return trend;
     }
-
+    // 获取支付方式统计数据
     std::vector<std::pair<std::string, double>> FinanceService::GetPaymentStats(
         const std::string &start_date,
         const std::string &end_date,
@@ -106,7 +106,7 @@ namespace services
 
         return stats;
     }
-
+    // 获取门店结算列表
     std::vector<models::StoreSettlement> FinanceService::GetSettlementList(
         const std::string &start_date,
         const std::string &end_date,
@@ -140,7 +140,7 @@ namespace services
 
         return filtered_settlements;
     }
-
+    // 创建门店结算
     std::string FinanceService::CreateSettlement(const models::StoreSettlement &settlement)
     {
         if (!ValidateSettlement(settlement))
@@ -151,7 +151,7 @@ namespace services
         mock_settlements_.push_back(settlement);
         return settlement.GetId();
     }
-
+    // 更新门店结算状态
     bool FinanceService::UpdateSettlementStatus(const std::string &id, models::StoreSettlement::Status status)
     {
         auto it = std::find_if(mock_settlements_.begin(), mock_settlements_.end(),
@@ -181,7 +181,7 @@ namespace services
 
         return true;
     }
-
+    // 获取门店结算详情
     models::StoreSettlement FinanceService::GetSettlementById(const std::string &id)
     {
         auto it = std::find_if(mock_settlements_.begin(), mock_settlements_.end(),
@@ -197,7 +197,7 @@ namespace services
 
         return models::StoreSettlement();
     }
-
+    // 获取报表配置列表
     std::vector<models::ReportConfig> FinanceService::GetReportConfigs()
     {
         return mock_report_configs_;
@@ -213,7 +213,7 @@ namespace services
         mock_report_configs_.push_back(config);
         return config.GetId();
     }
-
+    // 更新报表配置
     bool FinanceService::UpdateReportConfig(const std::string &id, const models::ReportConfig &config)
     {
         auto it = std::find_if(mock_report_configs_.begin(), mock_report_configs_.end(),
@@ -230,7 +230,7 @@ namespace services
         *it = config;
         return true;
     }
-
+    // 删除报表配置
     bool FinanceService::DeleteReportConfig(const std::string &id)
     {
         auto it = std::find_if(mock_report_configs_.begin(), mock_report_configs_.end(),
@@ -247,7 +247,7 @@ namespace services
         mock_report_configs_.erase(it);
         return true;
     }
-
+    // 生成报表
     std::string FinanceService::GenerateReport(
         const std::string &config_id,
         const std::string &start_date,
@@ -257,7 +257,20 @@ namespace services
         // 现在返回一个模拟的报表ID
         return "REPORT" + config_id + "_" + start_date + "_" + end_date;
     }
-
+    // 获取报表历史
+    std::vector<models::ReportConfig> FinanceService::GetReportHistory(const std::string &config_id)
+    {
+        std::vector<models::ReportConfig> history;
+        for (const auto &config : mock_report_configs_)
+        {
+            if (config.GetId() == config_id)
+            {
+                history.push_back(config);
+            }
+        }
+        return history;
+    }
+    // 验证结算数据
     bool FinanceService::ValidateSettlement(const models::StoreSettlement &settlement)
     {
         // 验证结算数据

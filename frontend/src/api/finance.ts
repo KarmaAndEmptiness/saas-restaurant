@@ -66,7 +66,7 @@ export interface DailyRecordsParams {
   endDate: string;
   storeId?: string;
 }
-
+// 销售趋势
 export interface SalesTrend {
   date: string;
   amount: number;
@@ -103,14 +103,14 @@ export const getRevenueStats = (params: DateRangeParams) => {
     params,
   });
 };
-
+// 支出统计
 export const getExpenseStats = (params: DateRangeParams) => {
   return request('/finance/expense-stats', {
     method: 'GET',
     params,
   });
 };
-
+// 利润统计
 export const getProfitStats = (params: DateRangeParams) => {
   return request('/finance/profit-stats', {
     method: 'GET',
@@ -125,20 +125,20 @@ export const createSettlement = (data: SettlementRecord) => {
     data,
   });
 };
-
+// 获取门店结算列表
 export const getSettlements = (params: DateRangeParams) => {
   return request('/finance/settlements', {
     method: 'GET',
     params,
   });
 };
-
+// 获取门店结算详情
 export const getSettlementDetails = (id: string) => {
   return request(`/finance/settlements/${id}`, {
     method: 'GET',
   });
 };
-
+// 更新门店结算状态
 export const updateSettlementStatus = (id: string, status: SettlementRecord['status']) => {
   return request(`/finance/settlements/status/${id}`, {
     method: 'PUT',
@@ -153,33 +153,33 @@ export const createReportConfig = (data: ReportConfig) => {
     data,
   });
 };
-
+// 获取报表配置列表
 export const getReportConfigs = () => {
   return request('/finance/report-configs', {
     method: 'GET',
   });
 };
-
+// 更新报表配置
 export const updateReportConfig = (id: string, data: Partial<ReportConfig>) => {
   return request(`/finance/report-configs/${id}`, {
     method: 'PUT',
     data,
   });
 };
-
+// 删除报表配置
 export const deleteReportConfig = (id: string) => {
   return request(`/finance/report-configs/${id}`, {
     method: 'DELETE',
   });
 };
-
+// 生成报表
 export const generateReport = (configId: string, params: DateRangeParams) => {
   return request(`/finance/reports/generate/${configId}`, {
     method: 'POST',
     data: params,
   });
 };
-
+// 获取报表历史
 export const getReportHistory = (configId: string) => {
   return request(`/finance/reports/history/${configId}`, {
     method: 'GET',

@@ -13,22 +13,34 @@ namespace controllers
         FinanceController();
 
         // 财务统计接口
-        void HandleGetFinancialStats(const httplib::Request &req, httplib::Response &res);
-        void HandleGetSalesTrend(const httplib::Request &req, httplib::Response &res);
-        void HandleGetPaymentStats(const httplib::Request &req, httplib::Response &res);
+        void GetFinancialStats(const httplib::Request &req, httplib::Response &res);
+        // 收入统计接口
+        void GetRevenueStats(const httplib::Request &req, httplib::Response &res);
+        // 支出统计接口
+        void GetExpenseStats(const httplib::Request &req, httplib::Response &res);
+        // 利润统计接口
+        void GetProfitStats(const httplib::Request &req, httplib::Response &res);
+        // 支付方式统计接口
+        void GetPaymentStats(const httplib::Request &req, httplib::Response &res);
+        // 每日记录接口
+        void GetDailyRecords(const httplib::Request &req, httplib::Response &res);
+        // 导出财务报表接口
+        void ExportFinancialReport(const httplib::Request &req, httplib::Response &res);
 
         // 门店结算接口
-        void HandleGetSettlementList(const httplib::Request &req, httplib::Response &res);
-        void HandleCreateSettlement(const httplib::Request &req, httplib::Response &res);
-        void HandleUpdateSettlementStatus(const httplib::Request &req, httplib::Response &res);
-        void HandleGetSettlementById(const httplib::Request &req, httplib::Response &res);
+        void GetSettlements(const httplib::Request &req, httplib::Response &res);
+        void CreateSettlement(const httplib::Request &req, httplib::Response &res);
+        void UpdateSettlementStatus(const httplib::Request &req, httplib::Response &res);
+        void GetSettlementById(const httplib::Request &req, httplib::Response &res);
 
         // 报表接口
-        void HandleGetReportConfigs(const httplib::Request &req, httplib::Response &res);
-        void HandleCreateReportConfig(const httplib::Request &req, httplib::Response &res);
-        void HandleUpdateReportConfig(const httplib::Request &req, httplib::Response &res);
-        void HandleDeleteReportConfig(const httplib::Request &req, httplib::Response &res);
-        void HandleGenerateReport(const httplib::Request &req, httplib::Response &res);
+        void GetReportConfigs(const httplib::Request &req, httplib::Response &res);
+        void CreateReportConfig(const httplib::Request &req, httplib::Response &res);
+        void UpdateReportConfig(const httplib::Request &req, httplib::Response &res);
+        void DeleteReportConfig(const httplib::Request &req, httplib::Response &res);
+        void GenerateReport(const httplib::Request &req, httplib::Response &res);
+        void GetReportHistory(const httplib::Request &req, httplib::Response &res);
+        void GetSalesTrend(const httplib::Request &req, httplib::Response &res);
 
     private:
         std::unique_ptr<services::FinanceService> finance_service_;

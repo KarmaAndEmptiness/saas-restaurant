@@ -11,7 +11,8 @@ namespace controllers
     FinanceController::FinanceController()
         : finance_service_(std::make_unique<services::FinanceService>()) {}
 
-    void FinanceController::HandleGetFinancialStats(const httplib::Request &req, httplib::Response &res)
+    // 财务统计接口
+    void FinanceController::GetFinancialStats(const httplib::Request &req, httplib::Response &res)
     {
         try
         {
@@ -25,20 +26,15 @@ namespace controllers
             }
 
             auto stats = finance_service_->GetFinancialStats(start_date, end_date, store_id);
-            res.body = FinancialStatsToJson(stats).dump();
+            res.set_content(FinancialStatsToJson(stats).dump(), "application/json");
         }
         catch (const middleware::ApiException &)
         {
             throw;
         }
-        catch (const std::exception &e)
-        {
-            std::cerr << "Error: " << __FILE__ << ":" << __LINE__ << " " << e.what() << std::endl;
-            throw middleware::ApiException(500, "获取财务统计失败: " + std::string(e.what()));
-        }
     }
-
-    void FinanceController::HandleGetSalesTrend(const httplib::Request &req, httplib::Response &res)
+    // 收入统计接口
+    void FinanceController::GetRevenueStats(const httplib::Request &req, httplib::Response &res)
     {
         try
         {
@@ -51,21 +47,8 @@ namespace controllers
                 throw middleware::ValidationException("无效的日期范围");
             }
 
-            auto trend = finance_service_->GetSalesTrend(start_date, end_date, store_id);
-            json response = json::array();
-            for (const auto &[date, amount] : trend)
-            {
-                response.push_back({{"date", date},
-                                    {"amount", amount}});
-            }
-            res.body = response.dump();
-        }
-        catch (const json::parse_error &e)
-        {
-            std::cerr << "Error: " << __FILE__ << ":" << __LINE__ << " " << e.what() << std::endl;
-            res.status = 400;
-            json error = {{"message", "JSON解析错误"}};
-            res.body = error.dump();
+            auto stats = finance_service_->GetFinancialStats(start_date, end_date, store_id);
+            res.set_content(FinancialStatsToJson(stats).dump(), "application/json");
         }
         catch (const middleware::ApiException &)
         {
@@ -74,11 +57,58 @@ namespace controllers
         catch (const std::exception &e)
         {
             std::cerr << "Error: " << __FILE__ << ":" << __LINE__ << " " << e.what() << std::endl;
-            throw middleware::ApiException(500, "获取销售趋势失败: " + std::string(e.what()));
+            throw middleware::ApiException(500, "获取财务统计失败: " + std::string(e.what()));
         }
     }
 
-    void FinanceController::HandleGetPaymentStats(const httplib::Request &req, httplib::Response &res)
+    // 支出统计接口
+    void FinanceController::GetExpenseStats(const httplib::Request &req, httplib::Response &res)
+    {
+        try
+        {
+            std::string start_date = req.get_header_value("startDate");
+            std::string end_date = req.get_header_value("endDate");
+            std::string store_id = req.get_header_value("storeId");
+
+            if (!ValidateDateRange(start_date, end_date))
+            {
+                throw middleware::ValidationException("无效的日期范围");
+            }
+
+            auto stats = finance_service_->GetFinancialStats(start_date, end_date, store_id);
+            res.set_content(FinancialStatsToJson(stats).dump(), "application/json");
+        }
+        catch (const middleware::ApiException &)
+        {
+            throw;
+        }
+    }
+
+    // 利润统计接口
+    void FinanceController::GetProfitStats(const httplib::Request &req, httplib::Response &res)
+    {
+        try
+        {
+            std::string start_date = req.get_header_value("startDate");
+            std::string end_date = req.get_header_value("endDate");
+            std::string store_id = req.get_header_value("storeId");
+
+            if (!ValidateDateRange(start_date, end_date))
+            {
+                throw middleware::ValidationException("无效的日期范围");
+            }
+
+            auto stats = finance_service_->GetFinancialStats(start_date, end_date, store_id);
+            res.set_content(FinancialStatsToJson(stats).dump(), "application/json");
+        }
+        catch (const middleware::ApiException &)
+        {
+            throw;
+        }
+    }
+
+    // 支付方式统计接口
+    void FinanceController::GetPaymentStats(const httplib::Request &req, httplib::Response &res)
     {
         try
         {
@@ -98,14 +128,129 @@ namespace controllers
                 response.push_back({{"method", method},
                                     {"percentage", percentage}});
             }
-            res.body = response.dump();
+            res.set_content(response.dump(), "application/json");
+        }
+        catch (const middleware::ApiException &)
+        {
+            throw;
+        }
+    }
+
+    // 每日记录接口
+    void FinanceController::GetDailyRecords(const httplib::Request &req, httplib::Response &res)
+    {
+        try
+        {
+            std::string start_date = req.get_header_value("startDate");
+            std::string end_date = req.get_header_value("endDate");
+            std::string store_id = req.get_header_value("storeId");
+
+            if (!ValidateDateRange(start_date, end_date))
+            {
+                throw middleware::ValidationException("无效的日期范围");
+            }
+
+            auto records = finance_service_->GetDailyRecords(start_date, end_date, store_id);
+            res.set_content(json(records).dump(), "application/json");
+        }
+        catch (const middleware::ApiException &)
+        {
+            throw;
+        }
+    }
+
+    // 导出财务报表接口
+    void FinanceController::ExportFinancialReport(const httplib::Request &req, httplib::Response &res)
+    {
+        try
+        {
+            std::string start_date = req.get_header_value("startDate");
+            std::string end_date = req.get_header_value("endDate");
+            std::string store_id = req.get_header_value("storeId");
+
+            if (!ValidateDateRange(start_date, end_date))
+            {
+                throw middleware::ValidationException("无效的日期范围");
+            }
+
+            auto report = finance_service_->ExportFinancialReport(start_date, end_date, store_id);
+            res.set_content(report, "application/octet-stream");
+        }
+        catch (const middleware::ApiException &)
+        {
+            throw;
+        }
+    }
+
+    // 销售趋势接口
+    void FinanceController::GetSalesTrend(const httplib::Request &req, httplib::Response &res)
+    {
+        try
+        {
+            std::string start_date = req.get_header_value("startDate");
+            std::string end_date = req.get_header_value("endDate");
+            std::string store_id = req.get_header_value("storeId");
+
+            if (!ValidateDateRange(start_date, end_date))
+            {
+                throw middleware::ValidationException("无效的日期范围");
+            }
+
+            auto trend = finance_service_->GetSalesTrend(start_date, end_date, store_id);
+            json response = json::array();
+            for (const auto &[date, amount] : trend)
+            {
+                response.push_back({{"date", date},
+                                    {"amount", amount}});
+            }
+            res.set_content(response.dump(), "application/json");
         }
         catch (const json::parse_error &e)
         {
             std::cerr << "Error: " << __FILE__ << ":" << __LINE__ << " " << e.what() << std::endl;
             res.status = 400;
             json error = {{"message", "JSON解析错误"}};
-            res.body = error.dump();
+            res.set_content(error.dump(), "application/json");
+        }
+        catch (const middleware::ApiException &)
+        {
+            throw;
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error: " << __FILE__ << ":" << __LINE__ << " " << e.what() << std::endl;
+            throw middleware::ApiException(500, "获取销售趋势失败: " + std::string(e.what()));
+        }
+    }
+
+    void FinanceController::GetPaymentStats(const httplib::Request &req, httplib::Response &res)
+    {
+        try
+        {
+            std::string start_date = req.get_header_value("startDate");
+            std::string end_date = req.get_header_value("endDate");
+            std::string store_id = req.get_header_value("storeId");
+
+            if (!ValidateDateRange(start_date, end_date))
+            {
+                throw middleware::ValidationException("无效的日期范围");
+            }
+
+            auto stats = finance_service_->GetPaymentStats(start_date, end_date, store_id);
+            json response = json::array();
+            for (const auto &[method, percentage] : stats)
+            {
+                response.push_back({{"method", method},
+                                    {"percentage", percentage}});
+            }
+            res.set_content(response.dump(), "application/json");
+        }
+        catch (const json::parse_error &e)
+        {
+            std::cerr << "Error: " << __FILE__ << ":" << __LINE__ << " " << e.what() << std::endl;
+            res.status = 400;
+            json error = {{"message", "JSON解析错误"}};
+            res.set_content(error.dump(), "application/json");
         }
         catch (const middleware::ApiException &)
         {
@@ -118,7 +263,7 @@ namespace controllers
         }
     }
 
-    void FinanceController::HandleGetSettlementList(const httplib::Request &req, httplib::Response &res)
+    void FinanceController::GetSettlements(const httplib::Request &req, httplib::Response &res)
     {
         try
         {
@@ -137,14 +282,14 @@ namespace controllers
             {
                 response.push_back(SettlementToJson(settlement));
             }
-            res.body = response.dump();
+            res.set_content(response.dump(), "application/json");
         }
         catch (const json::parse_error &e)
         {
             std::cerr << "Error: " << __FILE__ << ":" << __LINE__ << " " << e.what() << std::endl;
             res.status = 400;
             json error = {{"message", "JSON解析错误"}};
-            res.body = error.dump();
+            res.set_content(error.dump(), "application/json");
         }
         catch (const middleware::ApiException &)
         {
@@ -157,7 +302,7 @@ namespace controllers
         }
     }
 
-    void FinanceController::HandleCreateSettlement(const httplib::Request &req, httplib::Response &res)
+    void FinanceController::CreateSettlement(const httplib::Request &req, httplib::Response &res)
     {
         try
         {
@@ -187,7 +332,7 @@ namespace controllers
             json response = {{"id", id},
                              {"message", "结算记录创建成功"}};
             res.status = 201;
-            res.body = response.dump();
+            res.set_content(response.dump(), "application/json");
         }
         catch (const middleware::ApiException &)
         {
@@ -198,7 +343,7 @@ namespace controllers
             std::cerr << "Error: " << __FILE__ << ":" << __LINE__ << " " << e.what() << std::endl;
             res.status = 400;
             json error = {{"message", "JSON解析错误"}};
-            res.body = error.dump();
+            res.set_content(error.dump(), "application/json");
         }
         catch (const json::exception &e)
         {
@@ -212,7 +357,7 @@ namespace controllers
         }
     }
 
-    void FinanceController::HandleUpdateSettlementStatus(const httplib::Request &req, httplib::Response &res)
+    void FinanceController::UpdateSettlementStatus(const httplib::Request &req, httplib::Response &res)
     {
         try
         {
@@ -246,7 +391,7 @@ namespace controllers
             }
 
             json response = {{"message", "结算状态更新成功"}};
-            res.body = response.dump();
+            res.set_content(response.dump(), "application/json");
         }
         catch (const middleware::ApiException &)
         {
@@ -264,7 +409,7 @@ namespace controllers
         }
     }
 
-    void FinanceController::HandleGetSettlementById(const httplib::Request &req, httplib::Response &res)
+    void FinanceController::GetSettlementById(const httplib::Request &req, httplib::Response &res)
     {
         try
         {
@@ -276,7 +421,7 @@ namespace controllers
                 throw middleware::ApiException(404, "结算记录不存在");
             }
 
-            res.body = SettlementToJson(settlement).dump();
+            res.set_content(SettlementToJson(settlement).dump(), "application/json");
         }
         catch (const middleware::ApiException &)
         {
@@ -289,7 +434,7 @@ namespace controllers
         }
     }
 
-    void FinanceController::HandleGetReportConfigs(const httplib::Request &req, httplib::Response &res)
+    void FinanceController::GetReportConfigs(const httplib::Request &req, httplib::Response &res)
     {
         std::cout << req.path << std::endl;
         try
@@ -300,7 +445,7 @@ namespace controllers
             {
                 response.push_back(ReportConfigToJson(config));
             }
-            res.body = response.dump();
+            res.set_content(response.dump(), "application/json");
         }
         catch (const std::exception &e)
         {
@@ -309,7 +454,7 @@ namespace controllers
         }
     }
 
-    void FinanceController::HandleCreateReportConfig(const httplib::Request &req, httplib::Response &res)
+    void FinanceController::CreateReportConfig(const httplib::Request &req, httplib::Response &res)
     {
         try
         {
@@ -340,7 +485,7 @@ namespace controllers
             json response = {{"id", id},
                              {"message", "报表配置创建成功"}};
             res.status = 201;
-            res.body = response.dump();
+            res.set_content(response.dump(), "application/json");
         }
         catch (const middleware::ApiException &)
         {
@@ -358,7 +503,7 @@ namespace controllers
         }
     }
 
-    void FinanceController::HandleUpdateReportConfig(const httplib::Request &req, httplib::Response &res)
+    void FinanceController::UpdateReportConfig(const httplib::Request &req, httplib::Response &res)
     {
         try
         {
@@ -388,7 +533,7 @@ namespace controllers
             }
 
             json response = {{"message", "报表配置更新成功"}};
-            res.body = response.dump();
+            res.set_content(response.dump(), "application/json");
         }
         catch (const middleware::ApiException &)
         {
@@ -406,7 +551,7 @@ namespace controllers
         }
     }
 
-    void FinanceController::HandleDeleteReportConfig(const httplib::Request &req, httplib::Response &res)
+    void FinanceController::DeleteReportConfig(const httplib::Request &req, httplib::Response &res)
     {
         try
         {
@@ -418,7 +563,7 @@ namespace controllers
             }
 
             json response = {{"message", "报表配置删除成功"}};
-            res.body = response.dump();
+            res.set_content(response.dump(), "application/json");
         }
         catch (const middleware::ApiException &)
         {
@@ -431,7 +576,7 @@ namespace controllers
         }
     }
 
-    void FinanceController::HandleGenerateReport(const httplib::Request &req, httplib::Response &res)
+    void FinanceController::GenerateReport(const httplib::Request &req, httplib::Response &res)
     {
         try
         {
@@ -462,7 +607,7 @@ namespace controllers
             json response = {
                 {"reportId", report_id},
                 {"message", "报表生成成功"}};
-            res.body = response.dump();
+            res.set_content(response.dump(), "application/json");
         }
         catch (const middleware::ApiException &)
         {
@@ -477,6 +622,25 @@ namespace controllers
         {
             std::cerr << "Error: " << __FILE__ << ":" << __LINE__ << " " << e.what() << std::endl;
             throw middleware::ApiException(500, "生成报表失败: " + std::string(e.what()));
+        }
+    }
+    void FinanceController::GetReportHistory(const httplib::Request &req, httplib::Response &res)
+    {
+        try
+        {
+            std::string config_id = ExtractIdFromPath(req.path);
+            auto history = finance_service_->GetReportHistory(config_id);
+            json response = json::array();
+            for (const auto &report : history)
+            {
+                response.push_back(ReportConfigToJson(report));
+            }
+            res.set_content(response.dump(), "application/json");
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error: " << __FILE__ << ":" << __LINE__ << " " << e.what() << std::endl;
+            throw middleware::ApiException(500, "获取报表历史失败: " + std::string(e.what()));
         }
     }
 

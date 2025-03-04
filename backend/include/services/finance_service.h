@@ -48,6 +48,49 @@ namespace services
         std::string GenerateReport(const std::string &config_id,
                                    const std::string &start_date,
                                    const std::string &end_date);
+        std::vector<models::ReportConfig> GetReportHistory(const std::string &config_id);
+
+        // 收入统计相关
+        std::vector<std::pair<std::string, double>> GetRevenueStats(
+            const std::string &start_date,
+            const std::string &end_date,
+            const std::string &store_id = "");
+
+        // 支出统计相关
+        std::vector<std::pair<std::string, double>> GetExpenseStats(
+            const std::string &start_date,
+            const std::string &end_date,
+            const std::string &store_id = "");
+
+        // 利润统计相关
+        std::vector<std::pair<std::string, double>> GetProfitStats(
+            const std::string &start_date,
+            const std::string &end_date,
+            const std::string &store_id = "");
+
+        // 支付方式统计相关
+        std::vector<std::pair<std::string, double>> GetPaymentStats(
+            const std::string &start_date,
+            const std::string &end_date,
+            const std::string &store_id = "");
+
+        // 每日记录相关
+        std::vector<models::DailyRecord> GetDailyRecords(
+            const std::string &start_date,
+            const std::string &end_date,
+            const std::string &store_id = "");
+
+        // 导出财务报表相关
+        std::string ExportFinancialReport(
+            const std::string &start_date,
+            const std::string &end_date,
+            const std::string &store_id = "");
+
+        // 销售趋势相关
+        std::vector<std::pair<std::string, double>> GetSalesTrend(
+            const std::string &start_date,
+            const std::string &end_date,
+            const std::string &store_id = "");
 
     private:
         // 模拟数据存储
