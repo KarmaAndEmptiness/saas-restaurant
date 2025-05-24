@@ -6,7 +6,7 @@ export default defineConfig({
     headers: {
       'Service-Worker-Allowed': '/'
     },
-    allowedHosts: ['localhost', '127.0.0.1', '0.0.0.0', 'holaworld.ggff.net', 'haloworld.ggff.net'],
+    allowedHosts: ['localhost', '127.0.0.1', '0.0.0.0', 'homeless.run.place'],
     proxy: {
       '/api': {
         target: 'http://localhost:8080/api',
@@ -15,9 +15,9 @@ export default defineConfig({
       },
     },
   },
-  base: '/restaurant/',
+  base: '/',
   preview: {
-    allowedHosts: ['localhost', '127.0.0.1', '0.0.0.0', 'holaworld.ggff.net', 'haloworld.ggff.net'],
+    allowedHosts: ['localhost', '127.0.0.1', '0.0.0.0', 'homeless.run.place'],
   },
   resolve: {
     alias: {
