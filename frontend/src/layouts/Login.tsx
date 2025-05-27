@@ -1,34 +1,33 @@
-import { useState } from 'react'
-import logo from '../../public/favicon.png'
-import { login } from '@/apis/login'
-import { useNavigate } from 'react-router-dom'
+import { useState } from "react";
+import logo from "../../public/favicon.png";
+import { login } from "@/apis/login";
+import { useNavigate } from "react-router-dom";
 function Login() {
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: any) => {
-    e.preventDefault()
-    setError('')
-    setIsLoading(true)
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
 
     try {
-      const data = await login({ username, password })
-
+      const data = await login({ username, password });
       if (data.token) {
-        localStorage.setItem('token', data.token)
-        navigate('/home')
+        localStorage.setItem("token", data.token);
+        navigate("/home");
       } else {
-        setError('无效的响应')
+        setError("无效的响应");
       }
     } catch (err: any) {
-      setError(err.message || '登录失败')
+      setError(err.message || "登录失败");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
   return (
     <div>
       <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
@@ -42,7 +41,10 @@ function Login() {
         <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="username" className="block text-sm/6 font-medium text-gray-900">
+              <label
+                htmlFor="username"
+                className="block text-sm/6 font-medium text-gray-900"
+              >
                 用户名：
               </label>
               <div className="mt-2">
@@ -61,11 +63,17 @@ function Login() {
 
             <div>
               <div className="flex items-center justify-between">
-                <label htmlFor="password" className="block text-sm/6 font-medium text-gray-900">
+                <label
+                  htmlFor="password"
+                  className="block text-sm/6 font-medium text-gray-900"
+                >
                   密码：
                 </label>
                 <div className="text-sm">
-                  <a href="#" className="font-semibold text-indigo-600 hover:text-indigo-500">
+                  <a
+                    href="#"
+                    className="font-semibold text-indigo-600 hover:text-indigo-500"
+                  >
                     忘记密码?
                   </a>
                 </div>
@@ -86,25 +94,26 @@ function Login() {
 
             {/* Display error message if any */}
             {error && (
-              <div className="text-sm text-red-600 text-center">
-                {error}
-              </div>
+              <div className="text-sm text-red-600 text-center">{error}</div>
             )}
 
             <div>
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`flex w-full justify-center rounded-md px-3 py-1.5 text-sm/6 font-semibold text-white shadow-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 ${isLoading ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-500'
-                  }`}
+                className={`flex w-full justify-center rounded-md px-3 py-1.5 text-sm/6 font-semibold text-white shadow-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 ${
+                  isLoading
+                    ? "bg-indigo-400 cursor-not-allowed"
+                    : "bg-indigo-600 hover:bg-indigo-500"
+                }`}
               >
-                {isLoading ? '登录中...' : '登录'}
+                {isLoading ? "登录中..." : "登录"}
               </button>
             </div>
           </form>
         </div>
       </div>
     </div>
-  )
+  );
 }
-export default Login
+export default Login;
