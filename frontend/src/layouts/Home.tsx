@@ -1,6 +1,7 @@
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import logo from '../../public/favicon.png'
+import { Outlet } from 'react-router-dom'
 
 const user = {
   name: 'Tom Cook',
@@ -186,7 +187,7 @@ function Home() {
           </div>
         </header>
         <main>
-          <Outlet/>
+          <Outlet />
         </main>
       </div>
     </>
