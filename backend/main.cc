@@ -14,7 +14,7 @@ int main()
 			{
 				auto resp = drogon::HttpResponse::newHttpResponse();
 				{
-					resp->addHeader("Access-Control-Allow-Origin", "http://homeless.run.place:5173");
+					resp->addHeader("Access-Control-Allow-Origin", "*");
 				}
 				{
 					const auto& val = req->getHeader("Access-Control-Request-Method");
