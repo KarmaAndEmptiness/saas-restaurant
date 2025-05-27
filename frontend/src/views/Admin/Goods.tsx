@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 interface MenuItem {
   id: string;
@@ -46,6 +46,7 @@ const initialMenuItems: MenuItem[] = [
 const categories = ["全部", "热菜", "凉菜", "海鲜", "素菜", "主食", "饮品"];
 
 function Goods() {
+  //@ts-ignore
   const [items, setItems] = useState<MenuItem[]>(initialMenuItems);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("全部");

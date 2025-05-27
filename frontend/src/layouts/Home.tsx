@@ -133,6 +133,7 @@ function Home() {
                     as={NavLink}
                     to={item.path}
                     onClick={() => handleNavClick(item)}
+                    //@ts-ignore
                     className={({ isActive }) =>
                       classNames(
                         isActive

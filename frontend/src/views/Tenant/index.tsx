@@ -39,6 +39,7 @@ function Tenant() {
   const [statusFilter, setStatusFilter] = useState<
     "全部" | "活跃" | "离线" | "停用"
   >("全部");
+  //@ts-ignore
   const [showModal, setShowModal] = useState(false);
 
   const filteredTenants = tenants.filter((tenant) => {
