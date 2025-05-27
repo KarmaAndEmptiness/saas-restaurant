@@ -10,7 +10,7 @@ import axios, {
 // 定义业务响应数据格式（根据后端接口调整）
 export interface ResponseData<T = any> {
   code: number
-  message: string
+  msg: string
   data: T
 }
 
