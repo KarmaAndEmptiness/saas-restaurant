@@ -16,27 +16,6 @@ const navigation = [
   // { name: 'Reports', href: '#', current: false },
 ]
 
-// 添加表格数据
-const people = [
-  {
-    name: '张三',
-    title: '餐厅老板',
-    email: 'zhangsan@example.com',
-    role: '管理员',
-    status: '活跃',
-    lastSeen: '3分钟前',
-  },
-  {
-    name: '李四',
-    title: '分店经理',
-    email: 'lisi@example.com',
-    role: '用户',
-    status: '离线',
-    lastSeen: '2小时前',
-  },
-  // ...更多数据
-]
-
 const userNavigation = [
   { name: 'Your Profile', href: '#' },
   { name: 'Settings', href: '#' },
