@@ -1,187 +1,173 @@
-import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
-import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/react/24/outline'
-import logo from '../../public/favicon.png'
-import { NavLink, Outlet } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, useCallback } from "react";
+import { Disclosure, Menu } from "@headlessui/react";
+import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { NavLink, Outlet } from "react-router-dom";
+import logo from "../../public/favicon.png";
 
-const basename = import.meta.env.VITE_API_BASE
-const user = {
-  name: 'Tom Cook',
-  email: 'tom@example.com',
-  imageUrl: logo,
+interface Navigation {
+  name: string;
+  path: string;
 }
 
-function classNames(...classes: any[]) {
-  return classes.filter(Boolean).join(' ')
+const navs: Navigation[] = [
+  { name: "租户管理", path: "/home/tenant" },
+  { name: "日志管理", path: "/home/log" },
+  { name: "预警管理", path: "/home/warning" },
+  { name: "员工管理", path: "/home/staff" },
+  { name: "菜品管理", path: "/home/goods" },
+  { name: "客户下单", path: "/home/place-order" },
+  { name: "客户管理", path: "/home/client" },
+];
+
+const userNavs: Navigation[] = [
+  { name: "个人信息", path: "/home/profile" },
+  { name: "设置", path: "/home/setting" },
+  { name: "退出", path: "/" },
+];
+
+function classNames(...classes: string[]) {
+  return classes.filter(Boolean).join(" ");
 }
 
 function Home() {
-  const [navs, setNavs] = useState([
-    { name: '用户管理', path: '', current: true },
-    { name: '日志管理', path: '/home/log', current: false },
-    { name: '预警管理', path: '', current: false },
-  ])
-  const [userNavs, setUserNavs] = useState([
-    { name: 'Your Profile', href: '#' },
-    { name: 'Settings', href: '#' },
-    { name: 'Sign out', href: '#' },
-  ])
-  const handleNavClick = (e, item) => {
-    const tmp = navs.map(item => ({
-      ...item, current: false
-    }));
-    const target = tmp.map(nav => {
-      if (nav.name === item.name)
-        nav.current = true
-      return nav
-    })
-    console.log(target)
-    setNavs(target)
-  }
+  const [currentNav, setCurrentNav] = useState(navs[0]);
+
+  // 修改 handleNavClick 的定义方式
+  const handleNavClick = useCallback((item: Navigation) => {
+    if (item.path === "/") {
+      localStorage.removeItem("token");
+      return;
+    }
+    setCurrentNav(item);
+  }, []);
+
   return (
-    <>
-      <div className="min-h-full">
-        <Disclosure as="nav">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="flex h-16 items-center justify-between">
-              <div className="flex items-center">
-                <div className="shrink-0">
-                  <img
-                    alt="智慧餐饮管理系统"
-                    src={logo}
-                    className="size-12"
-                  />
-                </div>
-                <div className="hidden md:block">
-                  <div className="ml-10 flex items-baseline space-x-4">
+    <div className="min-h-screen bg-gray-50">
+      <Disclosure as="nav" className="bg-white shadow-sm">
+        {({ open }) => (
+          <>
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+              <div className="flex h-16 justify-between">
+                {/* Logo and Desktop Navigation */}
+                <div className="flex">
+                  <div className="flex flex-shrink-0 items-center">
+                    <img className="h-8 w-auto" src={logo} alt="餐饮管理" />
+                  </div>
+                  <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
                     {navs.map((item) => (
                       <NavLink
-                        to={item.path}
                         key={item.name}
-                        onClick={e => handleNavClick(e, item)}
-                        className={classNames(
-                          item.current ? 'border-b border-indigo-600 rounded-none ' : 'hover:border-b hover:border-indigo-600 hover:rounded-none',
-                          'rounded-md px-3 py-2 text-sm font-medium text-black',
-                        )}
+                        to={item.path}
+                        onClick={() => handleNavClick(item)}
+                        className={({ isActive }) =>
+                          classNames(
+                            isActive
+                              ? "border-indigo-500 text-gray-900"
+                              : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700",
+                            "inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium"
+                          )
+                        }
                       >
                         {item.name}
                       </NavLink>
                     ))}
                   </div>
                 </div>
-              </div>
-              <div className="hidden md:block">
-                <div className="ml-4 flex items-center md:ml-6">
-                  <button
-                    type="button"
-                    className="relative rounded-full  p-1 text-gray-400 hover:text-black focus:ring-2 focus:ring-black focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-hidden"
-                  >
-                    <span className="absolute -inset-1.5" />
-                    <span className="sr-only">View notifications</span>
-                    <BellIcon aria-hidden="true" className="size-6" />
+
+                {/* Right Side Actions */}
+                <div className="hidden sm:ml-6 sm:flex sm:items-center">
+                  {/* Notification bell */}
+                  <button className="rounded-full bg-white p-1 text-gray-400 hover:text-gray-500">
+                    <BellIcon className="h-6 w-6" />
                   </button>
 
                   {/* Profile dropdown */}
                   <Menu as="div" className="relative ml-3">
-                    <div>
-                      <MenuButton className="relative flex max-w-xs items-center rounded-full  text-sm focus:ring-2 focus:ring-black focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-hidden">
-                        <span className="absolute -inset-1.5" />
-                        <span className="sr-only">Open user menu</span>
-                        <img alt="" src={user.imageUrl} className="size-8 rounded-full" />
-                      </MenuButton>
-                    </div>
-                    <MenuItems
-                      transition
-                      className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md  py-1 shadow-lg ring-1 ring-black/5 transition focus:outline-hidden data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
-                    >
+                    <Menu.Button className="flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                      <img
+                        className="h-8 w-8 rounded-full"
+                        src="https://api.dicebear.com/7.x/avataaars/svg?seed=1"
+                        alt=""
+                      />
+                    </Menu.Button>
+                    <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5">
                       {userNavs.map((item) => (
-                        <MenuItem key={item.name}>
-                          <a
-                            href={item.path}
-                            className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:outline-hidden"
-                          >
-                            {item.name}
-                          </a>
-                        </MenuItem>
+                        <Menu.Item key={item.name}>
+                          {({ active }) => (
+                            <NavLink
+                              to={item.path}
+                              onClick={() => handleNavClick(item)}
+                              className={classNames(
+                                active ? "bg-gray-100" : "",
+                                "block px-4 py-2 text-sm text-gray-700"
+                              )}
+                            >
+                              {item.name}
+                            </NavLink>
+                          )}
+                        </Menu.Item>
                       ))}
-                    </MenuItems>
+                    </Menu.Items>
                   </Menu>
                 </div>
-              </div>
-              <div className="-mr-2 flex md:hidden">
-                {/* Mobile menu button */}
-                <DisclosureButton className="group relative inline-flex items-center justify-center rounded-md  p-2 text-gray-400 hover:bg-gray-700 hover:text-black focus:ring-2 focus:ring-black focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-hidden">
-                  <span className="absolute -inset-0.5" />
-                  <span className="sr-only">Open main menu</span>
-                  <Bars3Icon aria-hidden="true" className="block size-6 group-data-open:hidden" />
-                  <XMarkIcon aria-hidden="true" className="hidden size-6 group-data-open:block" />
-                </DisclosureButton>
-              </div>
-            </div>
-          </div>
 
-          <DisclosurePanel className="md:hidden">
-            <div className="space-y-1 px-2 pt-2 pb-3 sm:px-3">
-              {navs.map((item) => (
-                <DisclosureButton
-                  key={item.name}
-                  as="a"
-                  href={basename + item.path}
-                  aria-current={item.current ? 'page' : undefined}
-                  className={classNames(
-                    item.current ? ' text-black' : 'text-gray-300 hover:bg-gray-700 hover:text-black',
-                    'block rounded-md px-3 py-2 text-base font-medium',
-                  )}
-                >
-                  {item.name}
-                </DisclosureButton>
-              ))}
-            </div>
-            <div className="border-t border-gray-700 pt-4 pb-3">
-              <div className="flex items-center px-5">
-                <div className="shrink-0">
-                  <img alt="" src={user.imageUrl} className="size-10 rounded-full" />
+                {/* Mobile menu button */}
+                <div className="flex items-center sm:hidden">
+                  <Disclosure.Button className="inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500">
+                    {open ? (
+                      <XMarkIcon className="h-6 w-6" />
+                    ) : (
+                      <Bars3Icon className="h-6 w-6" />
+                    )}
+                  </Disclosure.Button>
                 </div>
-                <div className="ml-3">
-                  <div className="text-base/5 font-medium text-black">{user.name}</div>
-                  <div className="text-sm font-medium text-gray-400">{user.email}</div>
-                </div>
-                <button
-                  type="button"
-                  className="relative ml-auto shrink-0 rounded-full  p-1 text-gray-400 hover:text-black focus:ring-2 focus:ring-black focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-hidden"
-                >
-                  <span className="absolute -inset-1.5" />
-                  <span className="sr-only">View notifications</span>
-                  <BellIcon aria-hidden="true" className="size-6" />
-                </button>
               </div>
-              <div className="mt-3 space-y-1 px-2">
-                {userNavs.map((item) => (
-                  <DisclosureButton
+            </div>
+
+            {/* Mobile menu */}
+            <Disclosure.Panel className="sm:hidden">
+              <div className="space-y-1 pb-3 pt-2">
+                {navs.map((item) => (
+                  <Disclosure.Button
                     key={item.name}
-                    as="a"
-                    href={item.path}
-                    className="block rounded-md px-3 py-2 text-base font-medium text-gray-400 hover:bg-gray-700 hover:text-black"
+                    as={NavLink}
+                    to={item.path}
+                    onClick={() => handleNavClick(item)}
+                    className={({ isActive }) =>
+                      classNames(
+                        isActive
+                          ? "bg-indigo-50 border-indigo-500 text-indigo-700"
+                          : "border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800",
+                        "block border-l-4 py-2 pl-3 pr-4 text-base font-medium"
+                      )
+                    }
                   >
                     {item.name}
-                  </DisclosureButton>
+                  </Disclosure.Button>
                 ))}
               </div>
-            </div>
-          </DisclosurePanel>
-        </Disclosure>
+            </Disclosure.Panel>
+          </>
+        )}
+      </Disclosure>
 
-        <header className="shadow-sm">
-          <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-            <h1 className="text-1xl font-bold tracking-tight text-gray-900">用户管理</h1>
-          </div>
-        </header>
-        <main>
+      {/* Page header */}
+      <header className="bg-white shadow">
+        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+          <h1 className="text-lg font-semibold text-gray-900">
+            {currentNav.name}
+          </h1>
+        </div>
+      </header>
+
+      {/* Main content */}
+      <main>
+        <div className="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
           <Outlet />
-        </main>
-      </div>
-    </>
-  )
+        </div>
+      </main>
+    </div>
+  );
 }
 
-export default Home
+export default Home;
