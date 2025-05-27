@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 interface MenuItem {
   id: string;
@@ -68,7 +68,7 @@ const recommendedItems: MenuItem[] = [
 ];
 
 const categories = ["全部", "热菜", "凉菜", "海鲜", "素菜", "主食", "饮品"];
-
+//@ts-ignore
 const memberDiscounts = {
   normal: { discount: 0.95, description: "普通会员95折" },
   silver: { discount: 0.9, description: "白银会员9折" },

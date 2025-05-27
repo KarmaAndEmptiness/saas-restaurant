@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 interface Employee {
   id: string;
@@ -49,12 +49,14 @@ const initialEmployees: Employee[] = [
 ];
 
 function Staff() {
+  //@ts-ignore
   const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<
     "全部" | "在职" | "休假" | "离职"
   >("全部");
   const [departmentFilter, setDepartmentFilter] = useState("全部");
+  //@ts-ignore
   const [showAddModal, setShowAddModal] = useState(false);
 
   const departments = ["全部", "后厨部", "服务部", "财务部", "采购部"];

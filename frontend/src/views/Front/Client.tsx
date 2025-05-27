@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 interface Customer {
   id: string;
@@ -57,6 +57,7 @@ const initialCustomers: Customer[] = [
 ];
 
 function Client() {
+  //@ts-ignore
   const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
   const [searchTerm, setSearchTerm] = useState("");
   const [membershipFilter, setMembershipFilter] = useState<string>("全部");
