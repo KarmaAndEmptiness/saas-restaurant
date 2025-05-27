@@ -84,10 +84,10 @@ class Request {
         pendingRequests.delete(requestKey)
 
         // 业务状态码处理
-        const { code, message } = response.data
+        const { code, msg } = response.data
         console.log(response.data)
         if (+code !== 200) {
-          return Promise.reject(new Error(message || '业务错误'))
+          return Promise.reject(new Error(msg || '业务错误'))
         }
 
         return response.data.data
