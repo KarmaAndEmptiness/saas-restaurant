@@ -37,8 +37,6 @@ void TenantController::login(const HttpRequestPtr &req, std::function<void(const
     response["message"] = "ok";
     response["data"]["token"] = token;
     auto resp = HttpResponse::newHttpJsonResponse(response);
-    resp->setStatusCode(k200OK);
-    resp->addHeader("Content-Type", "application/json; charset=utf-8");
     callback(resp);
   }
   else
@@ -47,8 +45,6 @@ void TenantController::login(const HttpRequestPtr &req, std::function<void(const
     response["message"] = "用户名或密码错误";
     response["data"] = Json::Value::null;
     auto resp = HttpResponse::newHttpJsonResponse(response);
-    resp->setStatusCode(k400BadRequest);
-    resp->addHeader("Content-Type", "application/json; charset=utf-8");
     callback(resp);
   }
 }

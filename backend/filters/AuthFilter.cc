@@ -41,8 +41,6 @@ void AuthFilter::doFilter(const HttpRequestPtr &req,
         response["data"] = Json::Value(Json::nullValue);
 
         auto resp = HttpResponse::newHttpJsonResponse(response);
-        resp->setStatusCode(k401Unauthorized);
-        resp->addHeader("Content-Type", "application/json; charset=utf-8");
         fcb(resp);
         return;
     }
@@ -63,8 +61,6 @@ void AuthFilter::doFilter(const HttpRequestPtr &req,
     response["data"] = Json::Value(Json::nullValue);
 
     auto resp = HttpResponse::newHttpJsonResponse(response);
-    resp->setStatusCode(k401Unauthorized);
-    resp->addHeader("Content-Type", "application/json; charset=utf-8");
     fcb(resp);
 }
 
