@@ -24,3 +24,13 @@ void TenantController::login(const HttpRequestPtr &req, std::function<void(const
   auto resp = HttpResponse::newHttpJsonResponse(ret);
   callback(resp);
 }
+
+void TenantController::getList(const HttpRequestPtr &req, std::function<void(const HttpResponsePtr &)> &&callback) const
+{
+  Json::Value ret;
+  ret["msg"] = "ok";
+  ret["code"] = 200;
+  ret["data"] = Json::arrayValue; // 返回一个空数组
+  auto resp = HttpResponse::newHttpJsonResponse(ret);
+  callback(resp);
+}

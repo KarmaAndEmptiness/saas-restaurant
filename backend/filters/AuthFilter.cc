@@ -13,9 +13,9 @@ AuthFilter::AuthFilter()
 {
     // 从配置文件读取 JWT secret
     auto &config = drogon::app().getCustomConfig();
-    if (config.isMember("jwt") && config["jwt"].isMember("secret"))
+    if (config.isMember("jwt") && config["jwt"].isMember("secret_key"))
     {
-        jwt_secret_ = config["jwt"]["secret"].asString();
+        jwt_secret_ = config["jwt"]["secret_key"].asString();
     }
     else
     {
@@ -35,10 +35,14 @@ void AuthFilter::doFilter(const HttpRequestPtr &req,
 
     if (header.empty() || header.substr(0, 7) != "Bearer ")
     {
-        auto res = HttpResponse::newHttpResponse();
-        res->setStatusCode(k401Unauthorized);
-        res->setBody("Unauthorized: No token provided");
-        fcb(res);
+        Json::Value response;
+        response["code"] = 401;
+        response["message"] = "Unauthorized";
+        response["data"] = Json::Value(Json::nullValue);
+
+        auto resp = HttpResponse::newHttpJsonResponse(response);
+        resp->setStatusCode(k401Unauthorized);
+        fcb(resp);
         return;
     }
 
@@ -52,10 +56,14 @@ void AuthFilter::doFilter(const HttpRequestPtr &req,
         return;
     }
 
-    auto res = HttpResponse::newHttpResponse();
-    res->setStatusCode(k401Unauthorized);
-    res->setBody("Unauthorized: Invalid token");
-    fcb(res);
+    Json::Value response;
+    response["code"] = 401;
+    response["message"] = "Invalid or expired token";
+    response["data"] = Json::Value(Json::nullValue);
+
+    auto resp = HttpResponse::newHttpJsonResponse(response);
+    resp->setStatusCode(k401Unauthorized);
+    fcb(resp);
 }
 
 bool AuthFilter::verifyJWT(const std::string &token)
@@ -73,20 +81,22 @@ bool AuthFilter::verifyJWT(const std::string &token)
 
         // 验证过期时间
         const auto exp = decoded.get_payload_claim("exp");
-        if (exp.empty())
+        try
+        {
+            const auto now = std::chrono::system_clock::now();
+            const auto exp_time = std::chrono::system_clock::from_time_t(exp.as_number());
+
+            if (now > exp_time)
+            {
+                return false;
+            }
+
+            return true;
+        }
+        catch (const std::runtime_error &)
         {
             return false;
         }
-
-        const auto now = std::chrono::system_clock::now();
-        const auto exp_time = std::chrono::system_clock::from_time_t(exp.as_int());
-
-        if (now > exp_time)
-        {
-            return false;
-        }
-
-        return true;
     }
     catch (const std::exception &)
     {
