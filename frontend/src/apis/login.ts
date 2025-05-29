@@ -6,5 +6,5 @@ interface LoginParam {
 }
 //登录
 export const login = (data: LoginParam) => {
-  return http.post('/api/login', data);
+  return http.post('/api/tenant/login', data);
 }
