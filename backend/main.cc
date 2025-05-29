@@ -1,5 +1,4 @@
 #include <drogon/drogon.h>
-#include "filters/CorsFilter.h"
 int main()
 {
 	// Load config file

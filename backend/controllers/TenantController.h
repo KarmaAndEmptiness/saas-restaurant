@@ -1,6 +1,7 @@
 #pragma once
 
 #include <drogon/HttpController.h>
+#include <jwt-cpp/jwt.h>
 
 using namespace drogon;
 namespace saas_restaurant
@@ -44,4 +45,9 @@ public:
   // void your_method_name(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, double p1, int p2) const;
   void login(const HttpRequestPtr &req, std::function<void(const HttpResponsePtr &)> &&callback, saas_restaurant::LoginParam &&loginParam) const;
   void getList(const HttpRequestPtr &req, std::function<void(const HttpResponsePtr &)> &&callback) const;
+
+  TenantController(); // 添加构造函数
+
+private:
+  std::string jwt_secret_;
 };
