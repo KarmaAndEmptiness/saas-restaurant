@@ -37,11 +37,12 @@ void AuthFilter::doFilter(const HttpRequestPtr &req,
     {
         Json::Value response;
         response["code"] = 401;
-        response["message"] = "Unauthorized";
+        response["message"] = "未授权，请登录";
         response["data"] = Json::Value(Json::nullValue);
 
         auto resp = HttpResponse::newHttpJsonResponse(response);
         resp->setStatusCode(k401Unauthorized);
+        resp->addHeader("Content-Type", "application/json; charset=utf-8");
         fcb(resp);
         return;
     }
@@ -58,11 +59,12 @@ void AuthFilter::doFilter(const HttpRequestPtr &req,
 
     Json::Value response;
     response["code"] = 401;
-    response["message"] = "Invalid or expired token";
+    response["message"] = "Token失效，请重新登录";
     response["data"] = Json::Value(Json::nullValue);
 
     auto resp = HttpResponse::newHttpJsonResponse(response);
     resp->setStatusCode(k401Unauthorized);
+    resp->addHeader("Content-Type", "application/json; charset=utf-8");
     fcb(resp);
 }
 
