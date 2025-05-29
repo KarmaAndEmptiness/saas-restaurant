@@ -10,7 +10,7 @@ import axios, {
 // 定义业务响应数据格式（根据后端接口调整）
 export interface ResponseData<T = any> {
   code: number
-  msg: string
+  message: string
   data: T
 }
 
@@ -63,7 +63,7 @@ class Request {
         }
         pendingRequests.set(requestKey, controller)
 
-        // 添加认证 token（示例）
+        // 添加认证 token
         const token = localStorage.getItem('token')
         if (token) {
           config.headers.Authorization = `Bearer ${token}`
@@ -84,10 +84,10 @@ class Request {
         pendingRequests.delete(requestKey)
 
         // 业务状态码处理
-        const { code, msg } = response.data
+        const { code, message } = response.data
         console.log(response.data)
         if (+code !== 200) {
-          return Promise.reject(new Error(msg || '业务错误'))
+          return Promise.reject(new Error(message || '业务错误'))
         }
 
         return response.data.data
