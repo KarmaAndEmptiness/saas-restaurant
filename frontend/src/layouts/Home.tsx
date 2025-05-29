@@ -11,17 +11,21 @@ interface Navigation {
 
 const navs: Navigation[] = [
   { name: "租户管理", path: "/home/tenant" },
-  { name: "日志管理", path: "/home/log" },
-  { name: "预警管理", path: "/home/warning" },
   { name: "员工管理", path: "/home/staff" },
   { name: "菜品管理", path: "/home/goods" },
+  { name: "分店管理", path: "/home/branch" },
   { name: "客户下单", path: "/home/place-order" },
   { name: "客户管理", path: "/home/client" },
+  { name: "会员管理", path: "/home/member" },
+  { name: "库存管理", path: "/home/inventory" },
+  { name: "报表中心", path: "/home/report" },
 ];
 
 const userNavs: Navigation[] = [
   { name: "个人信息", path: "/home/profile" },
   { name: "设置", path: "/home/setting" },
+  { name: "日志管理", path: "/home/log" },
+  { name: "预警管理", path: "/home/warning" },
   { name: "退出", path: "/" },
 ];
 
@@ -77,10 +81,19 @@ function Home() {
                 {/* Right Side Actions */}
                 <div className="hidden sm:ml-6 sm:flex sm:items-center">
                   {/* Notification bell */}
-                  <button className="rounded-full bg-white p-1 text-gray-400 hover:text-gray-500">
-                    <BellIcon className="h-6 w-6" />
-                  </button>
-
+                  <NavLink
+                    onClick={() =>
+                      handleNavClick({
+                        name: "通知",
+                        path: "/home/notification",
+                      })
+                    }
+                    to="/home/notification"
+                  >
+                    <button className="rounded-full bg-white p-1 text-gray-400 hover:text-gray-500">
+                      <BellIcon className="h-6 w-6" />
+                    </button>
+                  </NavLink>
                   {/* Profile dropdown */}
                   <Menu as="div" className="relative ml-3">
                     <Menu.Button className="flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
