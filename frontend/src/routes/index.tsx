@@ -16,6 +16,11 @@ import Client from "@/views/Front/Client";
 import Goods from "@/views/Admin/Goods";
 import Profile from "@/views/Profile";
 import Setting from "@/views/Profile/Setting";
+import Member from "@/views/Member";
+import Inventory from "@/views/Inventory";
+import Report from "@/views/Report";
+import Notification from "@/views/Notification";
+import Branch from "@/views/Branch";
 
 const routes: RouteObject[] = [
   {
@@ -47,22 +52,6 @@ const routes: RouteObject[] = [
         ),
       },
       {
-        path: "log",
-        element: (
-          <AuthGuard>
-            <Log />
-          </AuthGuard>
-        ),
-      },
-      {
-        path: "warning",
-        element: (
-          <AuthGuard>
-            <Warning />
-          </AuthGuard>
-        ),
-      },
-      {
         path: "staff",
         element: (
           <AuthGuard>
@@ -75,6 +64,14 @@ const routes: RouteObject[] = [
         element: (
           <AuthGuard>
             <Goods />
+          </AuthGuard>
+        ),
+      },
+      {
+        path: "branch",
+        element: (
+          <AuthGuard>
+            <Branch />
           </AuthGuard>
         ),
       },
@@ -95,6 +92,30 @@ const routes: RouteObject[] = [
         ),
       },
       {
+        path: "member",
+        element: (
+          <AuthGuard>
+            <Member />
+          </AuthGuard>
+        ),
+      },
+      {
+        path: "inventory",
+        element: (
+          <AuthGuard>
+            <Inventory />
+          </AuthGuard>
+        ),
+      },
+      {
+        path: "report",
+        element: (
+          <AuthGuard>
+            <Report />
+          </AuthGuard>
+        ),
+      },
+      {
         path: "profile",
         element: (
           <AuthGuard>
@@ -103,10 +124,34 @@ const routes: RouteObject[] = [
         ),
       },
       {
+        path: "log",
+        element: (
+          <AuthGuard>
+            <Log />
+          </AuthGuard>
+        ),
+      },
+      {
+        path: "warning",
+        element: (
+          <AuthGuard>
+            <Warning />
+          </AuthGuard>
+        ),
+      },
+      {
         path: "setting",
         element: (
           <AuthGuard>
             <Setting />
+          </AuthGuard>
+        ),
+      },
+      {
+        path: "notification",
+        element: (
+          <AuthGuard>
+            <Notification />
           </AuthGuard>
         ),
       },
