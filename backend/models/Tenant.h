@@ -45,21 +45,16 @@ class Tenant
     struct Cols
     {
         static const std::string _tenant_id;
-        static const std::string _tenant_name;
-        static const std::string _contact_email;
-        static const std::string _contact_phone;
-        static const std::string _status;
-        static const std::string _token;
-        static const std::string _created_at;
-        static const std::string _updated_at;
-        static const std::string _is_deleted;
+        static const std::string _username;
+        static const std::string _password;
+        static const std::string _create_time;
     };
 
     static const int primaryKeyNumber;
     static const std::string tableName;
     static const bool hasPrimaryKey;
     static const std::string primaryKeyName;
-    using PrimaryKeyType = uint64_t;
+    using PrimaryKeyType = int32_t;
     const PrimaryKeyType &getPrimaryKey() const;
 
     /**
@@ -106,85 +101,41 @@ class Tenant
 
     /**  For column tenant_id  */
     ///Get the value of the column tenant_id, returns the default value if the column is null
-    const uint64_t &getValueOfTenantId() const noexcept;
+    const int32_t &getValueOfTenantId() const noexcept;
     ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-    const std::shared_ptr<uint64_t> &getTenantId() const noexcept;
+    const std::shared_ptr<int32_t> &getTenantId() const noexcept;
     ///Set the value of the column tenant_id
-    void setTenantId(const uint64_t &pTenantId) noexcept;
+    void setTenantId(const int32_t &pTenantId) noexcept;
 
-    /**  For column tenant_name  */
-    ///Get the value of the column tenant_name, returns the default value if the column is null
-    const std::string &getValueOfTenantName() const noexcept;
+    /**  For column username  */
+    ///Get the value of the column username, returns the default value if the column is null
+    const std::string &getValueOfUsername() const noexcept;
     ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-    const std::shared_ptr<std::string> &getTenantName() const noexcept;
-    ///Set the value of the column tenant_name
-    void setTenantName(const std::string &pTenantName) noexcept;
-    void setTenantName(std::string &&pTenantName) noexcept;
+    const std::shared_ptr<std::string> &getUsername() const noexcept;
+    ///Set the value of the column username
+    void setUsername(const std::string &pUsername) noexcept;
+    void setUsername(std::string &&pUsername) noexcept;
 
-    /**  For column contact_email  */
-    ///Get the value of the column contact_email, returns the default value if the column is null
-    const std::string &getValueOfContactEmail() const noexcept;
+    /**  For column password  */
+    ///Get the value of the column password, returns the default value if the column is null
+    const std::string &getValueOfPassword() const noexcept;
     ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-    const std::shared_ptr<std::string> &getContactEmail() const noexcept;
-    ///Set the value of the column contact_email
-    void setContactEmail(const std::string &pContactEmail) noexcept;
-    void setContactEmail(std::string &&pContactEmail) noexcept;
+    const std::shared_ptr<std::string> &getPassword() const noexcept;
+    ///Set the value of the column password
+    void setPassword(const std::string &pPassword) noexcept;
+    void setPassword(std::string &&pPassword) noexcept;
 
-    /**  For column contact_phone  */
-    ///Get the value of the column contact_phone, returns the default value if the column is null
-    const std::string &getValueOfContactPhone() const noexcept;
+    /**  For column create_time  */
+    ///Get the value of the column create_time, returns the default value if the column is null
+    const ::trantor::Date &getValueOfCreateTime() const noexcept;
     ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-    const std::shared_ptr<std::string> &getContactPhone() const noexcept;
-    ///Set the value of the column contact_phone
-    void setContactPhone(const std::string &pContactPhone) noexcept;
-    void setContactPhone(std::string &&pContactPhone) noexcept;
-
-    /**  For column status  */
-    ///Get the value of the column status, returns the default value if the column is null
-    const std::string &getValueOfStatus() const noexcept;
-    ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-    const std::shared_ptr<std::string> &getStatus() const noexcept;
-    ///Set the value of the column status
-    void setStatus(const std::string &pStatus) noexcept;
-    void setStatus(std::string &&pStatus) noexcept;
-    void setStatusToNull() noexcept;
-
-    /**  For column token  */
-    ///Get the value of the column token, returns the default value if the column is null
-    const std::string &getValueOfToken() const noexcept;
-    ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-    const std::shared_ptr<std::string> &getToken() const noexcept;
-    ///Set the value of the column token
-    void setToken(const std::string &pToken) noexcept;
-    void setToken(std::string &&pToken) noexcept;
-
-    /**  For column created_at  */
-    ///Get the value of the column created_at, returns the default value if the column is null
-    const ::trantor::Date &getValueOfCreatedAt() const noexcept;
-    ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-    const std::shared_ptr<::trantor::Date> &getCreatedAt() const noexcept;
-    ///Set the value of the column created_at
-    void setCreatedAt(const ::trantor::Date &pCreatedAt) noexcept;
-
-    /**  For column updated_at  */
-    ///Get the value of the column updated_at, returns the default value if the column is null
-    const ::trantor::Date &getValueOfUpdatedAt() const noexcept;
-    ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-    const std::shared_ptr<::trantor::Date> &getUpdatedAt() const noexcept;
-    ///Set the value of the column updated_at
-    void setUpdatedAt(const ::trantor::Date &pUpdatedAt) noexcept;
-
-    /**  For column is_deleted  */
-    ///Get the value of the column is_deleted, returns the default value if the column is null
-    const int8_t &getValueOfIsDeleted() const noexcept;
-    ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-    const std::shared_ptr<int8_t> &getIsDeleted() const noexcept;
-    ///Set the value of the column is_deleted
-    void setIsDeleted(const int8_t &pIsDeleted) noexcept;
-    void setIsDeletedToNull() noexcept;
+    const std::shared_ptr<::trantor::Date> &getCreateTime() const noexcept;
+    ///Set the value of the column create_time
+    void setCreateTime(const ::trantor::Date &pCreateTime) noexcept;
+    void setCreateTimeToNull() noexcept;
 
 
-    static size_t getColumnNumber() noexcept {  return 9;  }
+    static size_t getColumnNumber() noexcept {  return 4;  }
     static const std::string &getColumnName(size_t index) noexcept(false);
 
     Json::Value toJson() const;
@@ -205,15 +156,10 @@ class Tenant
     void updateArgs(drogon::orm::internal::SqlBinder &binder) const;
     ///For mysql or sqlite3
     void updateId(const uint64_t id);
-    std::shared_ptr<uint64_t> tenantId_;
-    std::shared_ptr<std::string> tenantName_;
-    std::shared_ptr<std::string> contactEmail_;
-    std::shared_ptr<std::string> contactPhone_;
-    std::shared_ptr<std::string> status_;
-    std::shared_ptr<std::string> token_;
-    std::shared_ptr<::trantor::Date> createdAt_;
-    std::shared_ptr<::trantor::Date> updatedAt_;
-    std::shared_ptr<int8_t> isDeleted_;
+    std::shared_ptr<int32_t> tenantId_;
+    std::shared_ptr<std::string> username_;
+    std::shared_ptr<std::string> password_;
+    std::shared_ptr<::trantor::Date> createTime_;
     struct MetaData
     {
         const std::string colName_;
@@ -225,7 +171,7 @@ class Tenant
         const bool notNull_;
     };
     static const std::vector<MetaData> metaData_;
-    bool dirtyFlag_[9]={ false };
+    bool dirtyFlag_[4]={ false };
   public:
     static const std::string &sqlForFindingByPrimaryKey()
     {
@@ -247,45 +193,17 @@ class Tenant
             ++parametersCount;
         if(dirtyFlag_[1])
         {
-            sql += "tenant_name,";
+            sql += "username,";
             ++parametersCount;
         }
         if(dirtyFlag_[2])
         {
-            sql += "contact_email,";
+            sql += "password,";
             ++parametersCount;
         }
-        if(dirtyFlag_[3])
-        {
-            sql += "contact_phone,";
-            ++parametersCount;
-        }
-        sql += "status,";
+        sql += "create_time,";
         ++parametersCount;
-        if(!dirtyFlag_[4])
-        {
-            needSelection=true;
-        }
-        if(dirtyFlag_[5])
-        {
-            sql += "token,";
-            ++parametersCount;
-        }
-        sql += "created_at,";
-        ++parametersCount;
-        if(!dirtyFlag_[6])
-        {
-            needSelection=true;
-        }
-        sql += "updated_at,";
-        ++parametersCount;
-        if(!dirtyFlag_[7])
-        {
-            needSelection=true;
-        }
-        sql += "is_deleted,";
-        ++parametersCount;
-        if(!dirtyFlag_[8])
+        if(!dirtyFlag_[3])
         {
             needSelection=true;
         }
@@ -310,43 +228,6 @@ class Tenant
 
         }
         if(dirtyFlag_[3])
-        {
-            sql.append("?,");
-
-        }
-        if(dirtyFlag_[4])
-        {
-            sql.append("?,");
-
-        }
-        else
-        {
-            sql +="default,";
-        }
-        if(dirtyFlag_[5])
-        {
-            sql.append("?,");
-
-        }
-        if(dirtyFlag_[6])
-        {
-            sql.append("?,");
-
-        }
-        else
-        {
-            sql +="default,";
-        }
-        if(dirtyFlag_[7])
-        {
-            sql.append("?,");
-
-        }
-        else
-        {
-            sql +="default,";
-        }
-        if(dirtyFlag_[8])
         {
             sql.append("?,");
 
