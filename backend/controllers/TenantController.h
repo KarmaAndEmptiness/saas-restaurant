@@ -50,4 +50,5 @@ public:
 
 private:
   std::string jwt_secret_;
+  drogon::orm::DbClientPtr dbClient_;
 };
