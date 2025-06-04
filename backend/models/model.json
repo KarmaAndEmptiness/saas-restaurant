@@ -8,7 +8,7 @@
     //port: server port, 5432 by default;
     "port": 3306,
     //dbname: Database name;
-    "dbname": "",
+    "dbname": "saas_restaurant",
     //schema: valid for postgreSQL, "public" by default;
     "schema": "public",
     //user: User name
@@ -42,51 +42,333 @@
         ]
     },
     "relationships": {
-        "enabled": false,
+        "enabled": true,
         "items": [
             {
                 "type": "has one",
-                "original_table_name": "products",
-                "original_table_alias": "product",
-                "original_key": "id",
-                "target_table_name": "skus",
-                "target_table_alias": "SKU",
-                "target_key": "product_id",
+                "original_table_name": "user",
+                "original_table_alias": "",
+                "original_key": "user_id",
+                "target_table_name": "branch",
+                "target_table_alias": "",
+                "target_key": "manager_id",
+                "enable_reverse": true
+            },
+
+            {
+                "type": "has one",
+                "original_table_name": "user",
+                "original_table_alias": "",
+                "original_key": "user_id",
+                "target_table_name": "member",
+                "target_table_alias": "",
+                "target_key": "user_id",
                 "enable_reverse": true
             },
             {
                 "type": "has many",
-                "original_table_name": "products",
-                "original_table_alias": "product",
-                "original_key": "id",
-                "target_table_name": "reviews",
-                "target_table_alias": "",
-                "target_key": "product_id",
+                "original_table_name": "tenant",
+                "original_table_alias": "",
+                "original_key": "tenant_id",
+                "target_table_name": "user",
+                "target_table_alias": "users",
+                "target_key": "tenant_id",
+                "enable_reverse": true
+            },
+
+            {
+                "type": "has many",
+                "original_table_name": "tenant",
+                "original_table_alias": "",
+                "original_key": "tenant_id",
+                "target_table_name": "member_level",
+                "target_table_alias": "member_levels",
+                "target_key": "tenant_id",
                 "enable_reverse": true
             },
             {
-                "type": "many to many",
-                "original_table_name": "products",
+                "type": "has many",
+                "original_table_name": "tenant",
                 "original_table_alias": "",
-                "original_key": "id",
+                "original_key": "tenant_id",
+                "target_table_name": "role_permission",
+                "target_table_alias": "role_permissions",
+                "target_key": "tenant_id",
+                "enable_reverse": true
+            },
+            {
+                "type": "has many",
+                "original_table_name": "tenant",
+                "original_table_alias": "",
+                "original_key": "tenant_id",
+                "target_table_name": "role",
+                "target_table_alias": "roles",
+                "target_key": "tenant_id",
+                "enable_reverse": true
+            },
+            {
+                "type": "has many",
+                "original_table_name": "tenant",
+                "original_table_alias": "",
+                "original_key": "tenant_id",
+                "target_table_name": "user_role",
+                "target_table_alias": "user_roles",
+                "target_key": "tenant_id",
+                "enable_reverse": true
+            },
+
+            {
+                "type": "has many",
+                "original_table_name": "tenant",
+                "original_table_alias": "",
+                "original_key": "tenant_id",
+                "target_table_name": "branch",
+                "target_table_alias": "branches",
+                "target_key": "tenant_id",
+                "enable_reverse": true
+            },
+            {
+                "type": "has many",
+                "original_table_name": "tenant",
+                "original_table_alias": "",
+                "original_key": "tenant_id",
+                "target_table_name": "dish",
+                "target_table_alias": "dishes",
+                "target_key": "tenant_id",
+                "enable_reverse": true
+            },
+            {
+                "type": "has many",
+                "original_table_name": "tenant",
+                "original_table_alias": "",
+                "original_key": "tenant_id",
+                "target_table_name": "dish_category",
+                "target_table_alias": "dish_categories",
+                "target_key": "tenant_id",
+                "enable_reverse": true
+            },
+            {
+                "type": "has many",
+                "original_table_name": "tenant",
+                "original_table_alias": "",
+                "original_key": "tenant_id",
+                "target_table_name": "inventory",
+                "target_table_alias": "inventories",
+                "target_key": "tenant_id",
+                "enable_reverse": true
+            },
+            {
+                "type": "has many",
+                "original_table_name": "tenant",
+                "original_table_alias": "",
+                "original_key": "tenant_id",
+                "target_table_name": "marketing_campaign",
+                "target_table_alias": "marketing_campaigns",
+                "target_key": "tenant_id",
+                "enable_reverse": true
+            },
+            {
+                "type": "has many",
+                "original_table_name": "tenant",
+                "original_table_alias": "",
+                "original_key": "tenant_id",
+                "target_table_name": "member",
+                "target_table_alias": "members",
+                "target_key": "tenant_id",
+                "enable_reverse": true
+            },
+            {
+                "type": "has many",
+                "original_table_name": "tenant",
+                "original_table_alias": "",
+                "original_key": "tenant_id",
+                "target_table_name": "menu",
+                "target_table_alias": "menus",
+                "target_key": "tenant_id",
+                "enable_reverse": true
+            },
+            {
+                "type": "has many",
+                "original_table_name": "tenant",
+                "original_table_alias": "",
+                "original_key": "tenant_id",
+                "target_table_name": "order",
+                "target_table_alias": "orders",
+                "target_key": "tenant_id",
+                "enable_reverse": true
+            },
+            {
+                "type": "has many",
+                "original_table_name": "tenant",
+                "original_table_alias": "",
+                "original_key": "tenant_id",
+                "target_table_name": "permission",
+                "target_table_alias": "permissions",
+                "target_key": "tenant_id",
+                "enable_reverse": true
+            },
+            {
+                "type": "has many",
+                "original_table_name": "tenant",
+                "original_table_alias": "",
+                "original_key": "tenant_id",
+                "target_table_name": "permission_category",
+                "target_table_alias": "permission_categories",
+                "target_key": "tenant_id",
+                "enable_reverse": true
+            },
+
+
+            {
+                "type": "has many",
+                "original_table_name": "dish_category",
+                "original_table_alias": "",
+                "original_key": "category_id",
+                "target_table_name": "dish",
+                "target_table_alias": "dishes",
+                "target_key": "dish_category_id",
+                "enable_reverse": true
+            },
+
+            {
+                "type": "has many",
+                "original_table_name": "dish",
+                "original_table_alias": "",
+                "original_key": "dish_id",
+                "target_table_name": "inventory",
+                "target_table_alias": "inventories",
+                "target_key": "dish_id",
+                "enable_reverse": true
+            },
+
+            {
+                "type": "has many",
+                "original_table_name": "dish_category",
+                "original_table_alias": "parent",
+                "original_key": "category_id",
+                "target_table_name": "dish_category",
+                "target_table_alias": "dish_categories",
+                "target_key": "parent_id",
+                "enable_reverse": true
+            },
+
+            {
+                "type": "has many",
+                "original_table_name": "member_level",
+                "original_table_alias": "",
+                "original_key": "level_id",
+                "target_table_name": "marketing_campaign",
+                "target_table_alias": "marketing_campaigns",
+                "target_key": "level_id",
+                "enable_reverse": true
+            },
+
+            {
+                "type": "has many",
+                "original_table_name": "user",
+                "original_table_alias": "",
+                "original_key": "user_id",
+                "target_table_name": "marketing_campaign",
+                "target_table_alias": "marketing_campaigns",
+                "target_key": "created_by",
+                "enable_reverse": true
+            },
+
+            {
+                "type": "has many",
+                "original_table_name": "member_level",
+                "original_table_alias": "",
+                "original_key": "level_id",
+                "target_table_name": "member",
+                "target_table_alias": "members",
+                "target_key": "level_id",
+                "enable_reverse": true
+            },
+
+            {
+                "type": "has many",
+                "original_table_name": "menu",
+                "original_table_alias": "parent",
+                "original_key": "menu_id",
+                "target_table_name": "menu",
+                "target_table_alias": "menus",
+                "target_key": "parent_id",
+                "enable_reverse": true
+            },
+
+            {
+                "type": "has many",
+                "original_table_name": "menu",
+                "original_table_alias": "",
+                "original_key": "menu_id",
+                "target_table_name": "permission",
+                "target_table_alias": "permissions",
+                "target_key": "menu_id",
+                "enable_reverse": true
+            },
+
+            {
+                "type": "has many",
+                "original_table_name": "user",
+                "original_table_alias": "",
+                "original_key": "user_id",
+                "target_table_name": "order",
+                "target_table_alias": "orders",
+                "target_key": "user_id",
+                "enable_reverse": true
+            },
+
+            {
+                "type": "has many",
+                "original_table_name": "permission_category",
+                "original_table_alias": "",
+                "original_key": "category_id",
+                "target_table_name": "permission",
+                "target_table_alias": "permissions",
+                "target_key": "permission_category_id",
+                "enable_reverse": true
+            },
+
+            {
+                "type": "many to many",
+                "original_table_name": "user",
+                "original_table_alias": "users",
+                "original_key": "user_id",
                 "pivot_table": {
-                    "table_name": "carts_products",
-                    "original_key": "product_id",
-                    "target_key": "cart_id"
+                    "table_name": "user_role",
+                    "original_key": "user_id",
+                    "target_key": "role_id"
                 },
-                "target_table_name": "carts",
-                "target_table_alias": "",
-                "target_key": "id",
+                "target_table_name": "role",
+                "target_table_alias": "roles",
+                "target_key": "role_id",
                 "enable_reverse": true
             }
+,
+            {
+                "type": "many to many",
+                "original_table_name": "role",
+                "original_table_alias": "roles",
+                "original_key": "role_id",
+                "pivot_table": {
+                    "table_name": "role_permission",
+                    "original_key": "role_id",
+                    "target_key": "permission_id"
+                },
+                "target_table_name": "permission",
+                "target_table_alias": "permissions",
+                "target_key": "permission_id",
+                "enable_reverse": true
+            }
+
         ]
     },
     "restful_api_controllers": {
-        "enabled": false,
+        "enabled": true,
         // resource_uri: The URI to access the resource, the default value 
         // is '/*' in which the asterisk represents the table name.
         // If this option is set to a empty string, the URI is composed of the namespaces and the class name.
-        "resource_uri": "/*",
+        "resource_uri": "/api/*",
         // class_name: "Restful*Ctrl" by default, the asterisk represents the table name.
         // This option can contain namespaces.
         "class_name": "Restful*Ctrl",

@@ -5,7 +5,7 @@ import tailwindcss from '@tailwindcss/vite';
 //const base=process.env.VITE_API_BASE
 // https://vite.dev/config/
 export default defineConfig({
-  base:'/restaurant',
+  base:'',
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
