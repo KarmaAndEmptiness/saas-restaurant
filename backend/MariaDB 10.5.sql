@@ -27,6 +27,8 @@ CREATE TABLE `saas_restaurant`.`dish`  (
   `status` varchar(50) NULL COMMENT '销售状态',
   `sort_order` int NULL COMMENT '排序权重（权重值越大越靠前）',
   `is_deleted` tinyint(1) NULL COMMENT '软删除标记（0：未删除，1：已删除）',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`dish_id`)
 );
 
@@ -35,8 +37,9 @@ CREATE TABLE `saas_restaurant`.`dish_category`  (
   `tenant_id` int UNSIGNED NULL COMMENT '租户ID',
   `parent_id` int UNSIGNED NULL COMMENT '父级ID',
   `category_name` varchar(255) NULL COMMENT '菜品分类名称',
-  `created_at` timestamp NULL COMMENT '创建时间',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `sort_order` int NULL COMMENT '同级分类排序',
+  `is_deleted` tinyint(1) NULL COMMENT '软删除',
   PRIMARY KEY (`category_id`)
 );
 
