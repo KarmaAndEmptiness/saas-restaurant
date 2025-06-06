@@ -18,6 +18,7 @@ function Login() {
       const data = await login({ username, password });
       if (data.token) {
         localStorage.setItem("token", data.token);
+        localStorage.setItem("user_id", data.user_id);
         navigate("/home");
       } else {
         setError("无效的响应");

@@ -8,7 +8,6 @@
 #include "RestfulUserRoleCtrl.h"
 #include <string>
 
-
 void RestfulUserRoleCtrl::getOne(const HttpRequestPtr &req,
                                  std::function<void(const HttpResponsePtr &)> &&callback,
                                  UserRole::PrimaryKeyType &&id)
@@ -16,6 +15,12 @@ void RestfulUserRoleCtrl::getOne(const HttpRequestPtr &req,
     RestfulUserRoleCtrlBase::getOne(req, std::move(callback), std::move(id));
 }
 
+void RestfulUserRoleCtrl::getOneByUserId(const HttpRequestPtr &req,
+                                         std::function<void(const HttpResponsePtr &)> &&callback,
+                                         std::string &&userId)
+{
+    RestfulUserRoleCtrlBase::getOneByUserId(req, std::move(callback), std::move(userId));
+}
 
 void RestfulUserRoleCtrl::updateOne(const HttpRequestPtr &req,
                                     std::function<void(const HttpResponsePtr &)> &&callback,
@@ -23,7 +28,6 @@ void RestfulUserRoleCtrl::updateOne(const HttpRequestPtr &req,
 {
     RestfulUserRoleCtrlBase::updateOne(req, std::move(callback), std::move(id));
 }
-
 
 void RestfulUserRoleCtrl::deleteOne(const HttpRequestPtr &req,
                                     std::function<void(const HttpResponsePtr &)> &&callback,

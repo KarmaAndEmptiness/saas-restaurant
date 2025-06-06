@@ -1,4 +1,3 @@
-//@ts-ignore
 import http from '@/utils/request'
 interface LoginParam {
   username: string,
@@ -6,5 +5,5 @@ interface LoginParam {
 }
 //登录
 export const login = (data: LoginParam) => {
-  return http.post('/api/tenant/login', data);
+  return http.post('/api/tenant/admin/login', data);
 }
