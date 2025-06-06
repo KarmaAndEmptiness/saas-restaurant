@@ -22,8 +22,10 @@ void LoginController::tenantAdminLogin(const HttpRequestPtr &req, std::function<
   // 创建Mapper对象
   drogon::orm::Mapper<drogon_model::saas_restaurant::User> userMapper(dbClient_);
 
-  // 使用Mapper进行查询
-  std::vector<drogon_model::saas_restaurant::User> users = userMapper.findBy(drogon::orm::Criteria("username", tenantAdminLoginParam.username));
+  // 使用Mapper进行查询，添加is_deleted = 0条件
+  auto criteria = drogon::orm::Criteria("username", tenantAdminLoginParam.username) &&
+                  drogon::orm::Criteria("is_deleted", 0);
+  std::vector<drogon_model::saas_restaurant::User> users = userMapper.findBy(criteria);
 
   Json::Value response;
 

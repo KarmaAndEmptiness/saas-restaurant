@@ -20,7 +20,7 @@ void FileUploadController::upload(const HttpRequestPtr &req, std::function<void(
     auto md5 = file.getMd5();
     response["code"] = k200OK;
     response["message"] = "ok";
-    response["data"]["fileUrl"] = "/uploads/" + md5 + "_" + file.getFileName();
+    response["data"]["file_url"] = "/uploads/" + md5 + "_" + file.getFileName();
     auto resp = HttpResponse::newHttpJsonResponse(response);
     file.saveAs(md5 + "_" + file.getFileName());
     "directory";

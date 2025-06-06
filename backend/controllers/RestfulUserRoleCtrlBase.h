@@ -21,32 +21,32 @@ using namespace drogon_model::saas_restaurant;
 
 class RestfulUserRoleCtrlBase : public RestfulController
 {
-  public:
-    void getOne(const HttpRequestPtr &req,
-                std::function<void(const HttpResponsePtr &)> &&callback,
-                UserRole::PrimaryKeyType &&id);
-    void updateOne(const HttpRequestPtr &req,
-                   std::function<void(const HttpResponsePtr &)> &&callback,
-                   UserRole::PrimaryKeyType &&id);
-    void deleteOne(const HttpRequestPtr &req,
-                   std::function<void(const HttpResponsePtr &)> &&callback,
-                   UserRole::PrimaryKeyType &&id);
-    void get(const HttpRequestPtr &req,
-             std::function<void(const HttpResponsePtr &)> &&callback);
-    void create(const HttpRequestPtr &req,
-                std::function<void(const HttpResponsePtr &)> &&callback);
+public:
+  void getOne(const HttpRequestPtr &req,
+              std::function<void(const HttpResponsePtr &)> &&callback,
+              UserRole::PrimaryKeyType &&id);
 
+  void getOneByUserId(const HttpRequestPtr &req,
+                      std::function<void(const HttpResponsePtr &)> &&callback,
+                      std::string &&userId);
+  void updateOne(const HttpRequestPtr &req,
+                 std::function<void(const HttpResponsePtr &)> &&callback, UserRole::PrimaryKeyType &&id);
+  void deleteOne(const HttpRequestPtr &req, std::function<void(const HttpResponsePtr &)> &&callback, UserRole::PrimaryKeyType &&id);
+  void get(const HttpRequestPtr &req,
+           std::function<void(const HttpResponsePtr &)> &&callback);
+  void create(const HttpRequestPtr &req,
+              std::function<void(const HttpResponsePtr &)> &&callback);
 
-//  void update(const HttpRequestPtr &req,
-//              std::function<void(const HttpResponsePtr &)> &&callback);
+  //  void update(const HttpRequestPtr &req,
+  //              std::function<void(const HttpResponsePtr &)> &&callback);
 
-    orm::DbClientPtr getDbClient() 
-    {
-        return drogon::app().getDbClient(dbClientName_);
-    }
+  orm::DbClientPtr getDbClient()
+  {
+    return drogon::app().getDbClient(dbClientName_);
+  }
 
-  protected:
-    /// Ensure that subclasses inherited from this class are instantiated.
-    RestfulUserRoleCtrlBase();
-    const std::string dbClientName_{"default"};
+protected:
+  /// Ensure that subclasses inherited from this class are instantiated.
+  RestfulUserRoleCtrlBase();
+  const std::string dbClientName_{"default"};
 };

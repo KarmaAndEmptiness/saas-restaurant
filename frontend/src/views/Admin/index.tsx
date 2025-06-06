@@ -1,76 +1,57 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  getUsers,
+  type User,
+  getUserRole,
+  getRole,
+  // @ts-ignore
+  getRoles,
+  createUser,
+  updateUser,
+  deleteUser,
+} from "@/apis/admin";
 
-interface Employee {
-  id: string;
-  name: string;
-  position: string;
-  department: string;
-  status: "在职" | "休假" | "离职";
-  phone: string;
-  email: string;
-  joinDate: string;
-  avatar: string;
-}
+const baseurl = import.meta.env.VITE_API_BASE_URL;
 
-const initialEmployees: Employee[] = [
-  {
-    id: "1",
-    name: "张三",
-    position: "厨师长",
-    department: "后厨部",
-    status: "在职",
-    phone: "13800138000",
-    email: "zhangsan@example.com",
-    joinDate: "2023-01-15",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=1",
-  },
-  {
-    id: "2",
-    name: "李四",
-    position: "服务员",
-    department: "服务部",
-    status: "在职",
-    phone: "13800138001",
-    email: "lisi@example.com",
-    joinDate: "2023-03-20",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=2",
-  },
-  {
-    id: "3",
-    name: "王五",
-    position: "收银员",
-    department: "财务部",
-    status: "休假",
-    phone: "13800138002",
-    email: "wangwu@example.com",
-    joinDate: "2023-06-10",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=3",
-  },
-];
-
+const initialEmployees: User[] = [];
 function Staff() {
-  //@ts-ignore
-  const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
+  const [employees, setEmployees] = useState<User[]>(initialEmployees);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<
     "全部" | "在职" | "休假" | "离职"
   >("全部");
-  const [departmentFilter, setDepartmentFilter] = useState("全部");
-  //@ts-ignore
+  const [rolesFilter, setRolesFilter] = useState("全部");
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<User | null>(null);
+  const [formData, setFormData] = useState({
+    username: "",
+    email: "",
+    phone: "",
+    password: "",
+    status: "在职",
+    roles: [] as string[],
+  });
 
-  const departments = ["全部", "后厨部", "服务部", "财务部", "采购部"];
+  const roles = [
+    "全部",
+    "租户管理员",
+    "后台管理员",
+    "财务管理员",
+    "库存管理员",
+  ];
 
   const filteredEmployees = employees.filter((employee) => {
     const matchSearch =
-      employee.name.includes(searchTerm) ||
-      employee.email.includes(searchTerm) ||
-      employee.phone.includes(searchTerm);
+      employee.username?.includes(searchTerm) ||
+      employee.email?.includes(searchTerm) ||
+      employee.phone?.includes(searchTerm);
     const matchStatus =
       statusFilter === "全部" || employee.status === statusFilter;
-    const matchDepartment =
-      departmentFilter === "全部" || employee.department === departmentFilter;
-    return matchSearch && matchStatus && matchDepartment;
+    const matchRole =
+      rolesFilter === "全部" || employee?.roles?.includes(rolesFilter);
+    return matchSearch && matchStatus && matchRole;
   });
 
   const getStatusColor = (status: string) => {
@@ -83,6 +64,91 @@ function Staff() {
         return "bg-gray-100 text-gray-800";
       default:
         return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        const users = await getUsers();
+        const usersWithRoles = await Promise.all(
+          users.map(async (user: User) => {
+            const userRoles = await getUserRole(user.user_id);
+            const rolesInfo = await Promise.all(
+              userRoles.map(async (role: any) => {
+                return await getRole(role.role_id);
+              })
+            );
+            return {
+              ...user,
+              roles: rolesInfo.map((item) => item.description) || [],
+            };
+          })
+        );
+        setEmployees(usersWithRoles);
+      } catch (error) {
+        console.error("Error fetching employee data:", error);
+      }
+    };
+    fetchEmployees();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (selectedEmployee) {
+        // 编辑用户
+        await updateUser(selectedEmployee.user_id, {
+          ...formData,
+          user_id: selectedEmployee.user_id,
+        } as User);
+      } else {
+        // 创建新用户
+        await createUser(formData as User);
+      }
+      // 刷新用户列表
+      const users = await getUsers();
+      const usersWithRoles = await Promise.all(
+        users.map(async (user: any) => {
+          const userRoles = await getUserRole(user.user_id);
+          const rolesInfo = await Promise.all(
+            userRoles.map(async (role: any) => {
+              return await getRole(role.role_id);
+            })
+          );
+          return {
+            ...user,
+            roles: rolesInfo.map((item) => item.description) || [],
+          };
+        })
+      );
+      setEmployees(usersWithRoles);
+      setShowAddModal(false);
+      setShowEditModal(false);
+      setFormData({
+        username: "",
+        email: "",
+        phone: "",
+        password: "",
+        status: "在职",
+        roles: [],
+      });
+    } catch (error) {
+      console.error("Error submitting form:", error);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (selectedEmployee) {
+      try {
+        await deleteUser(selectedEmployee.user_id);
+        setEmployees(
+          employees.filter((e) => e.user_id !== selectedEmployee.user_id)
+        );
+        setShowDeleteModal(false);
+      } catch (error) {
+        console.error("Error deleting user:", error);
+      }
     }
   };
 
@@ -142,12 +208,12 @@ function Staff() {
         </select>
         <select
           className="px-4 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-          value={departmentFilter}
-          onChange={(e) => setDepartmentFilter(e.target.value)}
+          value={rolesFilter}
+          onChange={(e) => setRolesFilter(e.target.value)}
         >
-          {departments.map((dept) => (
-            <option key={dept} value={dept}>
-              {dept}
+          {roles.map((role) => (
+            <option key={role} value={role}>
+              {role}
             </option>
           ))}
         </select>
@@ -168,7 +234,7 @@ function Staff() {
                 scope="col"
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
               >
-                部门/职位
+                角色
               </th>
               <th
                 scope="col"
@@ -198,19 +264,25 @@ function Staff() {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {filteredEmployees.map((employee) => (
-              <tr key={employee.id} className="hover:bg-gray-50">
+              <tr key={employee.user_id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <div className="h-10 w-10 flex-shrink-0">
                       <img
                         className="h-10 w-10 rounded-full"
-                        src={employee.avatar}
+                        src={
+                          (employee.avatar_url
+                            ? baseurl + employee.avatar_url
+                            : "") ||
+                          "https://api.dicebear.com/7.x/avataaars/svg?seed=" +
+                            employee.user_id
+                        }
                         alt=""
                       />
                     </div>
                     <div className="ml-4">
                       <div className="text-sm font-medium text-gray-900">
-                        {employee.name}
+                        {employee.username}
                       </div>
                       <div className="text-sm text-gray-500">
                         {employee.email}
@@ -220,10 +292,7 @@ function Staff() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">
-                    {employee.department}
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    {employee.position}
+                    {employee?.roles?.join(",")}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -233,20 +302,40 @@ function Staff() {
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span
                     className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
-                      employee.status
+                      employee.status || ""
                     )}`}
                   >
-                    {employee.status}
+                    {employee.status || ""}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {employee.joinDate}
+                  {employee.created_at}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <button className="text-indigo-600 hover:text-indigo-900 mr-4">
+                  <button
+                    onClick={() => {
+                      setSelectedEmployee(employee);
+                      setFormData({
+                        username: employee.username || "",
+                        email: employee.email || "",
+                        phone: employee.phone || "",
+                        password: "",
+                        status: employee.status || "在职",
+                        roles: employee.roles || [],
+                      });
+                      setShowEditModal(true);
+                    }}
+                    className="text-indigo-600 hover:text-indigo-900 mr-4"
+                  >
                     编辑
                   </button>
-                  <button className="text-red-600 hover:text-red-900">
+                  <button
+                    onClick={() => {
+                      setSelectedEmployee(employee);
+                      setShowDeleteModal(true);
+                    }}
+                    className="text-red-600 hover:text-red-900"
+                  >
                     删除
                   </button>
                 </td>
@@ -255,6 +344,183 @@ function Staff() {
           </tbody>
         </table>
       </div>
+
+      {/* Add/Edit User Modal */}
+      {(showAddModal || showEditModal) && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-8 max-w-md w-full">
+            <h2 className="text-xl font-bold mb-4">
+              {showAddModal ? "添加员工" : "编辑员工"}
+            </h2>
+            <form onSubmit={handleSubmit}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    用户名
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.username}
+                    onChange={(e) =>
+                      setFormData({ ...formData, username: e.target.value })
+                    }
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    邮箱
+                  </label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    电话
+                  </label>
+                  <input
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) =>
+                      setFormData({ ...formData, phone: e.target.value })
+                    }
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  />
+                </div>
+                {!showEditModal && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      密码
+                    </label>
+                    <input
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) =>
+                        setFormData({ ...formData, password: e.target.value })
+                      }
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      required={!showEditModal}
+                    />
+                  </div>
+                )}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    状态
+                  </label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        status: e.target.value as any,
+                      })
+                    }
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  >
+                    {["在职", "休假", "离职"].map((status) => (
+                      <option key={status} value={status}>
+                        {status}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    角色
+                  </label>
+                  <div className="mt-2 space-y-2">
+                    {roles
+                      .filter((role) => role !== "全部")
+                      .map((role) => (
+                        <label
+                          key={role}
+                          className="inline-flex items-center mr-4"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={formData.roles.includes(role)}
+                            onChange={(e) => {
+                              const newRoles = e.target.checked
+                                ? [...formData.roles, role]
+                                : formData.roles.filter((r) => r !== role);
+                              setFormData({ ...formData, roles: newRoles });
+                            }}
+                            className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                          />
+                          <span className="ml-2">{role}</span>
+                        </label>
+                      ))}
+                  </div>
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddModal(false);
+                    setShowEditModal(false);
+                    setSelectedEmployee(null);
+                    setFormData({
+                      username: "",
+                      email: "",
+                      phone: "",
+                      password: "",
+                      status: "在职",
+                      roles: [],
+                    });
+                  }}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  取消
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  确认
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">确认删除</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              确定要删除员工 {selectedEmployee?.username} 吗？此操作无法撤销。
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setSelectedEmployee(null);
+                }}
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleDelete}
+                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+              >
+                删除
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

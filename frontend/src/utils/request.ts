@@ -18,7 +18,7 @@ export interface ResponseData<T = any> {
 interface RequestConfig extends AxiosRequestConfig {
   retry?: number // 重试次数
   retryDelay?: number // 重试延迟时间(ms)
-  headers: Record<string, string> // 请求头
+  headers?: Record<string, string> // 请求头
 }
 
 // 请求队列管理

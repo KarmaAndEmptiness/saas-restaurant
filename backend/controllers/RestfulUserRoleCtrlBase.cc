@@ -21,19 +21,21 @@ void RestfulUserRoleCtrlBase::getOne(const HttpRequestPtr &req,
     drogon::orm::Mapper<UserRole> mapper(dbClientPtr);
     mapper.findByPrimaryKey(
         id,
-        [req, callbackPtr, this](UserRole r) {
+        [req, callbackPtr, this](UserRole r)
+        {
             (*callbackPtr)(HttpResponse::newHttpJsonResponse(makeJson(req, r)));
         },
-        [callbackPtr](const DrogonDbException &e) {
-            const drogon::orm::UnexpectedRows *s=dynamic_cast<const drogon::orm::UnexpectedRows *>(&e.base());
-            if(s)
+        [callbackPtr](const DrogonDbException &e)
+        {
+            const drogon::orm::UnexpectedRows *s = dynamic_cast<const drogon::orm::UnexpectedRows *>(&e.base());
+            if (s)
             {
                 auto resp = HttpResponse::newHttpResponse();
                 resp->setStatusCode(k404NotFound);
                 (*callbackPtr)(resp);
                 return;
             }
-            LOG_ERROR<<e.base().what();
+            LOG_ERROR << e.base().what();
             Json::Value ret;
             ret["error"] = "database error";
             auto resp = HttpResponse::newHttpJsonResponse(ret);
@@ -42,41 +44,74 @@ void RestfulUserRoleCtrlBase::getOne(const HttpRequestPtr &req,
         });
 }
 
+void RestfulUserRoleCtrlBase::getOneByUserId(const HttpRequestPtr &req,
+                                             std::function<void(const HttpResponsePtr &)> &&callback,
+                                             std::string &&userId)
+{
+    try
+    {
+        /* code */
+        auto dbClientPtr = getDbClient();
+
+        drogon::orm::Mapper<UserRole> mapper(dbClientPtr);
+        auto criteria = drogon::orm::Criteria("user_id", userId) &&
+                        drogon::orm::Criteria("is_deleted", 0);
+        std::vector<UserRole> resultList = mapper.findBy(criteria);
+        Json::Value list;
+        Json::Value ret;
+        list.resize(0);
+        for (auto &r : resultList)
+        {
+            list.append(makeJson(req, r));
+        }
+        ret["data"] = list;
+        ret["code"] = k200OK;
+        ret["message"] = "ok";
+        auto resp = HttpResponse::newHttpJsonResponse(ret);
+        callback(resp);
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+
+    return;
+}
 
 void RestfulUserRoleCtrlBase::updateOne(const HttpRequestPtr &req,
                                         std::function<void(const HttpResponsePtr &)> &&callback,
                                         UserRole::PrimaryKeyType &&id)
 {
-    auto jsonPtr=req->jsonObject();
-    if(!jsonPtr)
+    auto jsonPtr = req->jsonObject();
+    if (!jsonPtr)
     {
         Json::Value ret;
-        ret["error"]="No json object is found in the request";
-        auto resp= HttpResponse::newHttpJsonResponse(ret);
+        ret["error"] = "No json object is found in the request";
+        auto resp = HttpResponse::newHttpJsonResponse(ret);
         resp->setStatusCode(k400BadRequest);
         callback(resp);
         return;
     }
     UserRole object;
     std::string err;
-    if(!doCustomValidations(*jsonPtr, err))
+    if (!doCustomValidations(*jsonPtr, err))
     {
         Json::Value ret;
         ret["error"] = err;
-        auto resp= HttpResponse::newHttpJsonResponse(ret);
+        auto resp = HttpResponse::newHttpJsonResponse(ret);
         resp->setStatusCode(k400BadRequest);
         callback(resp);
         return;
     }
     try
     {
-        if(isMasquerading())
+        if (isMasquerading())
         {
-            if(!UserRole::validateMasqueradedJsonForUpdate(*jsonPtr, masqueradingVector(), err))
+            if (!UserRole::validateMasqueradedJsonForUpdate(*jsonPtr, masqueradingVector(), err))
             {
                 Json::Value ret;
                 ret["error"] = err;
-                auto resp= HttpResponse::newHttpJsonResponse(ret);
+                auto resp = HttpResponse::newHttpJsonResponse(ret);
                 resp->setStatusCode(k400BadRequest);
                 callback(resp);
                 return;
@@ -85,11 +120,11 @@ void RestfulUserRoleCtrlBase::updateOne(const HttpRequestPtr &req,
         }
         else
         {
-            if(!UserRole::validateJsonForUpdate(*jsonPtr, err))
+            if (!UserRole::validateJsonForUpdate(*jsonPtr, err))
             {
                 Json::Value ret;
                 ret["error"] = err;
-                auto resp= HttpResponse::newHttpJsonResponse(ret);
+                auto resp = HttpResponse::newHttpJsonResponse(ret);
                 resp->setStatusCode(k400BadRequest);
                 callback(resp);
                 return;
@@ -97,21 +132,21 @@ void RestfulUserRoleCtrlBase::updateOne(const HttpRequestPtr &req,
             object.updateByJson(*jsonPtr);
         }
     }
-    catch(const Json::Exception &e)
+    catch (const Json::Exception &e)
     {
         LOG_ERROR << e.what();
         Json::Value ret;
-        ret["error"]="Field type error";
-        auto resp= HttpResponse::newHttpJsonResponse(ret);
+        ret["error"] = "Field type error";
+        auto resp = HttpResponse::newHttpJsonResponse(ret);
         resp->setStatusCode(k400BadRequest);
         callback(resp);
-        return;        
+        return;
     }
-    if(object.getPrimaryKey() != id)
+    if (object.getPrimaryKey() != id)
     {
         Json::Value ret;
-        ret["error"]="Bad primary key";
-        auto resp= HttpResponse::newHttpJsonResponse(ret);
+        ret["error"] = "Bad primary key";
+        auto resp = HttpResponse::newHttpJsonResponse(ret);
         resp->setStatusCode(k400BadRequest);
         callback(resp);
         return;
@@ -125,18 +160,18 @@ void RestfulUserRoleCtrlBase::updateOne(const HttpRequestPtr &req,
 
     mapper.update(
         object,
-        [callbackPtr](const size_t count) 
+        [callbackPtr](const size_t count)
         {
-            if(count == 1)
+            if (count == 1)
             {
                 auto resp = HttpResponse::newHttpResponse();
                 resp->setStatusCode(k202Accepted);
                 (*callbackPtr)(resp);
             }
-            else if(count == 0)
+            else if (count == 0)
             {
                 Json::Value ret;
-                ret["error"]="No resources are updated";
+                ret["error"] = "No resources are updated";
                 auto resp = HttpResponse::newHttpJsonResponse(ret);
                 resp->setStatusCode(k404NotFound);
                 (*callbackPtr)(resp);
@@ -151,7 +186,8 @@ void RestfulUserRoleCtrlBase::updateOne(const HttpRequestPtr &req,
                 (*callbackPtr)(resp);
             }
         },
-        [callbackPtr](const DrogonDbException &e) {
+        [callbackPtr](const DrogonDbException &e)
+        {
             LOG_ERROR << e.base().what();
             Json::Value ret;
             ret["error"] = "database error";
@@ -160,7 +196,6 @@ void RestfulUserRoleCtrlBase::updateOne(const HttpRequestPtr &req,
             (*callbackPtr)(resp);
         });
 }
-
 
 void RestfulUserRoleCtrlBase::deleteOne(const HttpRequestPtr &req,
                                         std::function<void(const HttpResponsePtr &)> &&callback,
@@ -174,14 +209,15 @@ void RestfulUserRoleCtrlBase::deleteOne(const HttpRequestPtr &req,
     drogon::orm::Mapper<UserRole> mapper(dbClientPtr);
     mapper.deleteByPrimaryKey(
         id,
-        [callbackPtr](const size_t count) {
-            if(count == 1)
+        [callbackPtr](const size_t count)
+        {
+            if (count == 1)
             {
                 auto resp = HttpResponse::newHttpResponse();
                 resp->setStatusCode(k204NoContent);
                 (*callbackPtr)(resp);
             }
-            else if(count == 0)
+            else if (count == 0)
             {
                 Json::Value ret;
                 ret["error"] = "No resources deleted";
@@ -199,7 +235,8 @@ void RestfulUserRoleCtrlBase::deleteOne(const HttpRequestPtr &req,
                 (*callbackPtr)(resp);
             }
         },
-        [callbackPtr](const DrogonDbException &e) {
+        [callbackPtr](const DrogonDbException &e)
+        {
             LOG_ERROR << e.base().what();
             Json::Value ret;
             ret["error"] = "database error";
@@ -216,19 +253,19 @@ void RestfulUserRoleCtrlBase::get(const HttpRequestPtr &req,
     drogon::orm::Mapper<UserRole> mapper(dbClientPtr);
     auto &parameters = req->parameters();
     auto iter = parameters.find("sort");
-    if(iter != parameters.end())
+    if (iter != parameters.end())
     {
         auto sortFields = drogon::utils::splitString(iter->second, ",");
-        for(auto &field : sortFields)
+        for (auto &field : sortFields)
         {
-            if(field.empty())
+            if (field.empty())
                 continue;
-            if(field[0] == '+')
+            if (field[0] == '+')
             {
                 field = field.substr(1);
                 mapper.orderBy(field, SortOrder::ASC);
             }
-            else if(field[0] == '-')
+            else if (field[0] == '-')
             {
                 field = field.substr(1);
                 mapper.orderBy(field, SortOrder::DESC);
@@ -240,13 +277,14 @@ void RestfulUserRoleCtrlBase::get(const HttpRequestPtr &req,
         }
     }
     iter = parameters.find("offset");
-    if(iter != parameters.end())
+    if (iter != parameters.end())
     {
-        try{
+        try
+        {
             auto offset = std::stoll(iter->second);
             mapper.offset(offset);
         }
-        catch(...)
+        catch (...)
         {
             auto resp = HttpResponse::newHttpResponse();
             resp->setStatusCode(k400BadRequest);
@@ -255,48 +293,48 @@ void RestfulUserRoleCtrlBase::get(const HttpRequestPtr &req,
         }
     }
     iter = parameters.find("limit");
-    if(iter != parameters.end())
+    if (iter != parameters.end())
     {
-        try{
+        try
+        {
             auto limit = std::stoll(iter->second);
             mapper.limit(limit);
         }
-        catch(...)
+        catch (...)
         {
             auto resp = HttpResponse::newHttpResponse();
             resp->setStatusCode(k400BadRequest);
             callback(resp);
             return;
         }
-    }    
+    }
     auto callbackPtr =
         std::make_shared<std::function<void(const HttpResponsePtr &)>>(
             std::move(callback));
     auto jsonPtr = req->jsonObject();
-    if(jsonPtr && jsonPtr->isMember("filter"))
+    if (jsonPtr && jsonPtr->isMember("filter"))
     {
-        try{
+        try
+        {
             auto criteria = makeCriteria((*jsonPtr)["filter"]);
-            mapper.findBy(criteria,
-                [req, callbackPtr, this](const std::vector<UserRole> &v) {
+            mapper.findBy(criteria, [req, callbackPtr, this](const std::vector<UserRole> &v)
+                          {
                     Json::Value ret;
                     ret.resize(0);
                     for (auto &obj : v)
                     {
                         ret.append(makeJson(req, obj));
                     }
-                    (*callbackPtr)(HttpResponse::newHttpJsonResponse(ret));
-                },
-                [callbackPtr](const DrogonDbException &e) { 
+                    (*callbackPtr)(HttpResponse::newHttpJsonResponse(ret)); }, [callbackPtr](const DrogonDbException &e)
+                          { 
                     LOG_ERROR << e.base().what();
                     Json::Value ret;
                     ret["error"] = "database error";
                     auto resp = HttpResponse::newHttpJsonResponse(ret);
                     resp->setStatusCode(k500InternalServerError);
-                    (*callbackPtr)(resp);    
-                });
+                    (*callbackPtr)(resp); });
         }
-        catch(const std::exception &e)
+        catch (const std::exception &e)
         {
             LOG_ERROR << e.what();
             Json::Value ret;
@@ -304,61 +342,62 @@ void RestfulUserRoleCtrlBase::get(const HttpRequestPtr &req,
             auto resp = HttpResponse::newHttpJsonResponse(ret);
             resp->setStatusCode(k400BadRequest);
             (*callbackPtr)(resp);
-            return;    
+            return;
         }
     }
     else
     {
-        mapper.findAll([req, callbackPtr, this](const std::vector<UserRole> &v) {
+        mapper.findAll([req, callbackPtr, this](const std::vector<UserRole> &v)
+                       {
                 Json::Value ret;
                 ret.resize(0);
                 for (auto &obj : v)
                 {
                     ret.append(makeJson(req, obj));
                 }
-                (*callbackPtr)(HttpResponse::newHttpJsonResponse(ret));
-            },
-            [callbackPtr](const DrogonDbException &e) { 
-                LOG_ERROR << e.base().what();
-                Json::Value ret;
-                ret["error"] = "database error";
-                auto resp = HttpResponse::newHttpJsonResponse(ret);
-                resp->setStatusCode(k500InternalServerError);
-                (*callbackPtr)(resp);    
-            });
+                (*callbackPtr)(HttpResponse::newHttpJsonResponse(ret)); },
+                       [callbackPtr](const DrogonDbException &e)
+                       {
+                           LOG_ERROR << e.base().what();
+                           Json::Value ret;
+                           ret["error"] = "database error";
+                           auto resp = HttpResponse::newHttpJsonResponse(ret);
+                           resp->setStatusCode(k500InternalServerError);
+                           (*callbackPtr)(resp);
+                       });
     }
 }
 
 void RestfulUserRoleCtrlBase::create(const HttpRequestPtr &req,
                                      std::function<void(const HttpResponsePtr &)> &&callback)
 {
-    auto jsonPtr=req->jsonObject();
-    if(!jsonPtr)
+    auto jsonPtr = req->jsonObject();
+    if (!jsonPtr)
     {
         Json::Value ret;
-        ret["error"]="No json object is found in the request";
-        auto resp= HttpResponse::newHttpJsonResponse(ret);
+        ret["error"] = "No json object is found in the request";
+        auto resp = HttpResponse::newHttpJsonResponse(ret);
         resp->setStatusCode(k400BadRequest);
         callback(resp);
         return;
     }
     std::string err;
-    if(!doCustomValidations(*jsonPtr, err))
+    if (!doCustomValidations(*jsonPtr, err))
     {
         Json::Value ret;
         ret["error"] = err;
-        auto resp= HttpResponse::newHttpJsonResponse(ret);
+        auto resp = HttpResponse::newHttpJsonResponse(ret);
         resp->setStatusCode(k400BadRequest);
         callback(resp);
         return;
     }
-    if(isMasquerading())
+    if (isMasquerading())
     {
-        if(!UserRole::validateMasqueradedJsonForCreation(*jsonPtr, masqueradingVector(), err))
+        if (!UserRole::validateMasqueradedJsonForCreation(*jsonPtr, masqueradingVector(), err))
         {
             Json::Value ret;
             ret["error"] = err;
-            auto resp= HttpResponse::newHttpJsonResponse(ret);
+            auto resp = HttpResponse::newHttpJsonResponse(ret);
             resp->setStatusCode(k400BadRequest);
             callback(resp);
             return;
@@ -366,22 +405,20 @@ void RestfulUserRoleCtrlBase::create(const HttpRequestPtr &req,
     }
     else
     {
-        if(!UserRole::validateJsonForCreation(*jsonPtr, err))
+        if (!UserRole::validateJsonForCreation(*jsonPtr, err))
         {
             Json::Value ret;
             ret["error"] = err;
-            auto resp= HttpResponse::newHttpJsonResponse(ret);
+            auto resp = HttpResponse::newHttpJsonResponse(ret);
             resp->setStatusCode(k400BadRequest);
             callback(resp);
             return;
         }
-    }   
-    try 
+    }
+    try
     {
-        UserRole object = 
-            (isMasquerading()? 
-             UserRole(*jsonPtr, masqueradingVector()) : 
-             UserRole(*jsonPtr));
+        UserRole object =
+            (isMasquerading() ? UserRole(*jsonPtr, masqueradingVector()) : UserRole(*jsonPtr));
         auto dbClientPtr = getDbClient();
         auto callbackPtr =
             std::make_shared<std::function<void(const HttpResponsePtr &)>>(
@@ -389,29 +426,31 @@ void RestfulUserRoleCtrlBase::create(const HttpRequestPtr &req,
         drogon::orm::Mapper<UserRole> mapper(dbClientPtr);
         mapper.insert(
             object,
-            [req, callbackPtr, this](UserRole newObject){
+            [req, callbackPtr, this](UserRole newObject)
+            {
                 (*callbackPtr)(HttpResponse::newHttpJsonResponse(
                     makeJson(req, newObject)));
             },
-            [callbackPtr](const DrogonDbException &e){
+            [callbackPtr](const DrogonDbException &e)
+            {
                 LOG_ERROR << e.base().what();
                 Json::Value ret;
                 ret["error"] = "database error";
                 auto resp = HttpResponse::newHttpJsonResponse(ret);
                 resp->setStatusCode(k500InternalServerError);
-                (*callbackPtr)(resp);   
+                (*callbackPtr)(resp);
             });
     }
-    catch(const Json::Exception &e)
+    catch (const Json::Exception &e)
     {
         LOG_ERROR << e.what();
         Json::Value ret;
-        ret["error"]="Field type error";
-        auto resp= HttpResponse::newHttpJsonResponse(ret);
+        ret["error"] = "Field type error";
+        auto resp = HttpResponse::newHttpJsonResponse(ret);
         resp->setStatusCode(k400BadRequest);
         callback(resp);
-        return;        
-    }   
+        return;
+    }
 }
 
 /*
@@ -422,28 +461,26 @@ void RestfulUserRoleCtrlBase::update(const HttpRequestPtr &req,
 }*/
 
 RestfulUserRoleCtrlBase::RestfulUserRoleCtrlBase()
-    : RestfulController({
-          "user_role_id",
-          "tenant_id",
-          "user_id",
-          "role_id",
-          "created_at",
-          "updated_at",
-          "is_deleted"
-      })
+    : RestfulController({"user_role_id",
+                         "tenant_id",
+                         "user_id",
+                         "role_id",
+                         "created_at",
+                         "updated_at",
+                         "is_deleted"})
 {
-   /**
-    * The items in the vector are aliases of column names in the table.
-    * if one item is set to an empty string, the related column is not sent
-    * to clients.
-    */
+    /**
+     * The items in the vector are aliases of column names in the table.
+     * if one item is set to an empty string, the related column is not sent
+     * to clients.
+     */
     enableMasquerading({
         "user_role_id", // the alias for the user_role_id column.
-        "tenant_id", // the alias for the tenant_id column.
-        "user_id", // the alias for the user_id column.
-        "role_id", // the alias for the role_id column.
-        "created_at", // the alias for the created_at column.
-        "updated_at", // the alias for the updated_at column.
-        "is_deleted"  // the alias for the is_deleted column.
+        "tenant_id",    // the alias for the tenant_id column.
+        "user_id",      // the alias for the user_id column.
+        "role_id",      // the alias for the role_id column.
+        "created_at",   // the alias for the created_at column.
+        "updated_at",   // the alias for the updated_at column.
+        "is_deleted"    // the alias for the is_deleted column.
     });
 }
