@@ -319,7 +319,7 @@ function Staff() {
                         username: employee.username || "",
                         email: employee.email || "",
                         phone: employee.phone || "",
-                        password: "",
+                        password: employee.password || "",
                         status: employee.status || "在职",
                         roles: employee.roles || [],
                       });
