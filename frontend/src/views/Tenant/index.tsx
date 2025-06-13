@@ -5,7 +5,7 @@ import {
   updateTenant,
   deleteTenant,
   getToken,
-  type Tenant,
+  type TenantType,
 } from "@/apis/tenant";
 
 function TenantModal({
@@ -16,7 +16,7 @@ function TenantModal({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  tenant?: Tenant;
+  tenant?: TenantType;
   mode: "create" | "edit" | "token";
 }) {
   const initialFormData = {
@@ -26,7 +26,9 @@ function TenantModal({
     phone: "",
   };
 
-  const [formData, setFormData] = useState<Partial<Tenant>>(initialFormData);
+  const [formData, setFormData] =
+    useState<Partial<TenantType>>(initialFormData);
+  //@ts-ignore
   const [token, setToken] = useState<string>("");
 
   useEffect(() => {
@@ -55,7 +57,7 @@ function TenantModal({
     try {
       if (mode === "create") {
         // 先创建租户
-        const createdTenant = await createTenant(formData as Tenant);
+        const createdTenant = await createTenant(formData as TenantType);
         // 然后获取token
         if (createdTenant.data?.tenant_id) {
           const tokenResponse = await getToken(createdTenant.data.tenant_id);
@@ -63,7 +65,7 @@ function TenantModal({
           await updateTenant(createdTenant.data.tenant_id, {
             ...formData,
             tenant_token: tokenResponse.token,
-          } as Tenant);
+          } as TenantType);
         }
       } else if (mode === "edit" && tenant?.tenant_id) {
         // 编辑时直接使用现有的tenant_id
@@ -71,7 +73,7 @@ function TenantModal({
         const updatedData = {
           ...formData,
           tenant_token: tokenResponse.token,
-        } as Tenant;
+        } as TenantType;
         await updateTenant(tenant.tenant_id, updatedData);
       }
       handleClose();
@@ -243,11 +245,13 @@ function Tenant() {
   >("全部");
   //@ts-ignore
   const [showModal, setShowModal] = useState(false);
-  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [tenants, setTenants] = useState<TenantType[]>([]);
   const [modalMode, setModalMode] = useState<"create" | "edit" | "token">(
     "create"
   );
-  const [selectedTenant, setSelectedTenant] = useState<Tenant | undefined>();
+  const [selectedTenant, setSelectedTenant] = useState<
+    TenantType | undefined
+  >();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const filteredTenants = tenants.filter((tenant) => {
@@ -271,7 +275,7 @@ function Tenant() {
     fetchTenants();
   }, []);
 
-  const handleDelete = async (tenant: Tenant) => {
+  const handleDelete = async (tenant: TenantType) => {
     try {
       await deleteTenant(tenant.tenant_id);
       window.location.reload();

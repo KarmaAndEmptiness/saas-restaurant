@@ -479,6 +479,19 @@ void RestfulTenantCtrlBase::create(const HttpRequestPtr &req,
             std::make_shared<std::function<void(const HttpResponsePtr &)>>(
                 std::move(callback));
         drogon::orm::Mapper<Tenant> mapper(dbClientPtr);
+        auto criteria = drogon::orm::Criteria(
+                            "tenant_name", object.getValueOfTenantName()) &&
+                        drogon::orm::Criteria("is_deleted", 0);
+        if (!mapper.findBy(criteria).empty())
+        {
+            Json::Value ret;
+            ret["code"] = k400BadRequest;
+            ret["message"] = "Tenant name already exists";
+            auto resp = HttpResponse::newHttpJsonResponse(ret);
+            callback(resp);
+            return;
+        }
+
         mapper.insert(
             object,
             [req, callbackPtr, this](Tenant newObject)
