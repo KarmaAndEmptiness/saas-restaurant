@@ -59,6 +59,8 @@ class Dish
         static const std::string _status;
         static const std::string _sort_order;
         static const std::string _is_deleted;
+        static const std::string _created_at;
+        static const std::string _updated_at;
     };
 
     static const int primaryKeyNumber;
@@ -224,8 +226,26 @@ class Dish
     void setIsDeleted(const int8_t &pIsDeleted) noexcept;
     void setIsDeletedToNull() noexcept;
 
+    /**  For column created_at  */
+    ///Get the value of the column created_at, returns the default value if the column is null
+    const ::trantor::Date &getValueOfCreatedAt() const noexcept;
+    ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
+    const std::shared_ptr<::trantor::Date> &getCreatedAt() const noexcept;
+    ///Set the value of the column created_at
+    void setCreatedAt(const ::trantor::Date &pCreatedAt) noexcept;
+    void setCreatedAtToNull() noexcept;
 
-    static size_t getColumnNumber() noexcept {  return 12;  }
+    /**  For column updated_at  */
+    ///Get the value of the column updated_at, returns the default value if the column is null
+    const ::trantor::Date &getValueOfUpdatedAt() const noexcept;
+    ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
+    const std::shared_ptr<::trantor::Date> &getUpdatedAt() const noexcept;
+    ///Set the value of the column updated_at
+    void setUpdatedAt(const ::trantor::Date &pUpdatedAt) noexcept;
+    void setUpdatedAtToNull() noexcept;
+
+
+    static size_t getColumnNumber() noexcept {  return 14;  }
     static const std::string &getColumnName(size_t index) noexcept(false);
 
     Json::Value toJson() const;
@@ -270,6 +290,8 @@ class Dish
     std::shared_ptr<std::string> status_;
     std::shared_ptr<int32_t> sortOrder_;
     std::shared_ptr<int8_t> isDeleted_;
+    std::shared_ptr<::trantor::Date> createdAt_;
+    std::shared_ptr<::trantor::Date> updatedAt_;
     struct MetaData
     {
         const std::string colName_;
@@ -281,7 +303,7 @@ class Dish
         const bool notNull_;
     };
     static const std::vector<MetaData> metaData_;
-    bool dirtyFlag_[12]={ false };
+    bool dirtyFlag_[14]={ false };
   public:
     static const std::string &sqlForFindingByPrimaryKey()
     {
@@ -356,6 +378,18 @@ class Dish
             sql += "is_deleted,";
             ++parametersCount;
         }
+        sql += "created_at,";
+        ++parametersCount;
+        if(!dirtyFlag_[12])
+        {
+            needSelection=true;
+        }
+        sql += "updated_at,";
+        ++parametersCount;
+        if(!dirtyFlag_[13])
+        {
+            needSelection=true;
+        }
         needSelection=true;
         if(parametersCount > 0)
         {
@@ -420,6 +454,24 @@ class Dish
         {
             sql.append("?,");
 
+        }
+        if(dirtyFlag_[12])
+        {
+            sql.append("?,");
+
+        }
+        else
+        {
+            sql +="default,";
+        }
+        if(dirtyFlag_[13])
+        {
+            sql.append("?,");
+
+        }
+        else
+        {
+            sql +="default,";
         }
         if(parametersCount > 0)
         {

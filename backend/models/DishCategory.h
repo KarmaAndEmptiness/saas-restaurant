@@ -53,6 +53,7 @@ class DishCategory
         static const std::string _category_name;
         static const std::string _created_at;
         static const std::string _sort_order;
+        static const std::string _is_deleted;
     };
 
     static const int primaryKeyNumber;
@@ -158,8 +159,17 @@ class DishCategory
     void setSortOrder(const int32_t &pSortOrder) noexcept;
     void setSortOrderToNull() noexcept;
 
+    /**  For column is_deleted  */
+    ///Get the value of the column is_deleted, returns the default value if the column is null
+    const int8_t &getValueOfIsDeleted() const noexcept;
+    ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
+    const std::shared_ptr<int8_t> &getIsDeleted() const noexcept;
+    ///Set the value of the column is_deleted
+    void setIsDeleted(const int8_t &pIsDeleted) noexcept;
+    void setIsDeletedToNull() noexcept;
 
-    static size_t getColumnNumber() noexcept {  return 6;  }
+
+    static size_t getColumnNumber() noexcept {  return 7;  }
     static const std::string &getColumnName(size_t index) noexcept(false);
 
     Json::Value toJson() const;
@@ -202,6 +212,7 @@ class DishCategory
     std::shared_ptr<std::string> categoryName_;
     std::shared_ptr<::trantor::Date> createdAt_;
     std::shared_ptr<int32_t> sortOrder_;
+    std::shared_ptr<int8_t> isDeleted_;
     struct MetaData
     {
         const std::string colName_;
@@ -213,7 +224,7 @@ class DishCategory
         const bool notNull_;
     };
     static const std::vector<MetaData> metaData_;
-    bool dirtyFlag_[6]={ false };
+    bool dirtyFlag_[7]={ false };
   public:
     static const std::string &sqlForFindingByPrimaryKey()
     {
@@ -248,14 +259,20 @@ class DishCategory
             sql += "category_name,";
             ++parametersCount;
         }
-        if(dirtyFlag_[4])
+        sql += "created_at,";
+        ++parametersCount;
+        if(!dirtyFlag_[4])
         {
-            sql += "created_at,";
-            ++parametersCount;
+            needSelection=true;
         }
         if(dirtyFlag_[5])
         {
             sql += "sort_order,";
+            ++parametersCount;
+        }
+        if(dirtyFlag_[6])
+        {
+            sql += "is_deleted,";
             ++parametersCount;
         }
         needSelection=true;
@@ -288,7 +305,16 @@ class DishCategory
             sql.append("?,");
 
         }
+        else
+        {
+            sql +="default,";
+        }
         if(dirtyFlag_[5])
+        {
+            sql.append("?,");
+
+        }
+        if(dirtyFlag_[6])
         {
             sql.append("?,");
 

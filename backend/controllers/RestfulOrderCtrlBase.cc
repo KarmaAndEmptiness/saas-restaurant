@@ -429,7 +429,7 @@ RestfulOrderCtrlBase::RestfulOrderCtrlBase()
           "user_id",
           "total_amount",
           "discount_ammout",
-          "payment_method_id",
+          "payment_method",
           "payment_status",
           "order_status",
           "delivery_address",
@@ -452,7 +452,7 @@ RestfulOrderCtrlBase::RestfulOrderCtrlBase()
         "user_id", // the alias for the user_id column.
         "total_amount", // the alias for the total_amount column.
         "discount_ammout", // the alias for the discount_ammout column.
-        "payment_method_id", // the alias for the payment_method_id column.
+        "payment_method", // the alias for the payment_method column.
         "payment_status", // the alias for the payment_status column.
         "order_status", // the alias for the order_status column.
         "delivery_address", // the alias for the delivery_address column.

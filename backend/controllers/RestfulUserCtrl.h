@@ -26,7 +26,7 @@ public:
   ADD_METHOD_TO(RestfulUserCtrl::updateOne, "/api/user/{1}", Put, Options, "AuthFilter");
   ADD_METHOD_TO(RestfulUserCtrl::deleteOne, "/api/user/{1}", Delete, Options, "AuthFilter");
   ADD_METHOD_TO(RestfulUserCtrl::get, "/api/user", Get, Options, "AuthFilter");
-  ADD_METHOD_TO(RestfulUserCtrl::create, "/api/user", Post, Options, "AuthFilter");
+  ADD_METHOD_TO(RestfulUserCtrl::create, "/api/user", Post, Options), "AuthFilter";
   // ADD_METHOD_TO(RestfulUserCtrl::update,"/api/user",Put,Options,"AuthFilter");
   METHOD_LIST_END
 

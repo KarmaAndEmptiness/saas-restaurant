@@ -55,6 +55,8 @@ class Branch
         static const std::string _status;
         static const std::string _opening_hours;
         static const std::string _capacity;
+        static const std::string _rate;
+        static const std::string _last_check;
         static const std::string _created_at;
         static const std::string _updated_at;
         static const std::string _is_deleted;
@@ -194,6 +196,25 @@ class Branch
     void setCapacity(const uint32_t &pCapacity) noexcept;
     void setCapacityToNull() noexcept;
 
+    /**  For column rate  */
+    ///Get the value of the column rate, returns the default value if the column is null
+    const std::string &getValueOfRate() const noexcept;
+    ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
+    const std::shared_ptr<std::string> &getRate() const noexcept;
+    ///Set the value of the column rate
+    void setRate(const std::string &pRate) noexcept;
+    void setRate(std::string &&pRate) noexcept;
+    void setRateToNull() noexcept;
+
+    /**  For column last_check  */
+    ///Get the value of the column last_check, returns the default value if the column is null
+    const ::trantor::Date &getValueOfLastCheck() const noexcept;
+    ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
+    const std::shared_ptr<::trantor::Date> &getLastCheck() const noexcept;
+    ///Set the value of the column last_check
+    void setLastCheck(const ::trantor::Date &pLastCheck) noexcept;
+    void setLastCheckToNull() noexcept;
+
     /**  For column created_at  */
     ///Get the value of the column created_at, returns the default value if the column is null
     const ::trantor::Date &getValueOfCreatedAt() const noexcept;
@@ -222,7 +243,7 @@ class Branch
     void setIsDeletedToNull() noexcept;
 
 
-    static size_t getColumnNumber() noexcept {  return 12;  }
+    static size_t getColumnNumber() noexcept {  return 14;  }
     static const std::string &getColumnName(size_t index) noexcept(false);
 
     Json::Value toJson() const;
@@ -260,6 +281,8 @@ class Branch
     std::shared_ptr<std::string> status_;
     std::shared_ptr<std::string> openingHours_;
     std::shared_ptr<uint32_t> capacity_;
+    std::shared_ptr<std::string> rate_;
+    std::shared_ptr<::trantor::Date> lastCheck_;
     std::shared_ptr<::trantor::Date> createdAt_;
     std::shared_ptr<::trantor::Date> updatedAt_;
     std::shared_ptr<int8_t> isDeleted_;
@@ -274,7 +297,7 @@ class Branch
         const bool notNull_;
     };
     static const std::vector<MetaData> metaData_;
-    bool dirtyFlag_[12]={ false };
+    bool dirtyFlag_[14]={ false };
   public:
     static const std::string &sqlForFindingByPrimaryKey()
     {
@@ -334,19 +357,30 @@ class Branch
             sql += "capacity,";
             ++parametersCount;
         }
-        sql += "created_at,";
-        ++parametersCount;
-        if(!dirtyFlag_[9])
+        if(dirtyFlag_[9])
         {
-            needSelection=true;
+            sql += "rate,";
+            ++parametersCount;
         }
-        sql += "updated_at,";
+        sql += "last_check,";
         ++parametersCount;
         if(!dirtyFlag_[10])
         {
             needSelection=true;
         }
-        if(dirtyFlag_[11])
+        sql += "created_at,";
+        ++parametersCount;
+        if(!dirtyFlag_[11])
+        {
+            needSelection=true;
+        }
+        sql += "updated_at,";
+        ++parametersCount;
+        if(!dirtyFlag_[12])
+        {
+            needSelection=true;
+        }
+        if(dirtyFlag_[13])
         {
             sql += "is_deleted,";
             ++parametersCount;
@@ -406,10 +440,6 @@ class Branch
             sql.append("?,");
 
         }
-        else
-        {
-            sql +="default,";
-        }
         if(dirtyFlag_[10])
         {
             sql.append("?,");
@@ -420,6 +450,24 @@ class Branch
             sql +="default,";
         }
         if(dirtyFlag_[11])
+        {
+            sql.append("?,");
+
+        }
+        else
+        {
+            sql +="default,";
+        }
+        if(dirtyFlag_[12])
+        {
+            sql.append("?,");
+
+        }
+        else
+        {
+            sql +="default,";
+        }
+        if(dirtyFlag_[13])
         {
             sql.append("?,");
 

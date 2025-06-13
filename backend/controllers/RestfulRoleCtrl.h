@@ -27,7 +27,7 @@ public:
   ADD_METHOD_TO(RestfulRoleCtrl::deleteOne, "/api/role/{1}", Delete, Options, "AuthFilter");
   ADD_METHOD_TO(RestfulRoleCtrl::get, "/api/role", Get, Options, "AuthFilter");
   ADD_METHOD_TO(RestfulRoleCtrl::create, "/api/role", Post, Options, "AuthFilter");
-  // ADD_METHOD_TO(RestfulRoleCtrl::update,"/api/role",Put,Options);
+  // ADD_METHOD_TO(RestfulRoleCtrl::update,"/api/role",Put,Options,"AuthFilter");
   METHOD_LIST_END
 
   void getOne(const HttpRequestPtr &req,

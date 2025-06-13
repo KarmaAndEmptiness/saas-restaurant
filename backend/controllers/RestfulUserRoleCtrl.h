@@ -23,21 +23,20 @@ class RestfulUserRoleCtrl : public drogon::HttpController<RestfulUserRoleCtrl>, 
 public:
   METHOD_LIST_BEGIN
   ADD_METHOD_TO(RestfulUserRoleCtrl::getOne, "/api/userrole/{1}", Get, Options, "AuthFilter");
-  ADD_METHOD_TO(RestfulUserRoleCtrl::getOneByUserId, "/api/userrole/user/{1}", Get, Options, "AuthFilter");
   ADD_METHOD_TO(RestfulUserRoleCtrl::updateOne, "/api/userrole/{1}", Put, Options, "AuthFilter");
   ADD_METHOD_TO(RestfulUserRoleCtrl::deleteOne, "/api/userrole/{1}", Delete, Options, "AuthFilter");
   ADD_METHOD_TO(RestfulUserRoleCtrl::get, "/api/userrole", Get, Options, "AuthFilter");
   ADD_METHOD_TO(RestfulUserRoleCtrl::create, "/api/userrole", Post, Options, "AuthFilter");
-  // ADD_METHOD_TO(RestfulUserRoleCtrl::update,"/api/userrole",Put,Options,"AuthFilter");
+  ADD_METHOD_TO(RestfulUserRoleCtrl::getRolesByUserId, "/api/userrole/user/{1}", Get, Options, "AuthFilter");
+  // ADD_METHOD_TO(RestfulUserRoleCtrl::update,"/api/userrole",Put,Options);
   METHOD_LIST_END
 
   void getOne(const HttpRequestPtr &req,
               std::function<void(const HttpResponsePtr &)> &&callback,
               UserRole::PrimaryKeyType &&id);
-
-  void getOneByUserId(const HttpRequestPtr &req,
-                      std::function<void(const HttpResponsePtr &)> &&callback,
-                      std::string &&userId);
+  void getRolesByUserId(const HttpRequestPtr &req,
+                        std::function<void(const HttpResponsePtr &)> &&callback,
+                        std::string &&id);
   void updateOne(const HttpRequestPtr &req,
                  std::function<void(const HttpResponsePtr &)> &&callback,
                  UserRole::PrimaryKeyType &&id);

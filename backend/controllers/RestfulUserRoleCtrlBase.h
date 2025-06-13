@@ -25,13 +25,15 @@ public:
   void getOne(const HttpRequestPtr &req,
               std::function<void(const HttpResponsePtr &)> &&callback,
               UserRole::PrimaryKeyType &&id);
-
-  void getOneByUserId(const HttpRequestPtr &req,
-                      std::function<void(const HttpResponsePtr &)> &&callback,
-                      std::string &&userId);
+  void getRolesByUserId(const HttpRequestPtr &req,
+                        std::function<void(const HttpResponsePtr &)> &&callback,
+                        std::string &&id);
   void updateOne(const HttpRequestPtr &req,
-                 std::function<void(const HttpResponsePtr &)> &&callback, UserRole::PrimaryKeyType &&id);
-  void deleteOne(const HttpRequestPtr &req, std::function<void(const HttpResponsePtr &)> &&callback, UserRole::PrimaryKeyType &&id);
+                 std::function<void(const HttpResponsePtr &)> &&callback,
+                 UserRole::PrimaryKeyType &&id);
+  void deleteOne(const HttpRequestPtr &req,
+                 std::function<void(const HttpResponsePtr &)> &&callback,
+                 UserRole::PrimaryKeyType &&id);
   void get(const HttpRequestPtr &req,
            std::function<void(const HttpResponsePtr &)> &&callback);
   void create(const HttpRequestPtr &req,

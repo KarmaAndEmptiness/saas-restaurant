@@ -26,10 +26,7 @@ void RestfulUserCtrlBase::getOne(const HttpRequestPtr &req,
             Json::Value ret;
             ret["code"] = k200OK;
             ret["message"] = "ok";
-            if (r.getValueOfIsDeleted())
-                ret["data"] = Json::Value::null;
-            else
-                ret["data"] = makeJson(req, r);
+            ret["data"] = makeJson(req, r);
             (*callbackPtr)(HttpResponse::newHttpJsonResponse(ret));
         },
         [callbackPtr](const DrogonDbException &e)
@@ -37,6 +34,9 @@ void RestfulUserCtrlBase::getOne(const HttpRequestPtr &req,
             const drogon::orm::UnexpectedRows *s = dynamic_cast<const drogon::orm::UnexpectedRows *>(&e.base());
             if (s)
             {
+                Json::Value ret;
+                ret["code"] = k404NotFound;
+                ret["message"] = "the user is not found";
                 auto resp = HttpResponse::newHttpResponse();
                 resp->setStatusCode(k404NotFound);
                 (*callbackPtr)(resp);
@@ -55,7 +55,6 @@ void RestfulUserCtrlBase::updateOne(const HttpRequestPtr &req,
                                     std::function<void(const HttpResponsePtr &)> &&callback,
                                     User::PrimaryKeyType &&id)
 {
-    std::cout << "id: " << id << std::endl;
     auto jsonPtr = req->jsonObject();
     if (!jsonPtr)
     {
@@ -136,10 +135,9 @@ void RestfulUserCtrlBase::updateOne(const HttpRequestPtr &req,
         object,
         [callbackPtr](const size_t count)
         {
-            Json::Value ret;
             if (count == 1)
             {
-
+                Json::Value ret;
                 ret["code"] = k200OK;
                 ret["message"] = "ok";
                 auto resp = HttpResponse::newHttpJsonResponse(ret);
@@ -147,6 +145,7 @@ void RestfulUserCtrlBase::updateOne(const HttpRequestPtr &req,
             }
             else if (count == 0)
             {
+                Json::Value ret;
                 ret["code"] = k404NotFound;
                 ret["message"] = "No resources are updated";
                 auto resp = HttpResponse::newHttpJsonResponse(ret);
@@ -155,6 +154,7 @@ void RestfulUserCtrlBase::updateOne(const HttpRequestPtr &req,
             else
             {
                 LOG_FATAL << "More than one resource is updated: " << count;
+                Json::Value ret;
                 ret["code"] = k500InternalServerError;
                 ret["message"] = "database error";
                 auto resp = HttpResponse::newHttpJsonResponse(ret);
@@ -261,8 +261,10 @@ void RestfulUserCtrlBase::get(const HttpRequestPtr &req,
         }
         catch (...)
         {
-            auto resp = HttpResponse::newHttpResponse();
-            resp->setStatusCode(k400BadRequest);
+            Json::Value ret;
+            ret["code"] = k400BadRequest;
+            ret["message"] = "Invalid offset parameter";
+            auto resp = HttpResponse::newHttpJsonResponse(ret);
             callback(resp);
             return;
         }
@@ -277,8 +279,10 @@ void RestfulUserCtrlBase::get(const HttpRequestPtr &req,
         }
         catch (...)
         {
-            auto resp = HttpResponse::newHttpResponse();
-            resp->setStatusCode(k400BadRequest);
+            Json::Value ret;
+            ret["code"] = k400BadRequest;
+            ret["message"] = "Invalid limit parameter";
+            auto resp = HttpResponse::newHttpJsonResponse(ret);
             callback(resp);
             return;
         }
@@ -294,14 +298,18 @@ void RestfulUserCtrlBase::get(const HttpRequestPtr &req,
             auto criteria = makeCriteria((*jsonPtr)["filter"]);
             mapper.findBy(criteria, [req, callbackPtr, this](const std::vector<User> &v)
                           {
+                    Json::Value list;
                     Json::Value ret;
-                    ret.resize(0);
+                    list.resize(0);
                     for (auto &obj : v)
                     {
                         if(obj.getValueOfIsDeleted())
                         continue;
-                        ret.append(makeJson(req, obj));
+                        list.append(makeJson(req, obj));
                     }
+                    ret["code"] = k200OK;
+                    ret["message"] = "ok";
+                    ret["data"] = list;
                     (*callbackPtr)(HttpResponse::newHttpJsonResponse(ret)); }, [callbackPtr](const DrogonDbException &e)
                           { 
                     LOG_ERROR << e.base().what();
@@ -327,6 +335,7 @@ void RestfulUserCtrlBase::get(const HttpRequestPtr &req,
         mapper.findAll([req, callbackPtr, this](const std::vector<User> &v)
                        {
                 Json::Value list;
+                Json::Value ret;
                 list.resize(0);
                 for (auto &obj : v)
                 {
@@ -334,7 +343,6 @@ void RestfulUserCtrlBase::get(const HttpRequestPtr &req,
                         continue;
                     list.append(makeJson(req, obj));
                 }
-                Json::Value ret;
                 ret["code"] = k200OK;
                 ret["message"] = "ok";
                 ret["data"] = list;
@@ -408,11 +416,10 @@ void RestfulUserCtrlBase::create(const HttpRequestPtr &req,
                 std::move(callback));
         drogon::orm::Mapper<User> mapper(dbClientPtr);
 
-        auto criteria = drogon::orm::Criteria("username", object.getValueOfUsername()) && drogon::orm::Criteria("is_deleted", 0);
-
+        auto criteria = drogon::orm::Criteria("username", object.getValueOfUsername()) &&
+                        drogon::orm::Criteria("is_deleted", 0);
         std::vector<drogon_model::saas_restaurant::User> users = mapper.findBy(criteria);
-        std::cout << "users size: " << users.size() << std::endl;
-        if (users.size() > 0)
+        if (!users.empty())
         {
             Json::Value ret;
             ret["code"] = k400BadRequest;
@@ -428,8 +435,9 @@ void RestfulUserCtrlBase::create(const HttpRequestPtr &req,
                 Json::Value ret;
                 ret["code"] = k200OK;
                 ret["message"] = "ok";
+                ret["data"]["user_id"] = newObject.getPrimaryKey();
                 (*callbackPtr)(HttpResponse::newHttpJsonResponse(
-                    ret));
+                    makeJson(req, newObject)));
             },
             [callbackPtr](const DrogonDbException &e)
             {
@@ -446,7 +454,7 @@ void RestfulUserCtrlBase::create(const HttpRequestPtr &req,
         LOG_ERROR << e.what();
         Json::Value ret;
         ret["code"] = k400BadRequest;
-        ret["messsage"] = "Field type error";
+        ret["message"] = "Field type error";
         auto resp = HttpResponse::newHttpJsonResponse(ret);
         callback(resp);
         return;

@@ -23,30 +23,23 @@ void RestfulDishCtrlBase::getOne(const HttpRequestPtr &req,
         id,
         [req, callbackPtr, this](Dish r)
         {
-            Json::Value ret;
-            ret["code"] = k200OK;
-            ret["message"] = "ok";
-            ret["data"] = makeJson(req, r);
-            (*callbackPtr)(HttpResponse::newHttpJsonResponse(ret));
+            (*callbackPtr)(HttpResponse::newHttpJsonResponse(makeJson(req, r)));
         },
         [callbackPtr](const DrogonDbException &e)
         {
             const drogon::orm::UnexpectedRows *s = dynamic_cast<const drogon::orm::UnexpectedRows *>(&e.base());
             if (s)
             {
-
-                Json::Value ret;
-                ret["code"] = k404NotFound;
-                ret["message"] = "database error";
                 auto resp = HttpResponse::newHttpResponse();
+                resp->setStatusCode(k404NotFound);
                 (*callbackPtr)(resp);
                 return;
             }
             LOG_ERROR << e.base().what();
             Json::Value ret;
-            ret["code"] = k500InternalServerError;
-            ret["message"] = "database error";
+            ret["error"] = "database error";
             auto resp = HttpResponse::newHttpJsonResponse(ret);
+            resp->setStatusCode(k500InternalServerError);
             (*callbackPtr)(resp);
         });
 }
@@ -137,7 +130,6 @@ void RestfulDishCtrlBase::updateOne(const HttpRequestPtr &req,
         {
             if (count == 1)
             {
-
                 Json::Value ret;
                 ret["code"] = k200OK;
                 ret["message"] = "ok";
@@ -295,34 +287,28 @@ void RestfulDishCtrlBase::get(const HttpRequestPtr &req,
             auto criteria = makeCriteria((*jsonPtr)["filter"]);
             mapper.findBy(criteria, [req, callbackPtr, this](const std::vector<Dish> &v)
                           {
-                    Json::Value list;
                     Json::Value ret;
-                    list.resize(0);
+                    ret.resize(0);
                     for (auto &obj : v)
                     {
-                        if(obj.getValueOfIsDeleted())
-                            continue;
-                        list.append(makeJson(req, obj));
+                        ret.append(makeJson(req, obj));
                     }
-                ret["code"] = k200OK;
-                ret["message"] = "ok";
-                ret["data"]=list;
                     (*callbackPtr)(HttpResponse::newHttpJsonResponse(ret)); }, [callbackPtr](const DrogonDbException &e)
                           { 
                     LOG_ERROR << e.base().what();
                     Json::Value ret;
-                    ret["code"] = k500InternalServerError;
-                    ret["message"] = "database error";
+                    ret["error"] = "database error";
                     auto resp = HttpResponse::newHttpJsonResponse(ret);
+                    resp->setStatusCode(k500InternalServerError);
                     (*callbackPtr)(resp); });
         }
         catch (const std::exception &e)
         {
             LOG_ERROR << e.what();
             Json::Value ret;
-            ret["code"] = k400BadRequest;
             ret["error"] = e.what();
             auto resp = HttpResponse::newHttpJsonResponse(ret);
+            resp->setStatusCode(k400BadRequest);
             (*callbackPtr)(resp);
             return;
         }
@@ -340,17 +326,17 @@ void RestfulDishCtrlBase::get(const HttpRequestPtr &req,
                     continue;
                     list.append(makeJson(req, obj));
                 }
-                ret["code"] = k200OK;
-                ret["message"] = "ok";
+                ret["code"]=k200OK;
+                ret["message"]="ok";
                 ret["data"]=list;
                 (*callbackPtr)(HttpResponse::newHttpJsonResponse(ret)); },
                        [callbackPtr](const DrogonDbException &e)
                        {
                            LOG_ERROR << e.base().what();
                            Json::Value ret;
-                           ret["code"] = k500InternalServerError;
                            ret["error"] = "database error";
                            auto resp = HttpResponse::newHttpJsonResponse(ret);
+                           resp->setStatusCode(k500InternalServerError);
                            (*callbackPtr)(resp);
                        });
     }
@@ -366,7 +352,6 @@ void RestfulDishCtrlBase::create(const HttpRequestPtr &req,
         ret["code"] = k400BadRequest;
         ret["message"] = "No json object is found in the request";
         auto resp = HttpResponse::newHttpJsonResponse(ret);
-        resp->setStatusCode(k400BadRequest);
         callback(resp);
         return;
     }
@@ -375,7 +360,7 @@ void RestfulDishCtrlBase::create(const HttpRequestPtr &req,
     {
         Json::Value ret;
         ret["code"] = k400BadRequest;
-        ret["error"] = err;
+        ret["message"] = err;
         auto resp = HttpResponse::newHttpJsonResponse(ret);
         callback(resp);
         return;
@@ -386,7 +371,7 @@ void RestfulDishCtrlBase::create(const HttpRequestPtr &req,
         {
             Json::Value ret;
             ret["code"] = k400BadRequest;
-            ret["error"] = err;
+            ret["message"] = err;
             auto resp = HttpResponse::newHttpJsonResponse(ret);
             callback(resp);
             return;
@@ -398,7 +383,7 @@ void RestfulDishCtrlBase::create(const HttpRequestPtr &req,
         {
             Json::Value ret;
             ret["code"] = k400BadRequest;
-            ret["error"] = err;
+            ret["message"] = err;
             auto resp = HttpResponse::newHttpJsonResponse(ret);
             callback(resp);
             return;
@@ -420,8 +405,8 @@ void RestfulDishCtrlBase::create(const HttpRequestPtr &req,
                 Json::Value ret;
                 ret["code"] = k200OK;
                 ret["message"] = "ok";
-                (*callbackPtr)(HttpResponse::newHttpJsonResponse(
-                    ret));
+                ret["data"]["dish_id"] = newObject.getPrimaryKey();
+                (*callbackPtr)(HttpResponse::newHttpJsonResponse(ret));
             },
             [callbackPtr](const DrogonDbException &e)
             {
@@ -438,9 +423,8 @@ void RestfulDishCtrlBase::create(const HttpRequestPtr &req,
         LOG_ERROR << e.what();
         Json::Value ret;
         ret["code"] = k400BadRequest;
-        ret["error"] = "Field type error";
+        ret["message"] = "Field type error";
         auto resp = HttpResponse::newHttpJsonResponse(ret);
-        resp->setStatusCode(k400BadRequest);
         callback(resp);
         return;
     }
@@ -465,7 +449,9 @@ RestfulDishCtrlBase::RestfulDishCtrlBase()
                          "cover_img",
                          "status",
                          "sort_order",
-                         "is_deleted"})
+                         "is_deleted",
+                         "created_at",
+                         "updated_at"})
 {
     /**
      * The items in the vector are aliases of column names in the table.
@@ -484,6 +470,8 @@ RestfulDishCtrlBase::RestfulDishCtrlBase()
         "cover_img",        // the alias for the cover_img column.
         "status",           // the alias for the status column.
         "sort_order",       // the alias for the sort_order column.
-        "is_deleted"        // the alias for the is_deleted column.
+        "is_deleted",       // the alias for the is_deleted column.
+        "created_at",       // the alias for the created_at column.
+        "updated_at"        // the alias for the updated_at column.
     });
 }

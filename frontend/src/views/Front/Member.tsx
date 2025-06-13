@@ -1,18 +1,14 @@
-import { useState } from "react";
-
-interface MemberType {
-  id: string;
-  name: string;
-  phone: string;
-  level: "普通" | "白银" | "黄金" | "钻石";
-  points: number;
-  totalSpent: number;
-  joinDate: string;
-  lastVisit: string;
-  status: "活跃" | "非活跃" | "已禁用";
-  birthday?: string;
-  email?: string;
-}
+import { useEffect, useState } from "react";
+import {
+  getMembers,
+  getMemberLevel,
+  getMemberLevels,
+  createMember,
+  updateMember,
+  type MemberType,
+  type MemberLevelType,
+} from "@/apis/front/member";
+import { getUserInfo, getUsers, type UserInfo } from "@/apis/profile";
 
 interface ConsumptionRecord {
   id: string;
@@ -22,32 +18,7 @@ interface ConsumptionRecord {
   orderItems: string[];
 }
 
-const initialMembers: MemberType[] = [
-  {
-    id: "M001",
-    name: "张三",
-    phone: "13800138000",
-    level: "黄金",
-    points: 2500,
-    totalSpent: 15800,
-    joinDate: "2023-05-15",
-    lastVisit: "2024-01-15",
-    status: "活跃",
-    birthday: "1990-01-01",
-    email: "zhangsan@example.com",
-  },
-  {
-    id: "M002",
-    name: "李四",
-    phone: "13900139000",
-    level: "白银",
-    points: 1200,
-    totalSpent: 8500,
-    joinDate: "2023-08-20",
-    lastVisit: "2024-01-10",
-    status: "活跃",
-  },
-];
+const initialMembers: MemberType[] = [];
 
 const membershipLevels = {
   普通: { discount: 0.95, pointRate: 1, color: "gray" },
@@ -57,20 +28,31 @@ const membershipLevels = {
 };
 
 function Member() {
-  //@ts-ignore
   const [members, setMembers] = useState<MemberType[]>(initialMembers);
+  const [users, setUsers] = useState<UserInfo[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [levelFilter, setLevelFilter] = useState<string>("全部");
   const [statusFilter, setStatusFilter] = useState<string>("全部");
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState<MemberType | null>(null);
   const [showConsumptionHistory, setShowConsumptionHistory] = useState(false);
+  const [memberLevels, setMemberLevels] = useState<MemberLevelType[]>([]);
+  const [formData, setFormData] = useState({
+    user_id: 0,
+    name: "",
+    phone: "",
+    level_id: 1, // 默认普通会员
+    points: 0,
+    total_spent: "0",
+    status: "活跃",
+  });
+  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
 
   const filteredMembers = members.filter((member) => {
     const matchSearch =
-      member.name.includes(searchTerm) ||
-      member.phone.includes(searchTerm) ||
-      member.id.includes(searchTerm);
+      member.name?.includes(searchTerm) ||
+      member.phone?.includes(searchTerm) ||
+      `${member.member_id}`?.includes(searchTerm);
     const matchLevel = levelFilter === "全部" || member.level === levelFilter;
     const matchStatus =
       statusFilter === "全部" || member.status === statusFilter;
@@ -112,6 +94,139 @@ function Member() {
       orderItems: ["粤式烧鸭", "清炒时蔬"],
     },
   ];
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        // 1. 首先获取所有必要的数据
+        const [membersData, levelsData, usersData] = await Promise.all([
+          getMembers(),
+          getMemberLevels(),
+          getUsers(),
+        ]);
+
+        // 2. 设置会员等级和用户数据
+        setMemberLevels(levelsData);
+        setUsers(usersData);
+
+        // 3. 处理会员数据
+        const processedMembers = await Promise.all(
+          membersData.map(async (member: MemberType) => {
+            const user =
+              usersData.find((u) => u.user_id === member.user_id) ||
+              (await getUserInfo(member.user_id));
+            const level =
+              levelsData.find((l) => l.level_id === member.level_id) ||
+              (await getMemberLevel(member.level_id));
+
+            return {
+              ...member,
+              name: user.username,
+              phone: user.phone,
+              level: level.level_name,
+            };
+          })
+        );
+
+        // 4. 更新会员列表
+        console.log("Processed members:", processedMembers); // 调试用
+        setMembers(processedMembers);
+      } catch (error) {
+        console.error("获取数据失败:", error);
+      }
+    }
+
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    if (selectedMember) {
+      setFormData({
+        user_id: selectedMember.user_id,
+        name: selectedMember.name || "",
+        phone: selectedMember.phone || "",
+        level_id: selectedMember.level_id,
+        points: selectedMember.points,
+        total_spent: selectedMember.total_spent,
+        status: selectedMember.status,
+      });
+    } else {
+      setFormData({
+        user_id: 0,
+        name: "",
+        phone: "",
+        level_id: 1,
+        points: 0,
+        total_spent: "0",
+        status: "活跃",
+      });
+    }
+  }, [selectedMember]);
+
+  const validateForm = () => {
+    const errors: { [key: string]: string } = {};
+    if (!formData.user_id) errors.user_id = "请选择用户";
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+
+    try {
+      const selectedUser = users.find(
+        (user) => user.user_id === formData.user_id
+      );
+      if (!selectedUser) {
+        setFormErrors({ user_id: "请选择有效用户" });
+        return;
+      }
+
+      if (selectedMember) {
+        await updateMember(selectedMember.member_id, {
+          ...selectedMember,
+          ...formData,
+          user_id: selectedUser.user_id,
+        });
+      } else {
+        await createMember({
+          ...formData,
+          tenant_id: 1,
+          user_id: selectedUser.user_id,
+          is_deleted: 0,
+        } as MemberType);
+      }
+
+      const updatedMembers = await getMembers();
+      const processedMembers = await Promise.all(
+        updatedMembers.map(async (member: MemberType) => {
+          const user = await getUserInfo(member.user_id);
+          const memberLevel = await getMemberLevel(member.level_id);
+          return {
+            ...member,
+            name: user.username,
+            phone: user.phone,
+            level: memberLevel.level_name,
+          };
+        })
+      );
+      setMembers(processedMembers);
+
+      setShowAddModal(false);
+      setSelectedMember(null);
+      setFormData({
+        user_id: 0,
+        name: "",
+        phone: "",
+        level_id: 1,
+        points: 0,
+        total_spent: "0",
+        status: "活跃",
+      });
+    } catch (error) {
+      console.error("保存会员失败:", error);
+    }
+  };
 
   return (
     <div className="p-6">
@@ -204,7 +319,7 @@ function Member() {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {filteredMembers.map((member) => (
-              <tr key={member.id} className="hover:bg-gray-50">
+              <tr key={member.member_id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <div>
@@ -214,7 +329,9 @@ function Member() {
                       <div className="text-sm text-gray-500">
                         {member.phone}
                       </div>
-                      <div className="text-xs text-gray-400">{member.id}</div>
+                      <div className="text-xs text-gray-400">
+                        {member.member_id}
+                      </div>
                     </div>
                   </div>
                 </td>
@@ -232,10 +349,10 @@ function Member() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">
-                    总消费: ¥{member.totalSpent}
+                    总消费: ¥{member.total_spent}
                   </div>
                   <div className="text-xs text-gray-500">
-                    最近光临: {member.lastVisit}
+                    创建时间: {member.created_at}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -285,6 +402,7 @@ function Member() {
                 onClick={() => {
                   setShowAddModal(false);
                   setSelectedMember(null);
+                  setFormErrors({});
                 }}
                 className="text-gray-400 hover:text-gray-500"
               >
@@ -307,13 +425,38 @@ function Member() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  姓名
+                  选择用户
                 </label>
-                <input
-                  type="text"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  defaultValue={selectedMember?.name}
-                />
+                <select
+                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 ${
+                    formErrors.user_id ? "border-red-500" : ""
+                  }`}
+                  value={formData.user_id || ""}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      user_id: Number(e.target.value),
+                      name:
+                        users.find((u) => u.user_id === Number(e.target.value))
+                          ?.username || "",
+                      phone:
+                        users.find((u) => u.user_id === Number(e.target.value))
+                          ?.phone || "",
+                    })
+                  }
+                >
+                  <option value="">请选择用户</option>
+                  {users.map((user) => (
+                    <option key={user.user_id} value={user.user_id}>
+                      {user.username} ({user.phone})
+                    </option>
+                  ))}
+                </select>
+                {formErrors.user_id && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {formErrors.user_id}
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
@@ -321,11 +464,58 @@ function Member() {
                 </label>
                 <input
                   type="text"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  defaultValue={selectedMember?.phone}
+                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 ${
+                    formErrors.phone ? "border-red-500" : ""
+                  }`}
+                  value={formData.phone}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phone: e.target.value })
+                  }
+                  disabled
                 />
+                {formErrors.phone && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {formErrors.phone}
+                  </p>
+                )}
               </div>
-              {/* Add more form fields as needed */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  会员等级
+                </label>
+                <select
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  value={formData.level_id}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      level_id: Number(e.target.value),
+                    })
+                  }
+                >
+                  {memberLevels.map((level) => (
+                    <option key={level.level_id} value={level.level_id}>
+                      {level.level_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  状态
+                </label>
+                <select
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  value={formData.status}
+                  onChange={(e) =>
+                    setFormData({ ...formData, status: e.target.value })
+                  }
+                >
+                  <option value="活跃">活跃</option>
+                  <option value="非活跃">非活跃</option>
+                  <option value="已禁用">已禁用</option>
+                </select>
+              </div>
             </div>
 
             <div className="mt-6 flex justify-end space-x-3">
@@ -333,12 +523,16 @@ function Member() {
                 onClick={() => {
                   setShowAddModal(false);
                   setSelectedMember(null);
+                  setFormErrors({});
                 }}
                 className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
               >
                 取消
               </button>
-              <button className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+              <button
+                onClick={handleSubmit}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+              >
                 保存
               </button>
             </div>

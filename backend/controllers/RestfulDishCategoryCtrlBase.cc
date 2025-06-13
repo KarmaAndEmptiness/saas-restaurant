@@ -34,11 +34,10 @@ void RestfulDishCategoryCtrlBase::getOne(const HttpRequestPtr &req,
             const drogon::orm::UnexpectedRows *s = dynamic_cast<const drogon::orm::UnexpectedRows *>(&e.base());
             if (s)
             {
-
                 Json::Value ret;
                 ret["code"] = k404NotFound;
                 ret["message"] = "not found";
-                auto resp = HttpResponse::newHttpResponse();
+                auto resp = HttpResponse::newHttpJsonResponse(ret);
                 (*callbackPtr)(resp);
                 return;
             }
@@ -59,9 +58,9 @@ void RestfulDishCategoryCtrlBase::updateOne(const HttpRequestPtr &req,
     if (!jsonPtr)
     {
         Json::Value ret;
-        ret["error"] = "No json object is found in the request";
+        ret["code"] = k400BadRequest;
+        ret["message"] = "No json object is found in the request";
         auto resp = HttpResponse::newHttpJsonResponse(ret);
-        resp->setStatusCode(k400BadRequest);
         callback(resp);
         return;
     }
@@ -70,9 +69,9 @@ void RestfulDishCategoryCtrlBase::updateOne(const HttpRequestPtr &req,
     if (!doCustomValidations(*jsonPtr, err))
     {
         Json::Value ret;
-        ret["error"] = err;
+        ret["code"] = k400BadRequest;
+        ret["message"] = err;
         auto resp = HttpResponse::newHttpJsonResponse(ret);
-        resp->setStatusCode(k400BadRequest);
         callback(resp);
         return;
     }
@@ -83,9 +82,9 @@ void RestfulDishCategoryCtrlBase::updateOne(const HttpRequestPtr &req,
             if (!DishCategory::validateMasqueradedJsonForUpdate(*jsonPtr, masqueradingVector(), err))
             {
                 Json::Value ret;
-                ret["error"] = err;
+                ret["code"] = k400BadRequest;
+                ret["message"] = err;
                 auto resp = HttpResponse::newHttpJsonResponse(ret);
-                resp->setStatusCode(k400BadRequest);
                 callback(resp);
                 return;
             }
@@ -96,9 +95,9 @@ void RestfulDishCategoryCtrlBase::updateOne(const HttpRequestPtr &req,
             if (!DishCategory::validateJsonForUpdate(*jsonPtr, err))
             {
                 Json::Value ret;
-                ret["error"] = err;
+                ret["code"] = k400BadRequest;
+                ret["message"] = err;
                 auto resp = HttpResponse::newHttpJsonResponse(ret);
-                resp->setStatusCode(k400BadRequest);
                 callback(resp);
                 return;
             }
@@ -109,18 +108,18 @@ void RestfulDishCategoryCtrlBase::updateOne(const HttpRequestPtr &req,
     {
         LOG_ERROR << e.what();
         Json::Value ret;
-        ret["error"] = "Field type error";
+        ret["code"] = k400BadRequest;
+        ret["message"] = "Field type error";
         auto resp = HttpResponse::newHttpJsonResponse(ret);
-        resp->setStatusCode(k400BadRequest);
         callback(resp);
         return;
     }
     if (object.getPrimaryKey() != id)
     {
         Json::Value ret;
-        ret["error"] = "Bad primary key";
+        ret["code"] = k400BadRequest;
+        ret["message"] = "Bad primary key";
         auto resp = HttpResponse::newHttpJsonResponse(ret);
-        resp->setStatusCode(k400BadRequest);
         callback(resp);
         return;
     }
@@ -137,7 +136,6 @@ void RestfulDishCategoryCtrlBase::updateOne(const HttpRequestPtr &req,
         {
             if (count == 1)
             {
-
                 Json::Value ret;
                 ret["code"] = k200OK;
                 ret["message"] = "ok";
@@ -295,9 +293,8 @@ void RestfulDishCategoryCtrlBase::get(const HttpRequestPtr &req,
             auto criteria = makeCriteria((*jsonPtr)["filter"]);
             mapper.findBy(criteria, [req, callbackPtr, this](const std::vector<DishCategory> &v)
                           {
-                    Json::Value list;
                     Json::Value ret;
-                    list.resize(0);
+                    ret.resize(0);
                     for (auto &obj : v)
                     {
                         ret.append(makeJson(req, obj));
@@ -306,18 +303,18 @@ void RestfulDishCategoryCtrlBase::get(const HttpRequestPtr &req,
                           { 
                     LOG_ERROR << e.base().what();
                     Json::Value ret;
-                    ret["code"] = k500InternalServerError;
-                    ret["message"] = "database error";
+                    ret["error"] = "database error";
                     auto resp = HttpResponse::newHttpJsonResponse(ret);
+                    resp->setStatusCode(k500InternalServerError);
                     (*callbackPtr)(resp); });
         }
         catch (const std::exception &e)
         {
             LOG_ERROR << e.what();
             Json::Value ret;
-            ret["code"] = k400BadRequest;
-            ret["message"] = e.what();
+            ret["error"] = e.what();
             auto resp = HttpResponse::newHttpJsonResponse(ret);
+            resp->setStatusCode(k400BadRequest);
             (*callbackPtr)(resp);
             return;
         }
@@ -326,12 +323,18 @@ void RestfulDishCategoryCtrlBase::get(const HttpRequestPtr &req,
     {
         mapper.findAll([req, callbackPtr, this](const std::vector<DishCategory> &v)
                        {
+                Json::Value list;
                 Json::Value ret;
-                ret.resize(0);
+                list.resize(0);
                 for (auto &obj : v)
                 {
-                    ret.append(makeJson(req, obj));
+                    if(obj.getValueOfIsDeleted())
+                    continue;
+                    list.append(makeJson(req, obj));
                 }
+                ret["code"]=k200OK;
+                ret["message"]="ok";
+                ret["data"]=list;
                 (*callbackPtr)(HttpResponse::newHttpJsonResponse(ret)); },
                        [callbackPtr](const DrogonDbException &e)
                        {
@@ -386,7 +389,7 @@ void RestfulDishCategoryCtrlBase::create(const HttpRequestPtr &req,
         {
             Json::Value ret;
             ret["code"] = k400BadRequest;
-            ret["messge"] = err;
+            ret["message"] = err;
             auto resp = HttpResponse::newHttpJsonResponse(ret);
             callback(resp);
             return;
@@ -405,11 +408,8 @@ void RestfulDishCategoryCtrlBase::create(const HttpRequestPtr &req,
             object,
             [req, callbackPtr, this](DishCategory newObject)
             {
-                Json::Value ret;
-                ret["code"] = k200OK;
-                ret["message"] = "ok";
                 (*callbackPtr)(HttpResponse::newHttpJsonResponse(
-                    ret));
+                    makeJson(req, newObject)));
             },
             [callbackPtr](const DrogonDbException &e)
             {
@@ -428,6 +428,7 @@ void RestfulDishCategoryCtrlBase::create(const HttpRequestPtr &req,
         ret["code"] = k400BadRequest;
         ret["message"] = "Field type error";
         auto resp = HttpResponse::newHttpJsonResponse(ret);
+        resp->setStatusCode(k400BadRequest);
         callback(resp);
         return;
     }
@@ -446,7 +447,8 @@ RestfulDishCategoryCtrlBase::RestfulDishCategoryCtrlBase()
                          "parent_id",
                          "category_name",
                          "created_at",
-                         "sort_order"})
+                         "sort_order",
+                         "is_deleted"})
 {
     /**
      * The items in the vector are aliases of column names in the table.
@@ -459,6 +461,7 @@ RestfulDishCategoryCtrlBase::RestfulDishCategoryCtrlBase()
         "parent_id",     // the alias for the parent_id column.
         "category_name", // the alias for the category_name column.
         "created_at",    // the alias for the created_at column.
-        "sort_order"     // the alias for the sort_order column.
+        "sort_order",    // the alias for the sort_order column.
+        "is_deleted"     // the alias for the is_deleted column.
     });
 }

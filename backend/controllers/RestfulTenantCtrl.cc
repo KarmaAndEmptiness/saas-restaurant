@@ -8,7 +8,6 @@
 #include "RestfulTenantCtrl.h"
 #include <string>
 
-
 void RestfulTenantCtrl::getOne(const HttpRequestPtr &req,
                                std::function<void(const HttpResponsePtr &)> &&callback,
                                Tenant::PrimaryKeyType &&id)
@@ -16,6 +15,12 @@ void RestfulTenantCtrl::getOne(const HttpRequestPtr &req,
     RestfulTenantCtrlBase::getOne(req, std::move(callback), std::move(id));
 }
 
+void RestfulTenantCtrl::getToken(const HttpRequestPtr &req,
+                                 std::function<void(const HttpResponsePtr &)> &&callback,
+                                 Tenant::PrimaryKeyType &&id)
+{
+    RestfulTenantCtrlBase::getToken(req, std::move(callback), std::move(id));
+}
 
 void RestfulTenantCtrl::updateOne(const HttpRequestPtr &req,
                                   std::function<void(const HttpResponsePtr &)> &&callback,
@@ -23,7 +28,6 @@ void RestfulTenantCtrl::updateOne(const HttpRequestPtr &req,
 {
     RestfulTenantCtrlBase::updateOne(req, std::move(callback), std::move(id));
 }
-
 
 void RestfulTenantCtrl::deleteOne(const HttpRequestPtr &req,
                                   std::function<void(const HttpResponsePtr &)> &&callback,

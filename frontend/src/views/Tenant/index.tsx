@@ -1,38 +1,240 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  getTenants,
+  createTenant,
+  updateTenant,
+  deleteTenant,
+  getToken,
+  type Tenant,
+} from "@/apis/tenant";
 
-interface Tenant {
-  id: string;
-  name: string;
-  title: string;
-  email: string;
-  role: "管理员" | "用户";
-  status: "活跃" | "离线" | "停用";
-  lastSeen: string;
-  avatar: string;
+function TenantModal({
+  isOpen,
+  onClose,
+  tenant,
+  mode,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  tenant?: Tenant;
+  mode: "create" | "edit" | "token";
+}) {
+  const initialFormData = {
+    status: "活跃",
+    tenant_name: "",
+    email: "",
+    phone: "",
+  };
+
+  const [formData, setFormData] = useState<Partial<Tenant>>(initialFormData);
+  const [token, setToken] = useState<string>("");
+
+  useEffect(() => {
+    if (mode === "edit" && tenant) {
+      setFormData({
+        tenant_name: tenant.tenant_name,
+        email: tenant.email,
+        phone: tenant.phone,
+        status: tenant.status,
+      });
+    } else if (mode === "create") {
+      setFormData(initialFormData);
+    }
+  }, [tenant, mode]);
+
+  useEffect(() => {
+    if (mode === "token" && tenant?.tenant_id) {
+      getToken(tenant.tenant_id).then((response) => {
+        setToken(response.data);
+      });
+    }
+  }, [mode, tenant]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (mode === "create") {
+        // 先创建租户
+        const createdTenant = await createTenant(formData as Tenant);
+        // 然后获取token
+        if (createdTenant.data?.tenant_id) {
+          const tokenResponse = await getToken(createdTenant.data.tenant_id);
+          // 更新租户的token
+          await updateTenant(createdTenant.data.tenant_id, {
+            ...formData,
+            tenant_token: tokenResponse.token,
+          } as Tenant);
+        }
+      } else if (mode === "edit" && tenant?.tenant_id) {
+        // 编辑时直接使用现有的tenant_id
+        const tokenResponse = await getToken(tenant.tenant_id);
+        const updatedData = {
+          ...formData,
+          tenant_token: tokenResponse.token,
+        } as Tenant;
+        await updateTenant(tenant.tenant_id, updatedData);
+      }
+      handleClose();
+      window.location.reload();
+    } catch (error) {
+      console.error("操作失败:", error);
+    }
+  };
+
+  const handleClose = () => {
+    setFormData(initialFormData);
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div className="mt-3">
+          <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
+            {mode === "create"
+              ? "添加租户"
+              : mode === "edit"
+              ? "编辑租户"
+              : "租户Token"}
+          </h3>
+          {mode === "token" ? (
+            <div>
+              <div className="mt-2 p-4 bg-gray-50 rounded">
+                <p className="text-sm text-gray-500 break-all">
+                  {tenant?.tenant_token}
+                </p>
+              </div>
+              <div className="flex justify-end mt-4">
+                <button
+                  onClick={handleClose}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                >
+                  关闭
+                </button>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit}>
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2">
+                  租户名称
+                </label>
+                <input
+                  type="text"
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  value={formData.tenant_name || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, tenant_name: e.target.value })
+                  }
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2">
+                  邮箱
+                </label>
+                <input
+                  type="email"
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  value={formData.email || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2">
+                  手机号
+                </label>
+                <input
+                  type="tel"
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  value={formData.phone || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phone: e.target.value })
+                  }
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2">
+                  状态
+                </label>
+                <select
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  value={formData.status || "活跃"}
+                  onChange={(e) =>
+                    setFormData({ ...formData, status: e.target.value })
+                  }
+                >
+                  <option value="活跃">活跃</option>
+                  <option value="离线">离线</option>
+                  <option value="停用">停用</option>
+                </select>
+              </div>
+              <div className="flex items-center justify-end mt-4">
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  className="mr-3 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                >
+                  取消
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
+                >
+                  确认
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
-const tenants: Tenant[] = [
-  {
-    id: "1",
-    name: "张三",
-    title: "餐厅老板",
-    email: "zhangsan@example.com",
-    role: "管理员",
-    status: "活跃",
-    lastSeen: "3分钟前",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=1",
-  },
-  {
-    id: "2",
-    name: "李四",
-    title: "分店经理",
-    email: "lisi@example.com",
-    role: "用户",
-    status: "离线",
-    lastSeen: "2小时前",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=2",
-  },
-];
+function ConfirmDialog({
+  isOpen,
+  onClose,
+  onConfirm,
+  title,
+  message,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title: string;
+  message: string;
+}) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <h3 className="text-lg font-medium leading-6 text-gray-900 mb-2">
+          {title}
+        </h3>
+        <p className="text-sm text-gray-500 mb-4">{message}</p>
+        <div className="flex justify-end space-x-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+          >
+            取消
+          </button>
+          <button
+            onClick={onConfirm}
+            className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+          >
+            确认
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function Tenant() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -41,16 +243,42 @@ function Tenant() {
   >("全部");
   //@ts-ignore
   const [showModal, setShowModal] = useState(false);
+  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [modalMode, setModalMode] = useState<"create" | "edit" | "token">(
+    "create"
+  );
+  const [selectedTenant, setSelectedTenant] = useState<Tenant | undefined>();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const filteredTenants = tenants.filter((tenant) => {
     const matchSearch =
-      tenant.name.includes(searchTerm) ||
       tenant.email.includes(searchTerm) ||
-      tenant.title.includes(searchTerm);
+      tenant.tenant_name.includes(searchTerm);
     const matchStatus =
       statusFilter === "全部" || tenant.status === statusFilter;
     return matchSearch && matchStatus;
   });
+
+  useEffect(() => {
+    const fetchTenants = async () => {
+      try {
+        const tenants = await getTenants();
+        setTenants(tenants);
+      } catch (error) {
+        console.error("获取租户数据失败:", error);
+      }
+    };
+    fetchTenants();
+  }, []);
+
+  const handleDelete = async (tenant: Tenant) => {
+    try {
+      await deleteTenant(tenant.tenant_id);
+      window.location.reload();
+    } catch (error) {
+      console.error("删除失败:", error);
+    }
+  };
 
   return (
     <div className="mx-auto py-6 sm:px-6 lg:px-8">
@@ -65,7 +293,10 @@ function Tenant() {
             </p>
           </div>
           <button
-            onClick={() => setShowModal(true)}
+            onClick={() => {
+              setModalMode("create");
+              setShowModal(true);
+            }}
             className="mt-4 sm:mt-0 inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
             <svg
@@ -146,19 +377,16 @@ function Tenant() {
                   姓名
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  职位
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   邮箱
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  角色
+                  手机号
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   状态
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  最后在线
+                  创建时间
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   操作
@@ -167,19 +395,12 @@ function Tenant() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredTenants.map((tenant) => (
-                <tr key={tenant.id} className="hover:bg-gray-50">
+                <tr key={tenant.tenant_id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="h-10 w-10 flex-shrink-0">
-                        <img
-                          className="h-10 w-10 rounded-full"
-                          src={tenant.avatar}
-                          alt=""
-                        />
-                      </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">
-                          {tenant.name}
+                          {tenant.tenant_name}
                         </div>
                         <div className="text-sm text-gray-500">
                           {tenant.email}
@@ -188,14 +409,12 @@ function Tenant() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {tenant.title}
+                    {tenant.phone}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {tenant.email}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {tenant.role}
-                  </td>
+
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     <span
                       className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
@@ -210,15 +429,38 @@ function Tenant() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {tenant.lastSeen}
+                    {tenant.created_at}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end space-x-3">
-                      <button className="text-indigo-600 hover:text-indigo-900">
+                      <button
+                        onClick={() => {
+                          setSelectedTenant(tenant);
+                          setModalMode("edit");
+                          setShowModal(true);
+                        }}
+                        className="text-indigo-600 hover:text-indigo-900"
+                      >
                         编辑
                       </button>
-                      <button className="text-red-600 hover:text-red-900">
+                      <button
+                        onClick={() => {
+                          setSelectedTenant(tenant);
+                          setShowDeleteConfirm(true);
+                        }}
+                        className="text-red-600 hover:text-red-900"
+                      >
                         删除
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedTenant(tenant);
+                          setModalMode("token");
+                          setShowModal(true);
+                        }}
+                        className="text-indigo-600 hover:text-indigo-900"
+                      >
+                        查看token
                       </button>
                     </div>
                   </td>
@@ -259,6 +501,29 @@ function Tenant() {
           </div>
         </div>
       </div>
+
+      <TenantModal
+        isOpen={showModal}
+        onClose={() => {
+          setShowModal(false);
+          setSelectedTenant(undefined);
+        }}
+        tenant={selectedTenant}
+        mode={modalMode}
+      />
+
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={() => {
+          if (selectedTenant) {
+            handleDelete(selectedTenant);
+          }
+          setShowDeleteConfirm(false);
+        }}
+        title="确认删除"
+        message={`确定要删除租户 "${selectedTenant?.tenant_name}" 吗？此操作不可撤销。`}
+      />
     </div>
   );
 }

@@ -27,7 +27,7 @@ public:
   ADD_METHOD_TO(RestfulPermissionCtrl::deleteOne, "/api/permission/{1}", Delete, Options, "AuthFilter");
   ADD_METHOD_TO(RestfulPermissionCtrl::get, "/api/permission", Get, Options, "AuthFilter");
   ADD_METHOD_TO(RestfulPermissionCtrl::create, "/api/permission", Post, Options, "AuthFilter");
-  // ADD_METHOD_TO(RestfulPermissionCtrl::update,"/api/permission",Put,Options);
+  // ADD_METHOD_TO(RestfulPermissionCtrl::update,"/api/permission",Put,Options,"AuthFilter");
   METHOD_LIST_END
 
   void getOne(const HttpRequestPtr &req,

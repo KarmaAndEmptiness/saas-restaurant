@@ -1,59 +1,30 @@
-import { useState } from "react";
-
-interface BranchType {
-  id: string;
-  name: string;
-  address: string;
-  manager: string;
-  phone: string;
-  status: "营业中" | "已关店" | "装修中";
-  openingHours: string;
-  employeeCount: number;
-  monthlyRevenue: number;
-  rating: number;
-  lastInspection: string;
-  createdAt: string;
-}
-
-const initialBranches: BranchType[] = [
-  {
-    id: "B001",
-    name: "城北总店",
-    address: "城北区明珠路128号",
-    manager: "张经理",
-    phone: "0571-88887777",
-    status: "营业中",
-    openingHours: "10:00-22:00",
-    employeeCount: 25,
-    monthlyRevenue: 380000,
-    rating: 4.8,
-    lastInspection: "2024-01-15",
-    createdAt: "2022-05-01",
-  },
-  {
-    id: "B002",
-    name: "滨江店",
-    address: "滨江区网商路88号",
-    manager: "李经理",
-    phone: "0571-88889999",
-    status: "营业中",
-    openingHours: "10:30-21:30",
-    employeeCount: 18,
-    monthlyRevenue: 280000,
-    rating: 4.6,
-    lastInspection: "2024-01-18",
-    createdAt: "2023-03-15",
-  },
-];
+import { useEffect, useState } from "react";
+import {
+  getBranches,
+  createBranch,
+  updateBranch,
+  deleteBranch,
+  type BranchType,
+} from "@/apis/admin/branch";
+import { getUserInfo, type UserInfo, getUsers } from "@/apis/profile";
 
 function Branch() {
-  //@ts-ignore
-  const [branches, setBranches] = useState<BranchType[]>(initialBranches);
+  const [branches, setBranches] = useState<BranchType[]>();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("全部");
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState<BranchType | null>(null);
   const [showStatsModal, setShowStatsModal] = useState(false);
+  const [formData, setFormData] = useState<Partial<BranchType>>({
+    branch_name: "",
+    address: "",
+    phone: "",
+    opening_hours: "",
+    capacity: 0,
+    status: "营业中",
+    manager_id: 0,
+  });
+  const [users, setUsers] = useState<UserInfo[]>([]);
 
   const getStatusColor = (status: string) => {
     const colors: { [key: string]: string } = {
@@ -64,14 +35,98 @@ function Branch() {
     return colors[status] || colors.营业中;
   };
 
-  const filteredBranches = branches.filter((branch) => {
+  const filteredBranches = branches?.filter((branch) => {
     const matchSearch =
-      branch.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      branch.branch_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       branch.address.toLowerCase().includes(searchTerm.toLowerCase());
     const matchStatus =
       statusFilter === "全部" || branch.status === statusFilter;
     return matchSearch && matchStatus;
   });
+
+  useEffect(() => {
+    const fetchBranches = async () => {
+      try {
+        const data = await getBranches();
+        data.forEach(async (branch: BranchType) => {
+          const manager = await getUserInfo(branch.manager_id);
+          branch.manager = manager.username;
+          return branch;
+        });
+        console.log(data);
+        setBranches(data);
+      } catch (error) {
+        console.error("获取分店数据失败:", error);
+      }
+    };
+    fetchBranches();
+  }, []);
+
+  useEffect(() => {
+    if (selectedBranch) {
+      setFormData({
+        branch_name: selectedBranch.branch_name,
+        address: selectedBranch.address,
+        phone: selectedBranch.phone,
+        opening_hours: selectedBranch.opening_hours,
+        capacity: selectedBranch.capacity,
+        status: selectedBranch.status,
+        manager_id: selectedBranch.manager_id,
+      });
+    } else {
+      setFormData({
+        branch_name: "",
+        address: "",
+        phone: "",
+        opening_hours: "",
+        capacity: 0,
+        status: "营业中",
+        manager_id: 0,
+      });
+    }
+  }, [selectedBranch]);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      if (showAddModal) {
+        try {
+          const data = await getUsers();
+          setUsers(data);
+        } catch (error) {
+          console.error("获取用户列表失败:", error);
+        }
+      }
+    };
+    fetchUsers();
+  }, [showAddModal]);
+
+  const handleSubmit = async () => {
+    try {
+      if (selectedBranch) {
+        await updateBranch(selectedBranch.branch_id, formData as BranchType);
+      } else {
+        await createBranch(formData as BranchType);
+      }
+      const data = await getBranches();
+      setBranches(data);
+      setShowAddModal(false);
+      setSelectedBranch(null);
+    } catch (error) {
+      console.error("保存分店失败:", error);
+    }
+  };
+
+  const handleDelete = async (branchId: number) => {
+    if (confirm("确定要删除该分店吗？")) {
+      try {
+        await deleteBranch(branchId);
+        const data = await getBranches();
+        setBranches(data);
+      } catch (error) {
+        console.error("删除分店失败:", error);
+      }
+    }
+  };
 
   return (
     <div className="p-6">
@@ -80,8 +135,8 @@ function Branch() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">分店管理</h1>
           <p className="mt-1 text-sm text-gray-600">
-            共 {branches.length} 家分店，
-            {branches.filter((b) => b.status === "营业中").length} 家正在营业
+            共 {branches?.length} 家分店，
+            {branches?.filter((b) => b.status === "营业中").length} 家正在营业
           </p>
         </div>
         <button
@@ -111,26 +166,20 @@ function Branch() {
           <h3 className="text-sm font-medium text-gray-500">总营业额</h3>
           <p className="mt-2 text-2xl font-semibold text-gray-900">
             ¥
-            {branches
-              .reduce((sum, b) => sum + b.monthlyRevenue, 0)
-              .toLocaleString()}
+            {branches?.reduce((sum, b) => sum + b.capacity, 0).toLocaleString()}
           </p>
           <p className="mt-1 text-sm text-green-600">↑ 12.5% 环比上月</p>
         </div>
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-sm font-medium text-gray-500">总员工数</h3>
           <p className="mt-2 text-2xl font-semibold text-gray-900">
-            {branches.reduce((sum, b) => sum + b.employeeCount, 0)}人
+            {branches?.reduce((sum, b) => sum + b.capacity, 0)}人
           </p>
           <p className="mt-1 text-sm text-green-600">↑ 5.2% 环比上月</p>
         </div>
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-sm font-medium text-gray-500">平均评分</h3>
-          <p className="mt-2 text-2xl font-semibold text-gray-900">
-            {(
-              branches.reduce((sum, b) => sum + b.rating, 0) / branches.length
-            ).toFixed(1)}
-          </p>
+          <p className="mt-2 text-2xl font-semibold text-gray-900">{5}</p>
           <p className="mt-1 text-sm text-green-600">↑ 0.3 环比上月</p>
         </div>
         <div className="bg-white rounded-lg shadow p-6">
@@ -165,16 +214,16 @@ function Branch() {
 
       {/* Branches Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredBranches.map((branch) => (
+        {filteredBranches?.map((branch) => (
           <div
-            key={branch.id}
+            key={branch.branch_id}
             className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200"
           >
             <div className="p-6">
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <h3 className="text-lg font-medium text-gray-900">
-                    {branch.name}
+                    {branch.branch_name}
                   </h3>
                   <p className="text-sm text-gray-500">{branch.address}</p>
                 </div>
@@ -198,19 +247,19 @@ function Branch() {
                 </div>
                 <div>
                   <p className="text-gray-500">员工数</p>
-                  <p className="font-medium">{branch.employeeCount}人</p>
+                  <p className="font-medium">{branch.capacity}人</p>
                 </div>
                 <div>
                   <p className="text-gray-500">营业时间</p>
-                  <p className="font-medium">{branch.openingHours}</p>
+                  <p className="font-medium">{branch.opening_hours}</p>
                 </div>
               </div>
 
               <div className="flex items-center justify-between text-sm border-t pt-4">
                 <div className="flex items-center space-x-2 text-gray-500">
-                  <span>评分: {branch.rating}</span>
+                  <span>评分: {5}</span>
                   <span>·</span>
-                  <span>上次巡检: {branch.lastInspection}</span>
+                  <span>上次巡检: {branch.created_at}</span>
                 </div>
                 <div className="flex space-x-2">
                   <button
@@ -231,6 +280,12 @@ function Branch() {
                   >
                     编辑
                   </button>
+                  <button
+                    onClick={() => handleDelete(branch.branch_id)}
+                    className="text-red-600 hover:text-red-900"
+                  >
+                    删除
+                  </button>
                 </div>
               </div>
             </div>
@@ -240,10 +295,10 @@ function Branch() {
 
       {/* Add/Edit Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg max-w-2xl w-full p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-semibold text-gray-900">
                 {selectedBranch ? "编辑分店信息" : "新增分店"}
               </h3>
               <button
@@ -269,38 +324,119 @@ function Branch() {
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
+            <div className="grid grid-cols-2 gap-6">
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   分店名称
                 </label>
                 <input
                   type="text"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  defaultValue={selectedBranch?.name}
+                  value={formData.branch_name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, branch_name: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  店长
-                </label>
-                <input
-                  type="text"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  defaultValue={selectedBranch?.manager}
-                />
-              </div>
+
               <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   地址
                 </label>
                 <input
                   type="text"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  defaultValue={selectedBranch?.address}
+                  value={formData.address}
+                  onChange={(e) =>
+                    setFormData({ ...formData, address: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
-              {/* Add more form fields as needed */}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  联系电话
+                </label>
+                <input
+                  type="text"
+                  value={formData.phone}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phone: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  营业时间
+                </label>
+                <input
+                  type="text"
+                  value={formData.opening_hours}
+                  onChange={(e) =>
+                    setFormData({ ...formData, opening_hours: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  容纳人数
+                </label>
+                <input
+                  type="number"
+                  value={formData.capacity}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      capacity: parseInt(e.target.value),
+                    })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  状态
+                </label>
+                <select
+                  value={formData.status}
+                  onChange={(e) =>
+                    setFormData({ ...formData, status: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="营业中">营业中</option>
+                  <option value="已关店">已关店</option>
+                  <option value="装修中">装修中</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  店长
+                </label>
+                <select
+                  value={formData.manager_id}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      manager_id: parseInt(e.target.value),
+                    })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="">请选择店长</option>
+                  {users.map((user) => (
+                    <option key={user.user_id} value={user.user_id}>
+                      {user.username}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div className="mt-6 flex justify-end space-x-3">
@@ -309,12 +445,15 @@ function Branch() {
                   setShowAddModal(false);
                   setSelectedBranch(null);
                 }}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500"
               >
                 取消
               </button>
-              <button className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
-                保存
+              <button
+                onClick={handleSubmit}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                {selectedBranch ? "保存修改" : "创建分店"}
               </button>
             </div>
           </div>
@@ -327,7 +466,7 @@ function Branch() {
           <div className="bg-white rounded-lg max-w-4xl w-full p-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-medium">
-                {selectedBranch.name} - 统计数据
+                {selectedBranch.branch_name} - 统计数据
               </h3>
               <button
                 onClick={() => {
@@ -356,7 +495,7 @@ function Branch() {
               <div className="bg-gray-50 rounded-lg p-4">
                 <h4 className="text-sm font-medium text-gray-500">月营收</h4>
                 <p className="mt-2 text-xl font-semibold">
-                  ¥{selectedBranch.monthlyRevenue.toLocaleString()}
+                  ¥{selectedBranch.capacity.toLocaleString()}
                 </p>
                 <p className="mt-1 text-sm text-green-600">↑ 15.2%</p>
               </div>

@@ -1,9 +1,11 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Disclosure, Menu } from "@headlessui/react";
 import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { NavLink, Outlet } from "react-router-dom";
 import logo from "../../public/favicon.png";
+import { getUserInfo, type UserInfo } from "@/apis/profile";
 
+const baseurl = import.meta.env.VITE_API_BASE_URL;
 interface Navigation {
   name: string;
   path: string;
@@ -15,6 +17,7 @@ const navs: Navigation[] = [
   { name: "菜品管理", path: "/home/goods" },
   { name: "分店管理", path: "/home/branch" },
   { name: "客户下单", path: "/home/place-order" },
+  { name: "订单列表", path: "/home/order-list" },
   { name: "客户管理", path: "/home/client" },
   { name: "会员管理", path: "/home/member" },
   { name: "库存管理", path: "/home/inventory" },
@@ -35,6 +38,7 @@ function classNames(...classes: string[]) {
 
 function Home() {
   const [currentNav, setCurrentNav] = useState(navs[0]);
+  const [userInfo, setUserInfo] = useState<UserInfo>();
 
   // 修改 handleNavClick 的定义方式
   const handleNavClick = useCallback((item: Navigation) => {
@@ -45,6 +49,17 @@ function Home() {
     setCurrentNav(item);
   }, []);
 
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const data = await getUserInfo(localStorage.getItem("user_id") || "");
+        setUserInfo(data);
+      } catch (error) {
+        console.error("获取用户信息失败:", error);
+      }
+    };
+    fetchUserInfo();
+  }, []);
   return (
     <div className="min-h-screen bg-gray-50">
       <Disclosure as="nav" className="bg-white shadow-sm">
@@ -99,7 +114,11 @@ function Home() {
                     <Menu.Button className="flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
                       <img
                         className="h-8 w-8 rounded-full"
-                        src="https://api.dicebear.com/7.x/avataaars/svg?seed=1"
+                        src={
+                          userInfo?.avatar_url
+                            ? baseurl + userInfo.avatar_url
+                            : "https://api.dicebear.com/7.x/avataaars/svg?seed=1"
+                        }
                         alt=""
                       />
                     </Menu.Button>
