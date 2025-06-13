@@ -44,38 +44,37 @@ void RestfulUserRoleCtrlBase::getOne(const HttpRequestPtr &req,
         });
 }
 
-void RestfulUserRoleCtrlBase::getOneByUserId(const HttpRequestPtr &req,
-                                             std::function<void(const HttpResponsePtr &)> &&callback,
-                                             std::string &&userId)
+void RestfulUserRoleCtrlBase::getRolesByUserId(const HttpRequestPtr &req,
+                                               std::function<void(const HttpResponsePtr &)> &&callback,
+                                               std::string &&id)
 {
-    try
-    {
-        /* code */
-        auto dbClientPtr = getDbClient();
 
-        drogon::orm::Mapper<UserRole> mapper(dbClientPtr);
-        auto criteria = drogon::orm::Criteria("user_id", userId) &&
-                        drogon::orm::Criteria("is_deleted", 0);
-        std::vector<UserRole> resultList = mapper.findBy(criteria);
-        Json::Value list;
-        Json::Value ret;
-        list.resize(0);
-        for (auto &r : resultList)
-        {
-            list.append(makeJson(req, r));
-        }
-        ret["data"] = list;
-        ret["code"] = k200OK;
-        ret["message"] = "ok";
+    auto dbClientPtr = getDbClient();
+    drogon::orm::Mapper<UserRole> mapper(dbClientPtr);
+
+    auto criteria = drogon::orm::Criteria("user_id", id) &&
+                    drogon::orm::Criteria("is_deleted", 0);
+    std::vector<drogon_model::saas_restaurant::UserRole> userRoles = mapper.findBy(criteria);
+    Json::Value ret;
+    if (userRoles.empty())
+    {
+        ret["code"] = k404NotFound;
+        ret["message"] = "not found";
         auto resp = HttpResponse::newHttpJsonResponse(ret);
         callback(resp);
+        return;
     }
-    catch (const std::exception &e)
+    Json::Value list;
+    list.resize(0);
+    for (auto &obj : userRoles)
     {
-        std::cerr << e.what() << '\n';
+        list.append(makeJson(req, obj));
     }
-
-    return;
+    ret["code"] = k200OK;
+    ret["message"] = "ok";
+    ret["data"] = list;
+    auto resp = HttpResponse::newHttpJsonResponse(ret);
+    callback(resp);
 }
 
 void RestfulUserRoleCtrlBase::updateOne(const HttpRequestPtr &req,

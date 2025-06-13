@@ -27,7 +27,7 @@ public:
   ADD_METHOD_TO(RestfulMemberLevelCtrl::deleteOne, "/api/memberlevel/{1}", Delete, Options, "AuthFilter");
   ADD_METHOD_TO(RestfulMemberLevelCtrl::get, "/api/memberlevel", Get, Options, "AuthFilter");
   ADD_METHOD_TO(RestfulMemberLevelCtrl::create, "/api/memberlevel", Post, Options, "AuthFilter");
-  // ADD_METHOD_TO(RestfulMemberLevelCtrl::update,"/api/memberlevel",Put,Options);
+  // ADD_METHOD_TO(RestfulMemberLevelCtrl::update,"/api/memberlevel",Put,Options, "AuthFilter");
   METHOD_LIST_END
 
   void getOne(const HttpRequestPtr &req,

@@ -28,6 +28,8 @@ const std::string Dish::Cols::_cover_img = "cover_img";
 const std::string Dish::Cols::_status = "status";
 const std::string Dish::Cols::_sort_order = "sort_order";
 const std::string Dish::Cols::_is_deleted = "is_deleted";
+const std::string Dish::Cols::_created_at = "created_at";
+const std::string Dish::Cols::_updated_at = "updated_at";
 const std::string Dish::primaryKeyName = "dish_id";
 const bool Dish::hasPrimaryKey = true;
 const std::string Dish::tableName = "dish";
@@ -44,7 +46,9 @@ const std::vector<typename Dish::MetaData> Dish::metaData_={
 {"cover_img","std::string","varchar(255)",255,0,0,0},
 {"status","std::string","varchar(50)",50,0,0,0},
 {"sort_order","int32_t","int(11)",4,0,0,0},
-{"is_deleted","int8_t","tinyint(1)",1,0,0,0}
+{"is_deleted","int8_t","tinyint(1)",1,0,0,0},
+{"created_at","::trantor::Date","timestamp",0,0,0,0},
+{"updated_at","::trantor::Date","timestamp",0,0,0,0}
 };
 const std::string &Dish::getColumnName(size_t index) noexcept(false)
 {
@@ -103,11 +107,55 @@ Dish::Dish(const Row &r, const ssize_t indexOffset) noexcept
         {
             isDeleted_=std::make_shared<int8_t>(r["is_deleted"].as<int8_t>());
         }
+        if(!r["created_at"].isNull())
+        {
+            auto timeStr = r["created_at"].as<std::string>();
+            struct tm stm;
+            memset(&stm,0,sizeof(stm));
+            auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
+            time_t t = mktime(&stm);
+            size_t decimalNum = 0;
+            if(p)
+            {
+                if(*p=='.')
+                {
+                    std::string decimals(p+1,&timeStr[timeStr.length()]);
+                    while(decimals.length()<6)
+                    {
+                        decimals += "0";
+                    }
+                    decimalNum = (size_t)atol(decimals.c_str());
+                }
+                createdAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
+            }
+        }
+        if(!r["updated_at"].isNull())
+        {
+            auto timeStr = r["updated_at"].as<std::string>();
+            struct tm stm;
+            memset(&stm,0,sizeof(stm));
+            auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
+            time_t t = mktime(&stm);
+            size_t decimalNum = 0;
+            if(p)
+            {
+                if(*p=='.')
+                {
+                    std::string decimals(p+1,&timeStr[timeStr.length()]);
+                    while(decimals.length()<6)
+                    {
+                        decimals += "0";
+                    }
+                    decimalNum = (size_t)atol(decimals.c_str());
+                }
+                updatedAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
+            }
+        }
     }
     else
     {
         size_t offset = (size_t)indexOffset;
-        if(offset + 12 > r.size())
+        if(offset + 14 > r.size())
         {
             LOG_FATAL << "Invalid SQL result for this model";
             return;
@@ -173,13 +221,59 @@ Dish::Dish(const Row &r, const ssize_t indexOffset) noexcept
         {
             isDeleted_=std::make_shared<int8_t>(r[index].as<int8_t>());
         }
+        index = offset + 12;
+        if(!r[index].isNull())
+        {
+            auto timeStr = r[index].as<std::string>();
+            struct tm stm;
+            memset(&stm,0,sizeof(stm));
+            auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
+            time_t t = mktime(&stm);
+            size_t decimalNum = 0;
+            if(p)
+            {
+                if(*p=='.')
+                {
+                    std::string decimals(p+1,&timeStr[timeStr.length()]);
+                    while(decimals.length()<6)
+                    {
+                        decimals += "0";
+                    }
+                    decimalNum = (size_t)atol(decimals.c_str());
+                }
+                createdAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
+            }
+        }
+        index = offset + 13;
+        if(!r[index].isNull())
+        {
+            auto timeStr = r[index].as<std::string>();
+            struct tm stm;
+            memset(&stm,0,sizeof(stm));
+            auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
+            time_t t = mktime(&stm);
+            size_t decimalNum = 0;
+            if(p)
+            {
+                if(*p=='.')
+                {
+                    std::string decimals(p+1,&timeStr[timeStr.length()]);
+                    while(decimals.length()<6)
+                    {
+                        decimals += "0";
+                    }
+                    decimalNum = (size_t)atol(decimals.c_str());
+                }
+                updatedAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
+            }
+        }
     }
 
 }
 
 Dish::Dish(const Json::Value &pJson, const std::vector<std::string> &pMasqueradingVector) noexcept(false)
 {
-    if(pMasqueradingVector.size() != 12)
+    if(pMasqueradingVector.size() != 14)
     {
         LOG_ERROR << "Bad masquerading vector";
         return;
@@ -278,6 +372,58 @@ Dish::Dish(const Json::Value &pJson, const std::vector<std::string> &pMasqueradi
         if(!pJson[pMasqueradingVector[11]].isNull())
         {
             isDeleted_=std::make_shared<int8_t>((int8_t)pJson[pMasqueradingVector[11]].asInt64());
+        }
+    }
+    if(!pMasqueradingVector[12].empty() && pJson.isMember(pMasqueradingVector[12]))
+    {
+        dirtyFlag_[12] = true;
+        if(!pJson[pMasqueradingVector[12]].isNull())
+        {
+            auto timeStr = pJson[pMasqueradingVector[12]].asString();
+            struct tm stm;
+            memset(&stm,0,sizeof(stm));
+            auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
+            time_t t = mktime(&stm);
+            size_t decimalNum = 0;
+            if(p)
+            {
+                if(*p=='.')
+                {
+                    std::string decimals(p+1,&timeStr[timeStr.length()]);
+                    while(decimals.length()<6)
+                    {
+                        decimals += "0";
+                    }
+                    decimalNum = (size_t)atol(decimals.c_str());
+                }
+                createdAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
+            }
+        }
+    }
+    if(!pMasqueradingVector[13].empty() && pJson.isMember(pMasqueradingVector[13]))
+    {
+        dirtyFlag_[13] = true;
+        if(!pJson[pMasqueradingVector[13]].isNull())
+        {
+            auto timeStr = pJson[pMasqueradingVector[13]].asString();
+            struct tm stm;
+            memset(&stm,0,sizeof(stm));
+            auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
+            time_t t = mktime(&stm);
+            size_t decimalNum = 0;
+            if(p)
+            {
+                if(*p=='.')
+                {
+                    std::string decimals(p+1,&timeStr[timeStr.length()]);
+                    while(decimals.length()<6)
+                    {
+                        decimals += "0";
+                    }
+                    decimalNum = (size_t)atol(decimals.c_str());
+                }
+                updatedAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
+            }
         }
     }
 }
@@ -380,12 +526,64 @@ Dish::Dish(const Json::Value &pJson) noexcept(false)
             isDeleted_=std::make_shared<int8_t>((int8_t)pJson["is_deleted"].asInt64());
         }
     }
+    if(pJson.isMember("created_at"))
+    {
+        dirtyFlag_[12]=true;
+        if(!pJson["created_at"].isNull())
+        {
+            auto timeStr = pJson["created_at"].asString();
+            struct tm stm;
+            memset(&stm,0,sizeof(stm));
+            auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
+            time_t t = mktime(&stm);
+            size_t decimalNum = 0;
+            if(p)
+            {
+                if(*p=='.')
+                {
+                    std::string decimals(p+1,&timeStr[timeStr.length()]);
+                    while(decimals.length()<6)
+                    {
+                        decimals += "0";
+                    }
+                    decimalNum = (size_t)atol(decimals.c_str());
+                }
+                createdAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
+            }
+        }
+    }
+    if(pJson.isMember("updated_at"))
+    {
+        dirtyFlag_[13]=true;
+        if(!pJson["updated_at"].isNull())
+        {
+            auto timeStr = pJson["updated_at"].asString();
+            struct tm stm;
+            memset(&stm,0,sizeof(stm));
+            auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
+            time_t t = mktime(&stm);
+            size_t decimalNum = 0;
+            if(p)
+            {
+                if(*p=='.')
+                {
+                    std::string decimals(p+1,&timeStr[timeStr.length()]);
+                    while(decimals.length()<6)
+                    {
+                        decimals += "0";
+                    }
+                    decimalNum = (size_t)atol(decimals.c_str());
+                }
+                updatedAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
+            }
+        }
+    }
 }
 
 void Dish::updateByMasqueradedJson(const Json::Value &pJson,
                                             const std::vector<std::string> &pMasqueradingVector) noexcept(false)
 {
-    if(pMasqueradingVector.size() != 12)
+    if(pMasqueradingVector.size() != 14)
     {
         LOG_ERROR << "Bad masquerading vector";
         return;
@@ -485,6 +683,58 @@ void Dish::updateByMasqueradedJson(const Json::Value &pJson,
             isDeleted_=std::make_shared<int8_t>((int8_t)pJson[pMasqueradingVector[11]].asInt64());
         }
     }
+    if(!pMasqueradingVector[12].empty() && pJson.isMember(pMasqueradingVector[12]))
+    {
+        dirtyFlag_[12] = true;
+        if(!pJson[pMasqueradingVector[12]].isNull())
+        {
+            auto timeStr = pJson[pMasqueradingVector[12]].asString();
+            struct tm stm;
+            memset(&stm,0,sizeof(stm));
+            auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
+            time_t t = mktime(&stm);
+            size_t decimalNum = 0;
+            if(p)
+            {
+                if(*p=='.')
+                {
+                    std::string decimals(p+1,&timeStr[timeStr.length()]);
+                    while(decimals.length()<6)
+                    {
+                        decimals += "0";
+                    }
+                    decimalNum = (size_t)atol(decimals.c_str());
+                }
+                createdAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
+            }
+        }
+    }
+    if(!pMasqueradingVector[13].empty() && pJson.isMember(pMasqueradingVector[13]))
+    {
+        dirtyFlag_[13] = true;
+        if(!pJson[pMasqueradingVector[13]].isNull())
+        {
+            auto timeStr = pJson[pMasqueradingVector[13]].asString();
+            struct tm stm;
+            memset(&stm,0,sizeof(stm));
+            auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
+            time_t t = mktime(&stm);
+            size_t decimalNum = 0;
+            if(p)
+            {
+                if(*p=='.')
+                {
+                    std::string decimals(p+1,&timeStr[timeStr.length()]);
+                    while(decimals.length()<6)
+                    {
+                        decimals += "0";
+                    }
+                    decimalNum = (size_t)atol(decimals.c_str());
+                }
+                updatedAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
+            }
+        }
+    }
 }
 
 void Dish::updateByJson(const Json::Value &pJson) noexcept(false)
@@ -582,6 +832,58 @@ void Dish::updateByJson(const Json::Value &pJson) noexcept(false)
         if(!pJson["is_deleted"].isNull())
         {
             isDeleted_=std::make_shared<int8_t>((int8_t)pJson["is_deleted"].asInt64());
+        }
+    }
+    if(pJson.isMember("created_at"))
+    {
+        dirtyFlag_[12] = true;
+        if(!pJson["created_at"].isNull())
+        {
+            auto timeStr = pJson["created_at"].asString();
+            struct tm stm;
+            memset(&stm,0,sizeof(stm));
+            auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
+            time_t t = mktime(&stm);
+            size_t decimalNum = 0;
+            if(p)
+            {
+                if(*p=='.')
+                {
+                    std::string decimals(p+1,&timeStr[timeStr.length()]);
+                    while(decimals.length()<6)
+                    {
+                        decimals += "0";
+                    }
+                    decimalNum = (size_t)atol(decimals.c_str());
+                }
+                createdAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
+            }
+        }
+    }
+    if(pJson.isMember("updated_at"))
+    {
+        dirtyFlag_[13] = true;
+        if(!pJson["updated_at"].isNull())
+        {
+            auto timeStr = pJson["updated_at"].asString();
+            struct tm stm;
+            memset(&stm,0,sizeof(stm));
+            auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
+            time_t t = mktime(&stm);
+            size_t decimalNum = 0;
+            if(p)
+            {
+                if(*p=='.')
+                {
+                    std::string decimals(p+1,&timeStr[timeStr.length()]);
+                    while(decimals.length()<6)
+                    {
+                        decimals += "0";
+                    }
+                    decimalNum = (size_t)atol(decimals.c_str());
+                }
+                updatedAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
+            }
         }
     }
 }
@@ -885,6 +1187,50 @@ void Dish::setIsDeletedToNull() noexcept
     dirtyFlag_[11] = true;
 }
 
+const ::trantor::Date &Dish::getValueOfCreatedAt() const noexcept
+{
+    static const ::trantor::Date defaultValue = ::trantor::Date();
+    if(createdAt_)
+        return *createdAt_;
+    return defaultValue;
+}
+const std::shared_ptr<::trantor::Date> &Dish::getCreatedAt() const noexcept
+{
+    return createdAt_;
+}
+void Dish::setCreatedAt(const ::trantor::Date &pCreatedAt) noexcept
+{
+    createdAt_ = std::make_shared<::trantor::Date>(pCreatedAt);
+    dirtyFlag_[12] = true;
+}
+void Dish::setCreatedAtToNull() noexcept
+{
+    createdAt_.reset();
+    dirtyFlag_[12] = true;
+}
+
+const ::trantor::Date &Dish::getValueOfUpdatedAt() const noexcept
+{
+    static const ::trantor::Date defaultValue = ::trantor::Date();
+    if(updatedAt_)
+        return *updatedAt_;
+    return defaultValue;
+}
+const std::shared_ptr<::trantor::Date> &Dish::getUpdatedAt() const noexcept
+{
+    return updatedAt_;
+}
+void Dish::setUpdatedAt(const ::trantor::Date &pUpdatedAt) noexcept
+{
+    updatedAt_ = std::make_shared<::trantor::Date>(pUpdatedAt);
+    dirtyFlag_[13] = true;
+}
+void Dish::setUpdatedAtToNull() noexcept
+{
+    updatedAt_.reset();
+    dirtyFlag_[13] = true;
+}
+
 void Dish::updateId(const uint64_t id)
 {
     dishId_ = std::make_shared<uint32_t>(static_cast<uint32_t>(id));
@@ -903,7 +1249,9 @@ const std::vector<std::string> &Dish::insertColumns() noexcept
         "cover_img",
         "status",
         "sort_order",
-        "is_deleted"
+        "is_deleted",
+        "created_at",
+        "updated_at"
     };
     return inCols;
 }
@@ -1031,6 +1379,28 @@ void Dish::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
+    if(dirtyFlag_[12])
+    {
+        if(getCreatedAt())
+        {
+            binder << getValueOfCreatedAt();
+        }
+        else
+        {
+            binder << nullptr;
+        }
+    }
+    if(dirtyFlag_[13])
+    {
+        if(getUpdatedAt())
+        {
+            binder << getValueOfUpdatedAt();
+        }
+        else
+        {
+            binder << nullptr;
+        }
+    }
 }
 
 const std::vector<std::string> Dish::updateColumns() const
@@ -1079,6 +1449,14 @@ const std::vector<std::string> Dish::updateColumns() const
     if(dirtyFlag_[11])
     {
         ret.push_back(getColumnName(11));
+    }
+    if(dirtyFlag_[12])
+    {
+        ret.push_back(getColumnName(12));
+    }
+    if(dirtyFlag_[13])
+    {
+        ret.push_back(getColumnName(13));
     }
     return ret;
 }
@@ -1206,6 +1584,28 @@ void Dish::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
+    if(dirtyFlag_[12])
+    {
+        if(getCreatedAt())
+        {
+            binder << getValueOfCreatedAt();
+        }
+        else
+        {
+            binder << nullptr;
+        }
+    }
+    if(dirtyFlag_[13])
+    {
+        if(getUpdatedAt())
+        {
+            binder << getValueOfUpdatedAt();
+        }
+        else
+        {
+            binder << nullptr;
+        }
+    }
 }
 Json::Value Dish::toJson() const
 {
@@ -1306,6 +1706,22 @@ Json::Value Dish::toJson() const
     {
         ret["is_deleted"]=Json::Value();
     }
+    if(getCreatedAt())
+    {
+        ret["created_at"]=getCreatedAt()->toDbStringLocal();
+    }
+    else
+    {
+        ret["created_at"]=Json::Value();
+    }
+    if(getUpdatedAt())
+    {
+        ret["updated_at"]=getUpdatedAt()->toDbStringLocal();
+    }
+    else
+    {
+        ret["updated_at"]=Json::Value();
+    }
     return ret;
 }
 
@@ -1313,7 +1729,7 @@ Json::Value Dish::toMasqueradedJson(
     const std::vector<std::string> &pMasqueradingVector) const
 {
     Json::Value ret;
-    if(pMasqueradingVector.size() == 12)
+    if(pMasqueradingVector.size() == 14)
     {
         if(!pMasqueradingVector[0].empty())
         {
@@ -1447,6 +1863,28 @@ Json::Value Dish::toMasqueradedJson(
                 ret[pMasqueradingVector[11]]=Json::Value();
             }
         }
+        if(!pMasqueradingVector[12].empty())
+        {
+            if(getCreatedAt())
+            {
+                ret[pMasqueradingVector[12]]=getCreatedAt()->toDbStringLocal();
+            }
+            else
+            {
+                ret[pMasqueradingVector[12]]=Json::Value();
+            }
+        }
+        if(!pMasqueradingVector[13].empty())
+        {
+            if(getUpdatedAt())
+            {
+                ret[pMasqueradingVector[13]]=getUpdatedAt()->toDbStringLocal();
+            }
+            else
+            {
+                ret[pMasqueradingVector[13]]=Json::Value();
+            }
+        }
         return ret;
     }
     LOG_ERROR << "Masquerade failed";
@@ -1546,6 +1984,22 @@ Json::Value Dish::toMasqueradedJson(
     {
         ret["is_deleted"]=Json::Value();
     }
+    if(getCreatedAt())
+    {
+        ret["created_at"]=getCreatedAt()->toDbStringLocal();
+    }
+    else
+    {
+        ret["created_at"]=Json::Value();
+    }
+    if(getUpdatedAt())
+    {
+        ret["updated_at"]=getUpdatedAt()->toDbStringLocal();
+    }
+    else
+    {
+        ret["updated_at"]=Json::Value();
+    }
     return ret;
 }
 
@@ -1611,13 +2065,23 @@ bool Dish::validateJsonForCreation(const Json::Value &pJson, std::string &err)
         if(!validJsonOfField(11, "is_deleted", pJson["is_deleted"], err, true))
             return false;
     }
+    if(pJson.isMember("created_at"))
+    {
+        if(!validJsonOfField(12, "created_at", pJson["created_at"], err, true))
+            return false;
+    }
+    if(pJson.isMember("updated_at"))
+    {
+        if(!validJsonOfField(13, "updated_at", pJson["updated_at"], err, true))
+            return false;
+    }
     return true;
 }
 bool Dish::validateMasqueradedJsonForCreation(const Json::Value &pJson,
                                               const std::vector<std::string> &pMasqueradingVector,
                                               std::string &err)
 {
-    if(pMasqueradingVector.size() != 12)
+    if(pMasqueradingVector.size() != 14)
     {
         err = "Bad masquerading vector";
         return false;
@@ -1719,6 +2183,22 @@ bool Dish::validateMasqueradedJsonForCreation(const Json::Value &pJson,
                   return false;
           }
       }
+      if(!pMasqueradingVector[12].empty())
+      {
+          if(pJson.isMember(pMasqueradingVector[12]))
+          {
+              if(!validJsonOfField(12, pMasqueradingVector[12], pJson[pMasqueradingVector[12]], err, true))
+                  return false;
+          }
+      }
+      if(!pMasqueradingVector[13].empty())
+      {
+          if(pJson.isMember(pMasqueradingVector[13]))
+          {
+              if(!validJsonOfField(13, pMasqueradingVector[13], pJson[pMasqueradingVector[13]], err, true))
+                  return false;
+          }
+      }
     }
     catch(const Json::LogicError &e)
     {
@@ -1794,13 +2274,23 @@ bool Dish::validateJsonForUpdate(const Json::Value &pJson, std::string &err)
         if(!validJsonOfField(11, "is_deleted", pJson["is_deleted"], err, false))
             return false;
     }
+    if(pJson.isMember("created_at"))
+    {
+        if(!validJsonOfField(12, "created_at", pJson["created_at"], err, false))
+            return false;
+    }
+    if(pJson.isMember("updated_at"))
+    {
+        if(!validJsonOfField(13, "updated_at", pJson["updated_at"], err, false))
+            return false;
+    }
     return true;
 }
 bool Dish::validateMasqueradedJsonForUpdate(const Json::Value &pJson,
                                             const std::vector<std::string> &pMasqueradingVector,
                                             std::string &err)
 {
-    if(pMasqueradingVector.size() != 12)
+    if(pMasqueradingVector.size() != 14)
     {
         err = "Bad masquerading vector";
         return false;
@@ -1869,6 +2359,16 @@ bool Dish::validateMasqueradedJsonForUpdate(const Json::Value &pJson,
       if(!pMasqueradingVector[11].empty() && pJson.isMember(pMasqueradingVector[11]))
       {
           if(!validJsonOfField(11, pMasqueradingVector[11], pJson[pMasqueradingVector[11]], err, false))
+              return false;
+      }
+      if(!pMasqueradingVector[12].empty() && pJson.isMember(pMasqueradingVector[12]))
+      {
+          if(!validJsonOfField(12, pMasqueradingVector[12], pJson[pMasqueradingVector[12]], err, false))
+              return false;
+      }
+      if(!pMasqueradingVector[13].empty() && pJson.isMember(pMasqueradingVector[13]))
+      {
+          if(!validJsonOfField(13, pMasqueradingVector[13], pJson[pMasqueradingVector[13]], err, false))
               return false;
       }
     }
@@ -2068,6 +2568,28 @@ bool Dish::validJsonOfField(size_t index,
                 return true;
             }
             if(!pJson.isInt())
+            {
+                err="Type error in the "+fieldName+" field";
+                return false;
+            }
+            break;
+        case 12:
+            if(pJson.isNull())
+            {
+                return true;
+            }
+            if(!pJson.isString())
+            {
+                err="Type error in the "+fieldName+" field";
+                return false;
+            }
+            break;
+        case 13:
+            if(pJson.isNull())
+            {
+                return true;
+            }
+            if(!pJson.isString())
             {
                 err="Type error in the "+fieldName+" field";
                 return false;

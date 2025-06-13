@@ -15,11 +15,11 @@ void RestfulUserRoleCtrl::getOne(const HttpRequestPtr &req,
     RestfulUserRoleCtrlBase::getOne(req, std::move(callback), std::move(id));
 }
 
-void RestfulUserRoleCtrl::getOneByUserId(const HttpRequestPtr &req,
-                                         std::function<void(const HttpResponsePtr &)> &&callback,
-                                         std::string &&userId)
+void RestfulUserRoleCtrl::getRolesByUserId(const HttpRequestPtr &req,
+                                           std::function<void(const HttpResponsePtr &)> &&callback,
+                                           std::string &&id)
 {
-    RestfulUserRoleCtrlBase::getOneByUserId(req, std::move(callback), std::move(userId));
+    RestfulUserRoleCtrlBase::getRolesByUserId(req, std::move(callback), std::move(id));
 }
 
 void RestfulUserRoleCtrl::updateOne(const HttpRequestPtr &req,

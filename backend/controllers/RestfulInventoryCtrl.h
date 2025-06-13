@@ -27,7 +27,7 @@ public:
   ADD_METHOD_TO(RestfulInventoryCtrl::deleteOne, "/api/inventory/{1}", Delete, Options, "AuthFilter");
   ADD_METHOD_TO(RestfulInventoryCtrl::get, "/api/inventory", Get, Options, "AuthFilter");
   ADD_METHOD_TO(RestfulInventoryCtrl::create, "/api/inventory", Post, Options, "AuthFilter");
-  // ADD_METHOD_TO(RestfulInventoryCtrl::update,"/api/inventory",Put,Options);
+  // ADD_METHOD_TO(RestfulInventoryCtrl::update,"/api/inventory",Put,Options,"AuthFilter");
   METHOD_LIST_END
 
   void getOne(const HttpRequestPtr &req,

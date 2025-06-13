@@ -21,6 +21,7 @@ const std::string DishCategory::Cols::_parent_id = "parent_id";
 const std::string DishCategory::Cols::_category_name = "category_name";
 const std::string DishCategory::Cols::_created_at = "created_at";
 const std::string DishCategory::Cols::_sort_order = "sort_order";
+const std::string DishCategory::Cols::_is_deleted = "is_deleted";
 const std::string DishCategory::primaryKeyName = "category_id";
 const bool DishCategory::hasPrimaryKey = true;
 const std::string DishCategory::tableName = "dish_category";
@@ -31,7 +32,8 @@ const std::vector<typename DishCategory::MetaData> DishCategory::metaData_={
 {"parent_id","uint32_t","int(10) unsigned",4,0,0,0},
 {"category_name","std::string","varchar(255)",255,0,0,0},
 {"created_at","::trantor::Date","timestamp",0,0,0,0},
-{"sort_order","int32_t","int(11)",4,0,0,0}
+{"sort_order","int32_t","int(11)",4,0,0,0},
+{"is_deleted","int8_t","tinyint(1)",1,0,0,0}
 };
 const std::string &DishCategory::getColumnName(size_t index) noexcept(false)
 {
@@ -84,11 +86,15 @@ DishCategory::DishCategory(const Row &r, const ssize_t indexOffset) noexcept
         {
             sortOrder_=std::make_shared<int32_t>(r["sort_order"].as<int32_t>());
         }
+        if(!r["is_deleted"].isNull())
+        {
+            isDeleted_=std::make_shared<int8_t>(r["is_deleted"].as<int8_t>());
+        }
     }
     else
     {
         size_t offset = (size_t)indexOffset;
-        if(offset + 6 > r.size())
+        if(offset + 7 > r.size())
         {
             LOG_FATAL << "Invalid SQL result for this model";
             return;
@@ -142,13 +148,18 @@ DishCategory::DishCategory(const Row &r, const ssize_t indexOffset) noexcept
         {
             sortOrder_=std::make_shared<int32_t>(r[index].as<int32_t>());
         }
+        index = offset + 6;
+        if(!r[index].isNull())
+        {
+            isDeleted_=std::make_shared<int8_t>(r[index].as<int8_t>());
+        }
     }
 
 }
 
 DishCategory::DishCategory(const Json::Value &pJson, const std::vector<std::string> &pMasqueradingVector) noexcept(false)
 {
-    if(pMasqueradingVector.size() != 6)
+    if(pMasqueradingVector.size() != 7)
     {
         LOG_ERROR << "Bad masquerading vector";
         return;
@@ -217,6 +228,14 @@ DishCategory::DishCategory(const Json::Value &pJson, const std::vector<std::stri
         if(!pJson[pMasqueradingVector[5]].isNull())
         {
             sortOrder_=std::make_shared<int32_t>((int32_t)pJson[pMasqueradingVector[5]].asInt64());
+        }
+    }
+    if(!pMasqueradingVector[6].empty() && pJson.isMember(pMasqueradingVector[6]))
+    {
+        dirtyFlag_[6] = true;
+        if(!pJson[pMasqueradingVector[6]].isNull())
+        {
+            isDeleted_=std::make_shared<int8_t>((int8_t)pJson[pMasqueradingVector[6]].asInt64());
         }
     }
 }
@@ -289,12 +308,20 @@ DishCategory::DishCategory(const Json::Value &pJson) noexcept(false)
             sortOrder_=std::make_shared<int32_t>((int32_t)pJson["sort_order"].asInt64());
         }
     }
+    if(pJson.isMember("is_deleted"))
+    {
+        dirtyFlag_[6]=true;
+        if(!pJson["is_deleted"].isNull())
+        {
+            isDeleted_=std::make_shared<int8_t>((int8_t)pJson["is_deleted"].asInt64());
+        }
+    }
 }
 
 void DishCategory::updateByMasqueradedJson(const Json::Value &pJson,
                                             const std::vector<std::string> &pMasqueradingVector) noexcept(false)
 {
-    if(pMasqueradingVector.size() != 6)
+    if(pMasqueradingVector.size() != 7)
     {
         LOG_ERROR << "Bad masquerading vector";
         return;
@@ -364,6 +391,14 @@ void DishCategory::updateByMasqueradedJson(const Json::Value &pJson,
             sortOrder_=std::make_shared<int32_t>((int32_t)pJson[pMasqueradingVector[5]].asInt64());
         }
     }
+    if(!pMasqueradingVector[6].empty() && pJson.isMember(pMasqueradingVector[6]))
+    {
+        dirtyFlag_[6] = true;
+        if(!pJson[pMasqueradingVector[6]].isNull())
+        {
+            isDeleted_=std::make_shared<int8_t>((int8_t)pJson[pMasqueradingVector[6]].asInt64());
+        }
+    }
 }
 
 void DishCategory::updateByJson(const Json::Value &pJson) noexcept(false)
@@ -431,6 +466,14 @@ void DishCategory::updateByJson(const Json::Value &pJson) noexcept(false)
         if(!pJson["sort_order"].isNull())
         {
             sortOrder_=std::make_shared<int32_t>((int32_t)pJson["sort_order"].asInt64());
+        }
+    }
+    if(pJson.isMember("is_deleted"))
+    {
+        dirtyFlag_[6] = true;
+        if(!pJson["is_deleted"].isNull())
+        {
+            isDeleted_=std::make_shared<int8_t>((int8_t)pJson["is_deleted"].asInt64());
         }
     }
 }
@@ -572,6 +615,28 @@ void DishCategory::setSortOrderToNull() noexcept
     dirtyFlag_[5] = true;
 }
 
+const int8_t &DishCategory::getValueOfIsDeleted() const noexcept
+{
+    static const int8_t defaultValue = int8_t();
+    if(isDeleted_)
+        return *isDeleted_;
+    return defaultValue;
+}
+const std::shared_ptr<int8_t> &DishCategory::getIsDeleted() const noexcept
+{
+    return isDeleted_;
+}
+void DishCategory::setIsDeleted(const int8_t &pIsDeleted) noexcept
+{
+    isDeleted_ = std::make_shared<int8_t>(pIsDeleted);
+    dirtyFlag_[6] = true;
+}
+void DishCategory::setIsDeletedToNull() noexcept
+{
+    isDeleted_.reset();
+    dirtyFlag_[6] = true;
+}
+
 void DishCategory::updateId(const uint64_t id)
 {
     categoryId_ = std::make_shared<uint32_t>(static_cast<uint32_t>(id));
@@ -584,7 +649,8 @@ const std::vector<std::string> &DishCategory::insertColumns() noexcept
         "parent_id",
         "category_name",
         "created_at",
-        "sort_order"
+        "sort_order",
+        "is_deleted"
     };
     return inCols;
 }
@@ -646,6 +712,17 @@ void DishCategory::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
+    if(dirtyFlag_[6])
+    {
+        if(getIsDeleted())
+        {
+            binder << getValueOfIsDeleted();
+        }
+        else
+        {
+            binder << nullptr;
+        }
+    }
 }
 
 const std::vector<std::string> DishCategory::updateColumns() const
@@ -670,6 +747,10 @@ const std::vector<std::string> DishCategory::updateColumns() const
     if(dirtyFlag_[5])
     {
         ret.push_back(getColumnName(5));
+    }
+    if(dirtyFlag_[6])
+    {
+        ret.push_back(getColumnName(6));
     }
     return ret;
 }
@@ -731,6 +812,17 @@ void DishCategory::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
+    if(dirtyFlag_[6])
+    {
+        if(getIsDeleted())
+        {
+            binder << getValueOfIsDeleted();
+        }
+        else
+        {
+            binder << nullptr;
+        }
+    }
 }
 Json::Value DishCategory::toJson() const
 {
@@ -783,6 +875,14 @@ Json::Value DishCategory::toJson() const
     {
         ret["sort_order"]=Json::Value();
     }
+    if(getIsDeleted())
+    {
+        ret["is_deleted"]=getValueOfIsDeleted();
+    }
+    else
+    {
+        ret["is_deleted"]=Json::Value();
+    }
     return ret;
 }
 
@@ -790,7 +890,7 @@ Json::Value DishCategory::toMasqueradedJson(
     const std::vector<std::string> &pMasqueradingVector) const
 {
     Json::Value ret;
-    if(pMasqueradingVector.size() == 6)
+    if(pMasqueradingVector.size() == 7)
     {
         if(!pMasqueradingVector[0].empty())
         {
@@ -858,6 +958,17 @@ Json::Value DishCategory::toMasqueradedJson(
                 ret[pMasqueradingVector[5]]=Json::Value();
             }
         }
+        if(!pMasqueradingVector[6].empty())
+        {
+            if(getIsDeleted())
+            {
+                ret[pMasqueradingVector[6]]=getValueOfIsDeleted();
+            }
+            else
+            {
+                ret[pMasqueradingVector[6]]=Json::Value();
+            }
+        }
         return ret;
     }
     LOG_ERROR << "Masquerade failed";
@@ -909,6 +1020,14 @@ Json::Value DishCategory::toMasqueradedJson(
     {
         ret["sort_order"]=Json::Value();
     }
+    if(getIsDeleted())
+    {
+        ret["is_deleted"]=getValueOfIsDeleted();
+    }
+    else
+    {
+        ret["is_deleted"]=Json::Value();
+    }
     return ret;
 }
 
@@ -944,13 +1063,18 @@ bool DishCategory::validateJsonForCreation(const Json::Value &pJson, std::string
         if(!validJsonOfField(5, "sort_order", pJson["sort_order"], err, true))
             return false;
     }
+    if(pJson.isMember("is_deleted"))
+    {
+        if(!validJsonOfField(6, "is_deleted", pJson["is_deleted"], err, true))
+            return false;
+    }
     return true;
 }
 bool DishCategory::validateMasqueradedJsonForCreation(const Json::Value &pJson,
                                                       const std::vector<std::string> &pMasqueradingVector,
                                                       std::string &err)
 {
-    if(pMasqueradingVector.size() != 6)
+    if(pMasqueradingVector.size() != 7)
     {
         err = "Bad masquerading vector";
         return false;
@@ -1004,6 +1128,14 @@ bool DishCategory::validateMasqueradedJsonForCreation(const Json::Value &pJson,
                   return false;
           }
       }
+      if(!pMasqueradingVector[6].empty())
+      {
+          if(pJson.isMember(pMasqueradingVector[6]))
+          {
+              if(!validJsonOfField(6, pMasqueradingVector[6], pJson[pMasqueradingVector[6]], err, true))
+                  return false;
+          }
+      }
     }
     catch(const Json::LogicError &e)
     {
@@ -1049,13 +1181,18 @@ bool DishCategory::validateJsonForUpdate(const Json::Value &pJson, std::string &
         if(!validJsonOfField(5, "sort_order", pJson["sort_order"], err, false))
             return false;
     }
+    if(pJson.isMember("is_deleted"))
+    {
+        if(!validJsonOfField(6, "is_deleted", pJson["is_deleted"], err, false))
+            return false;
+    }
     return true;
 }
 bool DishCategory::validateMasqueradedJsonForUpdate(const Json::Value &pJson,
                                                     const std::vector<std::string> &pMasqueradingVector,
                                                     std::string &err)
 {
-    if(pMasqueradingVector.size() != 6)
+    if(pMasqueradingVector.size() != 7)
     {
         err = "Bad masquerading vector";
         return false;
@@ -1094,6 +1231,11 @@ bool DishCategory::validateMasqueradedJsonForUpdate(const Json::Value &pJson,
       if(!pMasqueradingVector[5].empty() && pJson.isMember(pMasqueradingVector[5]))
       {
           if(!validJsonOfField(5, pMasqueradingVector[5], pJson[pMasqueradingVector[5]], err, false))
+              return false;
+      }
+      if(!pMasqueradingVector[6].empty() && pJson.isMember(pMasqueradingVector[6]))
+      {
+          if(!validJsonOfField(6, pMasqueradingVector[6], pJson[pMasqueradingVector[6]], err, false))
               return false;
       }
     }
@@ -1182,6 +1324,17 @@ bool DishCategory::validJsonOfField(size_t index,
             }
             break;
         case 5:
+            if(pJson.isNull())
+            {
+                return true;
+            }
+            if(!pJson.isInt())
+            {
+                err="Type error in the "+fieldName+" field";
+                return false;
+            }
+            break;
+        case 6:
             if(pJson.isNull())
             {
                 return true;

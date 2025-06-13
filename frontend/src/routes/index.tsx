@@ -16,11 +16,12 @@ import Client from "@/views/Front/Client";
 import Goods from "@/views/Admin/Goods";
 import Profile from "@/views/Profile";
 import Setting from "@/views/Profile/Setting";
-import Member from "@/views/Member";
+import Member from "@/views/Front/Member";
 import Inventory from "@/views/Inventory";
 import Report from "@/views/Report";
 import Notification from "@/views/Notification";
-import Branch from "@/views/Branch";
+import Branch from "@/views/Admin/Branch";
+import OrderList from "@/views/Front/OrderList";
 
 const routes: RouteObject[] = [
   {
@@ -80,6 +81,14 @@ const routes: RouteObject[] = [
         element: (
           <AuthGuard>
             <PlaceOrder />
+          </AuthGuard>
+        ),
+      },
+      {
+        path: "order-list",
+        element: (
+          <AuthGuard>
+            <OrderList />
           </AuthGuard>
         ),
       },

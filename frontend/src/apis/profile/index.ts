@@ -18,9 +18,13 @@ export interface UserInfo {
   user_id: number
   username: string
 }
-export const getUserInfo=(id:string | null)=>{
+export const getUserInfo=(id:string|number | null)=>{
   return http.get<UserInfo>('/api/user/'+id);
 }
 export const updateUserInfo=(id:string | null,data:UserInfo)=>{
   return http.put('/api/user/'+id,data);
+}
+
+export const getUsers = () => {
+  return http.get<UserInfo[]>('/api/user');
 }

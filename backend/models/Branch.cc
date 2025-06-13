@@ -24,6 +24,8 @@ const std::string Branch::Cols::_manager_id = "manager_id";
 const std::string Branch::Cols::_status = "status";
 const std::string Branch::Cols::_opening_hours = "opening_hours";
 const std::string Branch::Cols::_capacity = "capacity";
+const std::string Branch::Cols::_rate = "rate";
+const std::string Branch::Cols::_last_check = "last_check";
 const std::string Branch::Cols::_created_at = "created_at";
 const std::string Branch::Cols::_updated_at = "updated_at";
 const std::string Branch::Cols::_is_deleted = "is_deleted";
@@ -35,12 +37,14 @@ const std::vector<typename Branch::MetaData> Branch::metaData_={
 {"branch_id","uint32_t","int(10) unsigned",4,1,1,1},
 {"tenant_id","uint32_t","int(10) unsigned",4,0,0,0},
 {"branch_name","std::string","varchar(255)",255,0,0,0},
-{"address","std::string","longtext",0,0,0,0},
+{"address","std::string","text",0,0,0,0},
 {"phone","std::string","varchar(255)",255,0,0,0},
 {"manager_id","uint32_t","int(10) unsigned",4,0,0,0},
 {"status","std::string","varchar(50)",50,0,0,0},
-{"opening_hours","std::string","longtext",0,0,0,0},
+{"opening_hours","std::string","text",0,0,0,0},
 {"capacity","uint32_t","int(10) unsigned",4,0,0,0},
+{"rate","std::string","varchar(50)",50,0,0,0},
+{"last_check","::trantor::Date","timestamp",0,0,0,0},
 {"created_at","::trantor::Date","timestamp",0,0,0,0},
 {"updated_at","::trantor::Date","timestamp",0,0,0,0},
 {"is_deleted","int8_t","tinyint(1)",1,0,0,0}
@@ -89,6 +93,32 @@ Branch::Branch(const Row &r, const ssize_t indexOffset) noexcept
         if(!r["capacity"].isNull())
         {
             capacity_=std::make_shared<uint32_t>(r["capacity"].as<uint32_t>());
+        }
+        if(!r["rate"].isNull())
+        {
+            rate_=std::make_shared<std::string>(r["rate"].as<std::string>());
+        }
+        if(!r["last_check"].isNull())
+        {
+            auto timeStr = r["last_check"].as<std::string>();
+            struct tm stm;
+            memset(&stm,0,sizeof(stm));
+            auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
+            time_t t = mktime(&stm);
+            size_t decimalNum = 0;
+            if(p)
+            {
+                if(*p=='.')
+                {
+                    std::string decimals(p+1,&timeStr[timeStr.length()]);
+                    while(decimals.length()<6)
+                    {
+                        decimals += "0";
+                    }
+                    decimalNum = (size_t)atol(decimals.c_str());
+                }
+                lastCheck_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
+            }
         }
         if(!r["created_at"].isNull())
         {
@@ -142,7 +172,7 @@ Branch::Branch(const Row &r, const ssize_t indexOffset) noexcept
     else
     {
         size_t offset = (size_t)indexOffset;
-        if(offset + 12 > r.size())
+        if(offset + 14 > r.size())
         {
             LOG_FATAL << "Invalid SQL result for this model";
             return;
@@ -196,6 +226,34 @@ Branch::Branch(const Row &r, const ssize_t indexOffset) noexcept
         index = offset + 9;
         if(!r[index].isNull())
         {
+            rate_=std::make_shared<std::string>(r[index].as<std::string>());
+        }
+        index = offset + 10;
+        if(!r[index].isNull())
+        {
+            auto timeStr = r[index].as<std::string>();
+            struct tm stm;
+            memset(&stm,0,sizeof(stm));
+            auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
+            time_t t = mktime(&stm);
+            size_t decimalNum = 0;
+            if(p)
+            {
+                if(*p=='.')
+                {
+                    std::string decimals(p+1,&timeStr[timeStr.length()]);
+                    while(decimals.length()<6)
+                    {
+                        decimals += "0";
+                    }
+                    decimalNum = (size_t)atol(decimals.c_str());
+                }
+                lastCheck_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
+            }
+        }
+        index = offset + 11;
+        if(!r[index].isNull())
+        {
             auto timeStr = r[index].as<std::string>();
             struct tm stm;
             memset(&stm,0,sizeof(stm));
@@ -216,7 +274,7 @@ Branch::Branch(const Row &r, const ssize_t indexOffset) noexcept
                 createdAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
             }
         }
-        index = offset + 10;
+        index = offset + 12;
         if(!r[index].isNull())
         {
             auto timeStr = r[index].as<std::string>();
@@ -239,7 +297,7 @@ Branch::Branch(const Row &r, const ssize_t indexOffset) noexcept
                 updatedAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
             }
         }
-        index = offset + 11;
+        index = offset + 13;
         if(!r[index].isNull())
         {
             isDeleted_=std::make_shared<int8_t>(r[index].as<int8_t>());
@@ -250,7 +308,7 @@ Branch::Branch(const Row &r, const ssize_t indexOffset) noexcept
 
 Branch::Branch(const Json::Value &pJson, const std::vector<std::string> &pMasqueradingVector) noexcept(false)
 {
-    if(pMasqueradingVector.size() != 12)
+    if(pMasqueradingVector.size() != 14)
     {
         LOG_ERROR << "Bad masquerading vector";
         return;
@@ -332,25 +390,7 @@ Branch::Branch(const Json::Value &pJson, const std::vector<std::string> &pMasque
         dirtyFlag_[9] = true;
         if(!pJson[pMasqueradingVector[9]].isNull())
         {
-            auto timeStr = pJson[pMasqueradingVector[9]].asString();
-            struct tm stm;
-            memset(&stm,0,sizeof(stm));
-            auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
-            time_t t = mktime(&stm);
-            size_t decimalNum = 0;
-            if(p)
-            {
-                if(*p=='.')
-                {
-                    std::string decimals(p+1,&timeStr[timeStr.length()]);
-                    while(decimals.length()<6)
-                    {
-                        decimals += "0";
-                    }
-                    decimalNum = (size_t)atol(decimals.c_str());
-                }
-                createdAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
-            }
+            rate_=std::make_shared<std::string>(pJson[pMasqueradingVector[9]].asString());
         }
     }
     if(!pMasqueradingVector[10].empty() && pJson.isMember(pMasqueradingVector[10]))
@@ -375,7 +415,7 @@ Branch::Branch(const Json::Value &pJson, const std::vector<std::string> &pMasque
                     }
                     decimalNum = (size_t)atol(decimals.c_str());
                 }
-                updatedAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
+                lastCheck_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
             }
         }
     }
@@ -384,7 +424,59 @@ Branch::Branch(const Json::Value &pJson, const std::vector<std::string> &pMasque
         dirtyFlag_[11] = true;
         if(!pJson[pMasqueradingVector[11]].isNull())
         {
-            isDeleted_=std::make_shared<int8_t>((int8_t)pJson[pMasqueradingVector[11]].asInt64());
+            auto timeStr = pJson[pMasqueradingVector[11]].asString();
+            struct tm stm;
+            memset(&stm,0,sizeof(stm));
+            auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
+            time_t t = mktime(&stm);
+            size_t decimalNum = 0;
+            if(p)
+            {
+                if(*p=='.')
+                {
+                    std::string decimals(p+1,&timeStr[timeStr.length()]);
+                    while(decimals.length()<6)
+                    {
+                        decimals += "0";
+                    }
+                    decimalNum = (size_t)atol(decimals.c_str());
+                }
+                createdAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
+            }
+        }
+    }
+    if(!pMasqueradingVector[12].empty() && pJson.isMember(pMasqueradingVector[12]))
+    {
+        dirtyFlag_[12] = true;
+        if(!pJson[pMasqueradingVector[12]].isNull())
+        {
+            auto timeStr = pJson[pMasqueradingVector[12]].asString();
+            struct tm stm;
+            memset(&stm,0,sizeof(stm));
+            auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
+            time_t t = mktime(&stm);
+            size_t decimalNum = 0;
+            if(p)
+            {
+                if(*p=='.')
+                {
+                    std::string decimals(p+1,&timeStr[timeStr.length()]);
+                    while(decimals.length()<6)
+                    {
+                        decimals += "0";
+                    }
+                    decimalNum = (size_t)atol(decimals.c_str());
+                }
+                updatedAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
+            }
+        }
+    }
+    if(!pMasqueradingVector[13].empty() && pJson.isMember(pMasqueradingVector[13]))
+    {
+        dirtyFlag_[13] = true;
+        if(!pJson[pMasqueradingVector[13]].isNull())
+        {
+            isDeleted_=std::make_shared<int8_t>((int8_t)pJson[pMasqueradingVector[13]].asInt64());
         }
     }
 }
@@ -463,9 +555,43 @@ Branch::Branch(const Json::Value &pJson) noexcept(false)
             capacity_=std::make_shared<uint32_t>((uint32_t)pJson["capacity"].asUInt64());
         }
     }
-    if(pJson.isMember("created_at"))
+    if(pJson.isMember("rate"))
     {
         dirtyFlag_[9]=true;
+        if(!pJson["rate"].isNull())
+        {
+            rate_=std::make_shared<std::string>(pJson["rate"].asString());
+        }
+    }
+    if(pJson.isMember("last_check"))
+    {
+        dirtyFlag_[10]=true;
+        if(!pJson["last_check"].isNull())
+        {
+            auto timeStr = pJson["last_check"].asString();
+            struct tm stm;
+            memset(&stm,0,sizeof(stm));
+            auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
+            time_t t = mktime(&stm);
+            size_t decimalNum = 0;
+            if(p)
+            {
+                if(*p=='.')
+                {
+                    std::string decimals(p+1,&timeStr[timeStr.length()]);
+                    while(decimals.length()<6)
+                    {
+                        decimals += "0";
+                    }
+                    decimalNum = (size_t)atol(decimals.c_str());
+                }
+                lastCheck_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
+            }
+        }
+    }
+    if(pJson.isMember("created_at"))
+    {
+        dirtyFlag_[11]=true;
         if(!pJson["created_at"].isNull())
         {
             auto timeStr = pJson["created_at"].asString();
@@ -491,7 +617,7 @@ Branch::Branch(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("updated_at"))
     {
-        dirtyFlag_[10]=true;
+        dirtyFlag_[12]=true;
         if(!pJson["updated_at"].isNull())
         {
             auto timeStr = pJson["updated_at"].asString();
@@ -517,7 +643,7 @@ Branch::Branch(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("is_deleted"))
     {
-        dirtyFlag_[11]=true;
+        dirtyFlag_[13]=true;
         if(!pJson["is_deleted"].isNull())
         {
             isDeleted_=std::make_shared<int8_t>((int8_t)pJson["is_deleted"].asInt64());
@@ -528,7 +654,7 @@ Branch::Branch(const Json::Value &pJson) noexcept(false)
 void Branch::updateByMasqueradedJson(const Json::Value &pJson,
                                             const std::vector<std::string> &pMasqueradingVector) noexcept(false)
 {
-    if(pMasqueradingVector.size() != 12)
+    if(pMasqueradingVector.size() != 14)
     {
         LOG_ERROR << "Bad masquerading vector";
         return;
@@ -609,25 +735,7 @@ void Branch::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[9] = true;
         if(!pJson[pMasqueradingVector[9]].isNull())
         {
-            auto timeStr = pJson[pMasqueradingVector[9]].asString();
-            struct tm stm;
-            memset(&stm,0,sizeof(stm));
-            auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
-            time_t t = mktime(&stm);
-            size_t decimalNum = 0;
-            if(p)
-            {
-                if(*p=='.')
-                {
-                    std::string decimals(p+1,&timeStr[timeStr.length()]);
-                    while(decimals.length()<6)
-                    {
-                        decimals += "0";
-                    }
-                    decimalNum = (size_t)atol(decimals.c_str());
-                }
-                createdAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
-            }
+            rate_=std::make_shared<std::string>(pJson[pMasqueradingVector[9]].asString());
         }
     }
     if(!pMasqueradingVector[10].empty() && pJson.isMember(pMasqueradingVector[10]))
@@ -652,7 +760,7 @@ void Branch::updateByMasqueradedJson(const Json::Value &pJson,
                     }
                     decimalNum = (size_t)atol(decimals.c_str());
                 }
-                updatedAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
+                lastCheck_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
             }
         }
     }
@@ -661,7 +769,59 @@ void Branch::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[11] = true;
         if(!pJson[pMasqueradingVector[11]].isNull())
         {
-            isDeleted_=std::make_shared<int8_t>((int8_t)pJson[pMasqueradingVector[11]].asInt64());
+            auto timeStr = pJson[pMasqueradingVector[11]].asString();
+            struct tm stm;
+            memset(&stm,0,sizeof(stm));
+            auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
+            time_t t = mktime(&stm);
+            size_t decimalNum = 0;
+            if(p)
+            {
+                if(*p=='.')
+                {
+                    std::string decimals(p+1,&timeStr[timeStr.length()]);
+                    while(decimals.length()<6)
+                    {
+                        decimals += "0";
+                    }
+                    decimalNum = (size_t)atol(decimals.c_str());
+                }
+                createdAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
+            }
+        }
+    }
+    if(!pMasqueradingVector[12].empty() && pJson.isMember(pMasqueradingVector[12]))
+    {
+        dirtyFlag_[12] = true;
+        if(!pJson[pMasqueradingVector[12]].isNull())
+        {
+            auto timeStr = pJson[pMasqueradingVector[12]].asString();
+            struct tm stm;
+            memset(&stm,0,sizeof(stm));
+            auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
+            time_t t = mktime(&stm);
+            size_t decimalNum = 0;
+            if(p)
+            {
+                if(*p=='.')
+                {
+                    std::string decimals(p+1,&timeStr[timeStr.length()]);
+                    while(decimals.length()<6)
+                    {
+                        decimals += "0";
+                    }
+                    decimalNum = (size_t)atol(decimals.c_str());
+                }
+                updatedAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
+            }
+        }
+    }
+    if(!pMasqueradingVector[13].empty() && pJson.isMember(pMasqueradingVector[13]))
+    {
+        dirtyFlag_[13] = true;
+        if(!pJson[pMasqueradingVector[13]].isNull())
+        {
+            isDeleted_=std::make_shared<int8_t>((int8_t)pJson[pMasqueradingVector[13]].asInt64());
         }
     }
 }
@@ -739,9 +899,43 @@ void Branch::updateByJson(const Json::Value &pJson) noexcept(false)
             capacity_=std::make_shared<uint32_t>((uint32_t)pJson["capacity"].asUInt64());
         }
     }
-    if(pJson.isMember("created_at"))
+    if(pJson.isMember("rate"))
     {
         dirtyFlag_[9] = true;
+        if(!pJson["rate"].isNull())
+        {
+            rate_=std::make_shared<std::string>(pJson["rate"].asString());
+        }
+    }
+    if(pJson.isMember("last_check"))
+    {
+        dirtyFlag_[10] = true;
+        if(!pJson["last_check"].isNull())
+        {
+            auto timeStr = pJson["last_check"].asString();
+            struct tm stm;
+            memset(&stm,0,sizeof(stm));
+            auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
+            time_t t = mktime(&stm);
+            size_t decimalNum = 0;
+            if(p)
+            {
+                if(*p=='.')
+                {
+                    std::string decimals(p+1,&timeStr[timeStr.length()]);
+                    while(decimals.length()<6)
+                    {
+                        decimals += "0";
+                    }
+                    decimalNum = (size_t)atol(decimals.c_str());
+                }
+                lastCheck_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
+            }
+        }
+    }
+    if(pJson.isMember("created_at"))
+    {
+        dirtyFlag_[11] = true;
         if(!pJson["created_at"].isNull())
         {
             auto timeStr = pJson["created_at"].asString();
@@ -767,7 +961,7 @@ void Branch::updateByJson(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("updated_at"))
     {
-        dirtyFlag_[10] = true;
+        dirtyFlag_[12] = true;
         if(!pJson["updated_at"].isNull())
         {
             auto timeStr = pJson["updated_at"].asString();
@@ -793,7 +987,7 @@ void Branch::updateByJson(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("is_deleted"))
     {
-        dirtyFlag_[11] = true;
+        dirtyFlag_[13] = true;
         if(!pJson["is_deleted"].isNull())
         {
             isDeleted_=std::make_shared<int8_t>((int8_t)pJson["is_deleted"].asInt64());
@@ -1024,6 +1218,55 @@ void Branch::setCapacityToNull() noexcept
     dirtyFlag_[8] = true;
 }
 
+const std::string &Branch::getValueOfRate() const noexcept
+{
+    static const std::string defaultValue = std::string();
+    if(rate_)
+        return *rate_;
+    return defaultValue;
+}
+const std::shared_ptr<std::string> &Branch::getRate() const noexcept
+{
+    return rate_;
+}
+void Branch::setRate(const std::string &pRate) noexcept
+{
+    rate_ = std::make_shared<std::string>(pRate);
+    dirtyFlag_[9] = true;
+}
+void Branch::setRate(std::string &&pRate) noexcept
+{
+    rate_ = std::make_shared<std::string>(std::move(pRate));
+    dirtyFlag_[9] = true;
+}
+void Branch::setRateToNull() noexcept
+{
+    rate_.reset();
+    dirtyFlag_[9] = true;
+}
+
+const ::trantor::Date &Branch::getValueOfLastCheck() const noexcept
+{
+    static const ::trantor::Date defaultValue = ::trantor::Date();
+    if(lastCheck_)
+        return *lastCheck_;
+    return defaultValue;
+}
+const std::shared_ptr<::trantor::Date> &Branch::getLastCheck() const noexcept
+{
+    return lastCheck_;
+}
+void Branch::setLastCheck(const ::trantor::Date &pLastCheck) noexcept
+{
+    lastCheck_ = std::make_shared<::trantor::Date>(pLastCheck);
+    dirtyFlag_[10] = true;
+}
+void Branch::setLastCheckToNull() noexcept
+{
+    lastCheck_.reset();
+    dirtyFlag_[10] = true;
+}
+
 const ::trantor::Date &Branch::getValueOfCreatedAt() const noexcept
 {
     static const ::trantor::Date defaultValue = ::trantor::Date();
@@ -1038,12 +1281,12 @@ const std::shared_ptr<::trantor::Date> &Branch::getCreatedAt() const noexcept
 void Branch::setCreatedAt(const ::trantor::Date &pCreatedAt) noexcept
 {
     createdAt_ = std::make_shared<::trantor::Date>(pCreatedAt);
-    dirtyFlag_[9] = true;
+    dirtyFlag_[11] = true;
 }
 void Branch::setCreatedAtToNull() noexcept
 {
     createdAt_.reset();
-    dirtyFlag_[9] = true;
+    dirtyFlag_[11] = true;
 }
 
 const ::trantor::Date &Branch::getValueOfUpdatedAt() const noexcept
@@ -1060,12 +1303,12 @@ const std::shared_ptr<::trantor::Date> &Branch::getUpdatedAt() const noexcept
 void Branch::setUpdatedAt(const ::trantor::Date &pUpdatedAt) noexcept
 {
     updatedAt_ = std::make_shared<::trantor::Date>(pUpdatedAt);
-    dirtyFlag_[10] = true;
+    dirtyFlag_[12] = true;
 }
 void Branch::setUpdatedAtToNull() noexcept
 {
     updatedAt_.reset();
-    dirtyFlag_[10] = true;
+    dirtyFlag_[12] = true;
 }
 
 const int8_t &Branch::getValueOfIsDeleted() const noexcept
@@ -1082,12 +1325,12 @@ const std::shared_ptr<int8_t> &Branch::getIsDeleted() const noexcept
 void Branch::setIsDeleted(const int8_t &pIsDeleted) noexcept
 {
     isDeleted_ = std::make_shared<int8_t>(pIsDeleted);
-    dirtyFlag_[11] = true;
+    dirtyFlag_[13] = true;
 }
 void Branch::setIsDeletedToNull() noexcept
 {
     isDeleted_.reset();
-    dirtyFlag_[11] = true;
+    dirtyFlag_[13] = true;
 }
 
 void Branch::updateId(const uint64_t id)
@@ -1106,6 +1349,8 @@ const std::vector<std::string> &Branch::insertColumns() noexcept
         "status",
         "opening_hours",
         "capacity",
+        "rate",
+        "last_check",
         "created_at",
         "updated_at",
         "is_deleted"
@@ -1205,6 +1450,28 @@ void Branch::outputArgs(drogon::orm::internal::SqlBinder &binder) const
     }
     if(dirtyFlag_[9])
     {
+        if(getRate())
+        {
+            binder << getValueOfRate();
+        }
+        else
+        {
+            binder << nullptr;
+        }
+    }
+    if(dirtyFlag_[10])
+    {
+        if(getLastCheck())
+        {
+            binder << getValueOfLastCheck();
+        }
+        else
+        {
+            binder << nullptr;
+        }
+    }
+    if(dirtyFlag_[11])
+    {
         if(getCreatedAt())
         {
             binder << getValueOfCreatedAt();
@@ -1214,7 +1481,7 @@ void Branch::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[10])
+    if(dirtyFlag_[12])
     {
         if(getUpdatedAt())
         {
@@ -1225,7 +1492,7 @@ void Branch::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[11])
+    if(dirtyFlag_[13])
     {
         if(getIsDeleted())
         {
@@ -1284,6 +1551,14 @@ const std::vector<std::string> Branch::updateColumns() const
     if(dirtyFlag_[11])
     {
         ret.push_back(getColumnName(11));
+    }
+    if(dirtyFlag_[12])
+    {
+        ret.push_back(getColumnName(12));
+    }
+    if(dirtyFlag_[13])
+    {
+        ret.push_back(getColumnName(13));
     }
     return ret;
 }
@@ -1380,6 +1655,28 @@ void Branch::updateArgs(drogon::orm::internal::SqlBinder &binder) const
     }
     if(dirtyFlag_[9])
     {
+        if(getRate())
+        {
+            binder << getValueOfRate();
+        }
+        else
+        {
+            binder << nullptr;
+        }
+    }
+    if(dirtyFlag_[10])
+    {
+        if(getLastCheck())
+        {
+            binder << getValueOfLastCheck();
+        }
+        else
+        {
+            binder << nullptr;
+        }
+    }
+    if(dirtyFlag_[11])
+    {
         if(getCreatedAt())
         {
             binder << getValueOfCreatedAt();
@@ -1389,7 +1686,7 @@ void Branch::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[10])
+    if(dirtyFlag_[12])
     {
         if(getUpdatedAt())
         {
@@ -1400,7 +1697,7 @@ void Branch::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[11])
+    if(dirtyFlag_[13])
     {
         if(getIsDeleted())
         {
@@ -1487,6 +1784,22 @@ Json::Value Branch::toJson() const
     {
         ret["capacity"]=Json::Value();
     }
+    if(getRate())
+    {
+        ret["rate"]=getValueOfRate();
+    }
+    else
+    {
+        ret["rate"]=Json::Value();
+    }
+    if(getLastCheck())
+    {
+        ret["last_check"]=getLastCheck()->toDbStringLocal();
+    }
+    else
+    {
+        ret["last_check"]=Json::Value();
+    }
     if(getCreatedAt())
     {
         ret["created_at"]=getCreatedAt()->toDbStringLocal();
@@ -1518,7 +1831,7 @@ Json::Value Branch::toMasqueradedJson(
     const std::vector<std::string> &pMasqueradingVector) const
 {
     Json::Value ret;
-    if(pMasqueradingVector.size() == 12)
+    if(pMasqueradingVector.size() == 14)
     {
         if(!pMasqueradingVector[0].empty())
         {
@@ -1621,9 +1934,9 @@ Json::Value Branch::toMasqueradedJson(
         }
         if(!pMasqueradingVector[9].empty())
         {
-            if(getCreatedAt())
+            if(getRate())
             {
-                ret[pMasqueradingVector[9]]=getCreatedAt()->toDbStringLocal();
+                ret[pMasqueradingVector[9]]=getValueOfRate();
             }
             else
             {
@@ -1632,9 +1945,9 @@ Json::Value Branch::toMasqueradedJson(
         }
         if(!pMasqueradingVector[10].empty())
         {
-            if(getUpdatedAt())
+            if(getLastCheck())
             {
-                ret[pMasqueradingVector[10]]=getUpdatedAt()->toDbStringLocal();
+                ret[pMasqueradingVector[10]]=getLastCheck()->toDbStringLocal();
             }
             else
             {
@@ -1643,13 +1956,35 @@ Json::Value Branch::toMasqueradedJson(
         }
         if(!pMasqueradingVector[11].empty())
         {
-            if(getIsDeleted())
+            if(getCreatedAt())
             {
-                ret[pMasqueradingVector[11]]=getValueOfIsDeleted();
+                ret[pMasqueradingVector[11]]=getCreatedAt()->toDbStringLocal();
             }
             else
             {
                 ret[pMasqueradingVector[11]]=Json::Value();
+            }
+        }
+        if(!pMasqueradingVector[12].empty())
+        {
+            if(getUpdatedAt())
+            {
+                ret[pMasqueradingVector[12]]=getUpdatedAt()->toDbStringLocal();
+            }
+            else
+            {
+                ret[pMasqueradingVector[12]]=Json::Value();
+            }
+        }
+        if(!pMasqueradingVector[13].empty())
+        {
+            if(getIsDeleted())
+            {
+                ret[pMasqueradingVector[13]]=getValueOfIsDeleted();
+            }
+            else
+            {
+                ret[pMasqueradingVector[13]]=Json::Value();
             }
         }
         return ret;
@@ -1727,6 +2062,22 @@ Json::Value Branch::toMasqueradedJson(
     {
         ret["capacity"]=Json::Value();
     }
+    if(getRate())
+    {
+        ret["rate"]=getValueOfRate();
+    }
+    else
+    {
+        ret["rate"]=Json::Value();
+    }
+    if(getLastCheck())
+    {
+        ret["last_check"]=getLastCheck()->toDbStringLocal();
+    }
+    else
+    {
+        ret["last_check"]=Json::Value();
+    }
     if(getCreatedAt())
     {
         ret["created_at"]=getCreatedAt()->toDbStringLocal();
@@ -1801,19 +2152,29 @@ bool Branch::validateJsonForCreation(const Json::Value &pJson, std::string &err)
         if(!validJsonOfField(8, "capacity", pJson["capacity"], err, true))
             return false;
     }
+    if(pJson.isMember("rate"))
+    {
+        if(!validJsonOfField(9, "rate", pJson["rate"], err, true))
+            return false;
+    }
+    if(pJson.isMember("last_check"))
+    {
+        if(!validJsonOfField(10, "last_check", pJson["last_check"], err, true))
+            return false;
+    }
     if(pJson.isMember("created_at"))
     {
-        if(!validJsonOfField(9, "created_at", pJson["created_at"], err, true))
+        if(!validJsonOfField(11, "created_at", pJson["created_at"], err, true))
             return false;
     }
     if(pJson.isMember("updated_at"))
     {
-        if(!validJsonOfField(10, "updated_at", pJson["updated_at"], err, true))
+        if(!validJsonOfField(12, "updated_at", pJson["updated_at"], err, true))
             return false;
     }
     if(pJson.isMember("is_deleted"))
     {
-        if(!validJsonOfField(11, "is_deleted", pJson["is_deleted"], err, true))
+        if(!validJsonOfField(13, "is_deleted", pJson["is_deleted"], err, true))
             return false;
     }
     return true;
@@ -1822,7 +2183,7 @@ bool Branch::validateMasqueradedJsonForCreation(const Json::Value &pJson,
                                                 const std::vector<std::string> &pMasqueradingVector,
                                                 std::string &err)
 {
-    if(pMasqueradingVector.size() != 12)
+    if(pMasqueradingVector.size() != 14)
     {
         err = "Bad masquerading vector";
         return false;
@@ -1924,6 +2285,22 @@ bool Branch::validateMasqueradedJsonForCreation(const Json::Value &pJson,
                   return false;
           }
       }
+      if(!pMasqueradingVector[12].empty())
+      {
+          if(pJson.isMember(pMasqueradingVector[12]))
+          {
+              if(!validJsonOfField(12, pMasqueradingVector[12], pJson[pMasqueradingVector[12]], err, true))
+                  return false;
+          }
+      }
+      if(!pMasqueradingVector[13].empty())
+      {
+          if(pJson.isMember(pMasqueradingVector[13]))
+          {
+              if(!validJsonOfField(13, pMasqueradingVector[13], pJson[pMasqueradingVector[13]], err, true))
+                  return false;
+          }
+      }
     }
     catch(const Json::LogicError &e)
     {
@@ -1984,19 +2361,29 @@ bool Branch::validateJsonForUpdate(const Json::Value &pJson, std::string &err)
         if(!validJsonOfField(8, "capacity", pJson["capacity"], err, false))
             return false;
     }
+    if(pJson.isMember("rate"))
+    {
+        if(!validJsonOfField(9, "rate", pJson["rate"], err, false))
+            return false;
+    }
+    if(pJson.isMember("last_check"))
+    {
+        if(!validJsonOfField(10, "last_check", pJson["last_check"], err, false))
+            return false;
+    }
     if(pJson.isMember("created_at"))
     {
-        if(!validJsonOfField(9, "created_at", pJson["created_at"], err, false))
+        if(!validJsonOfField(11, "created_at", pJson["created_at"], err, false))
             return false;
     }
     if(pJson.isMember("updated_at"))
     {
-        if(!validJsonOfField(10, "updated_at", pJson["updated_at"], err, false))
+        if(!validJsonOfField(12, "updated_at", pJson["updated_at"], err, false))
             return false;
     }
     if(pJson.isMember("is_deleted"))
     {
-        if(!validJsonOfField(11, "is_deleted", pJson["is_deleted"], err, false))
+        if(!validJsonOfField(13, "is_deleted", pJson["is_deleted"], err, false))
             return false;
     }
     return true;
@@ -2005,7 +2392,7 @@ bool Branch::validateMasqueradedJsonForUpdate(const Json::Value &pJson,
                                               const std::vector<std::string> &pMasqueradingVector,
                                               std::string &err)
 {
-    if(pMasqueradingVector.size() != 12)
+    if(pMasqueradingVector.size() != 14)
     {
         err = "Bad masquerading vector";
         return false;
@@ -2074,6 +2461,16 @@ bool Branch::validateMasqueradedJsonForUpdate(const Json::Value &pJson,
       if(!pMasqueradingVector[11].empty() && pJson.isMember(pMasqueradingVector[11]))
       {
           if(!validJsonOfField(11, pMasqueradingVector[11], pJson[pMasqueradingVector[11]], err, false))
+              return false;
+      }
+      if(!pMasqueradingVector[12].empty() && pJson.isMember(pMasqueradingVector[12]))
+      {
+          if(!validJsonOfField(12, pMasqueradingVector[12], pJson[pMasqueradingVector[12]], err, false))
+              return false;
+      }
+      if(!pMasqueradingVector[13].empty() && pJson.isMember(pMasqueradingVector[13]))
+      {
+          if(!validJsonOfField(13, pMasqueradingVector[13], pJson[pMasqueradingVector[13]], err, false))
               return false;
       }
     }
@@ -2231,6 +2628,14 @@ bool Branch::validJsonOfField(size_t index,
                 err="Type error in the "+fieldName+" field";
                 return false;
             }
+            if(pJson.isString() && std::strlen(pJson.asCString()) > 50)
+            {
+                err="String length exceeds limit for the " +
+                    fieldName +
+                    " field (the maximum value is 50)";
+                return false;
+            }
+
             break;
         case 10:
             if(pJson.isNull())
@@ -2244,6 +2649,28 @@ bool Branch::validJsonOfField(size_t index,
             }
             break;
         case 11:
+            if(pJson.isNull())
+            {
+                return true;
+            }
+            if(!pJson.isString())
+            {
+                err="Type error in the "+fieldName+" field";
+                return false;
+            }
+            break;
+        case 12:
+            if(pJson.isNull())
+            {
+                return true;
+            }
+            if(!pJson.isString())
+            {
+                err="Type error in the "+fieldName+" field";
+                return false;
+            }
+            break;
+        case 13:
             if(pJson.isNull())
             {
                 return true;

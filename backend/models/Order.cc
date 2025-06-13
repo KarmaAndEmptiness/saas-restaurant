@@ -21,7 +21,7 @@ const std::string Order::Cols::_tenant_id = "tenant_id";
 const std::string Order::Cols::_user_id = "user_id";
 const std::string Order::Cols::_total_amount = "total_amount";
 const std::string Order::Cols::_discount_ammout = "discount_ammout";
-const std::string Order::Cols::_payment_method_id = "payment_method_id";
+const std::string Order::Cols::_payment_method = "payment_method";
 const std::string Order::Cols::_payment_status = "payment_status";
 const std::string Order::Cols::_order_status = "order_status";
 const std::string Order::Cols::_delivery_address = "delivery_address";
@@ -41,7 +41,7 @@ const std::vector<typename Order::MetaData> Order::metaData_={
 {"user_id","uint32_t","int(10) unsigned",4,0,0,0},
 {"total_amount","std::string","varchar(255)",255,0,0,0},
 {"discount_ammout","std::string","varchar(255)",255,0,0,0},
-{"payment_method_id","std::string","varchar(255)",255,0,0,0},
+{"payment_method","std::string","varchar(255)",255,0,0,0},
 {"payment_status","std::string","varchar(50)",50,0,0,0},
 {"order_status","std::string","varchar(50)",50,0,0,0},
 {"delivery_address","std::string","varchar(255)",255,0,0,0},
@@ -84,9 +84,9 @@ Order::Order(const Row &r, const ssize_t indexOffset) noexcept
         {
             discountAmmout_=std::make_shared<std::string>(r["discount_ammout"].as<std::string>());
         }
-        if(!r["payment_method_id"].isNull())
+        if(!r["payment_method"].isNull())
         {
-            paymentMethodId_=std::make_shared<std::string>(r["payment_method_id"].as<std::string>());
+            paymentMethod_=std::make_shared<std::string>(r["payment_method"].as<std::string>());
         }
         if(!r["payment_status"].isNull())
         {
@@ -199,7 +199,7 @@ Order::Order(const Row &r, const ssize_t indexOffset) noexcept
         index = offset + 6;
         if(!r[index].isNull())
         {
-            paymentMethodId_=std::make_shared<std::string>(r[index].as<std::string>());
+            paymentMethod_=std::make_shared<std::string>(r[index].as<std::string>());
         }
         index = offset + 7;
         if(!r[index].isNull())
@@ -341,7 +341,7 @@ Order::Order(const Json::Value &pJson, const std::vector<std::string> &pMasquera
         dirtyFlag_[6] = true;
         if(!pJson[pMasqueradingVector[6]].isNull())
         {
-            paymentMethodId_=std::make_shared<std::string>(pJson[pMasqueradingVector[6]].asString());
+            paymentMethod_=std::make_shared<std::string>(pJson[pMasqueradingVector[6]].asString());
         }
     }
     if(!pMasqueradingVector[7].empty() && pJson.isMember(pMasqueradingVector[7]))
@@ -496,12 +496,12 @@ Order::Order(const Json::Value &pJson) noexcept(false)
             discountAmmout_=std::make_shared<std::string>(pJson["discount_ammout"].asString());
         }
     }
-    if(pJson.isMember("payment_method_id"))
+    if(pJson.isMember("payment_method"))
     {
         dirtyFlag_[6]=true;
-        if(!pJson["payment_method_id"].isNull())
+        if(!pJson["payment_method"].isNull())
         {
-            paymentMethodId_=std::make_shared<std::string>(pJson["payment_method_id"].asString());
+            paymentMethod_=std::make_shared<std::string>(pJson["payment_method"].asString());
         }
     }
     if(pJson.isMember("payment_status"))
@@ -666,7 +666,7 @@ void Order::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[6] = true;
         if(!pJson[pMasqueradingVector[6]].isNull())
         {
-            paymentMethodId_=std::make_shared<std::string>(pJson[pMasqueradingVector[6]].asString());
+            paymentMethod_=std::make_shared<std::string>(pJson[pMasqueradingVector[6]].asString());
         }
     }
     if(!pMasqueradingVector[7].empty() && pJson.isMember(pMasqueradingVector[7]))
@@ -820,12 +820,12 @@ void Order::updateByJson(const Json::Value &pJson) noexcept(false)
             discountAmmout_=std::make_shared<std::string>(pJson["discount_ammout"].asString());
         }
     }
-    if(pJson.isMember("payment_method_id"))
+    if(pJson.isMember("payment_method"))
     {
         dirtyFlag_[6] = true;
-        if(!pJson["payment_method_id"].isNull())
+        if(!pJson["payment_method"].isNull())
         {
-            paymentMethodId_=std::make_shared<std::string>(pJson["payment_method_id"].asString());
+            paymentMethod_=std::make_shared<std::string>(pJson["payment_method"].asString());
         }
     }
     if(pJson.isMember("payment_status"))
@@ -1077,30 +1077,30 @@ void Order::setDiscountAmmoutToNull() noexcept
     dirtyFlag_[5] = true;
 }
 
-const std::string &Order::getValueOfPaymentMethodId() const noexcept
+const std::string &Order::getValueOfPaymentMethod() const noexcept
 {
     static const std::string defaultValue = std::string();
-    if(paymentMethodId_)
-        return *paymentMethodId_;
+    if(paymentMethod_)
+        return *paymentMethod_;
     return defaultValue;
 }
-const std::shared_ptr<std::string> &Order::getPaymentMethodId() const noexcept
+const std::shared_ptr<std::string> &Order::getPaymentMethod() const noexcept
 {
-    return paymentMethodId_;
+    return paymentMethod_;
 }
-void Order::setPaymentMethodId(const std::string &pPaymentMethodId) noexcept
+void Order::setPaymentMethod(const std::string &pPaymentMethod) noexcept
 {
-    paymentMethodId_ = std::make_shared<std::string>(pPaymentMethodId);
+    paymentMethod_ = std::make_shared<std::string>(pPaymentMethod);
     dirtyFlag_[6] = true;
 }
-void Order::setPaymentMethodId(std::string &&pPaymentMethodId) noexcept
+void Order::setPaymentMethod(std::string &&pPaymentMethod) noexcept
 {
-    paymentMethodId_ = std::make_shared<std::string>(std::move(pPaymentMethodId));
+    paymentMethod_ = std::make_shared<std::string>(std::move(pPaymentMethod));
     dirtyFlag_[6] = true;
 }
-void Order::setPaymentMethodIdToNull() noexcept
+void Order::setPaymentMethodToNull() noexcept
 {
-    paymentMethodId_.reset();
+    paymentMethod_.reset();
     dirtyFlag_[6] = true;
 }
 
@@ -1318,7 +1318,7 @@ const std::vector<std::string> &Order::insertColumns() noexcept
         "user_id",
         "total_amount",
         "discount_ammout",
-        "payment_method_id",
+        "payment_method",
         "payment_status",
         "order_status",
         "delivery_address",
@@ -1390,9 +1390,9 @@ void Order::outputArgs(drogon::orm::internal::SqlBinder &binder) const
     }
     if(dirtyFlag_[6])
     {
-        if(getPaymentMethodId())
+        if(getPaymentMethod())
         {
-            binder << getValueOfPaymentMethodId();
+            binder << getValueOfPaymentMethod();
         }
         else
         {
@@ -1610,9 +1610,9 @@ void Order::updateArgs(drogon::orm::internal::SqlBinder &binder) const
     }
     if(dirtyFlag_[6])
     {
-        if(getPaymentMethodId())
+        if(getPaymentMethod())
         {
-            binder << getValueOfPaymentMethodId();
+            binder << getValueOfPaymentMethod();
         }
         else
         {
@@ -1759,13 +1759,13 @@ Json::Value Order::toJson() const
     {
         ret["discount_ammout"]=Json::Value();
     }
-    if(getPaymentMethodId())
+    if(getPaymentMethod())
     {
-        ret["payment_method_id"]=getValueOfPaymentMethodId();
+        ret["payment_method"]=getValueOfPaymentMethod();
     }
     else
     {
-        ret["payment_method_id"]=Json::Value();
+        ret["payment_method"]=Json::Value();
     }
     if(getPaymentStatus())
     {
@@ -1908,9 +1908,9 @@ Json::Value Order::toMasqueradedJson(
         }
         if(!pMasqueradingVector[6].empty())
         {
-            if(getPaymentMethodId())
+            if(getPaymentMethod())
             {
-                ret[pMasqueradingVector[6]]=getValueOfPaymentMethodId();
+                ret[pMasqueradingVector[6]]=getValueOfPaymentMethod();
             }
             else
             {
@@ -2056,13 +2056,13 @@ Json::Value Order::toMasqueradedJson(
     {
         ret["discount_ammout"]=Json::Value();
     }
-    if(getPaymentMethodId())
+    if(getPaymentMethod())
     {
-        ret["payment_method_id"]=getValueOfPaymentMethodId();
+        ret["payment_method"]=getValueOfPaymentMethod();
     }
     else
     {
-        ret["payment_method_id"]=Json::Value();
+        ret["payment_method"]=Json::Value();
     }
     if(getPaymentStatus())
     {
@@ -2163,9 +2163,9 @@ bool Order::validateJsonForCreation(const Json::Value &pJson, std::string &err)
         if(!validJsonOfField(5, "discount_ammout", pJson["discount_ammout"], err, true))
             return false;
     }
-    if(pJson.isMember("payment_method_id"))
+    if(pJson.isMember("payment_method"))
     {
-        if(!validJsonOfField(6, "payment_method_id", pJson["payment_method_id"], err, true))
+        if(!validJsonOfField(6, "payment_method", pJson["payment_method"], err, true))
             return false;
     }
     if(pJson.isMember("payment_status"))
@@ -2385,9 +2385,9 @@ bool Order::validateJsonForUpdate(const Json::Value &pJson, std::string &err)
         if(!validJsonOfField(5, "discount_ammout", pJson["discount_ammout"], err, false))
             return false;
     }
-    if(pJson.isMember("payment_method_id"))
+    if(pJson.isMember("payment_method"))
     {
-        if(!validJsonOfField(6, "payment_method_id", pJson["payment_method_id"], err, false))
+        if(!validJsonOfField(6, "payment_method", pJson["payment_method"], err, false))
             return false;
     }
     if(pJson.isMember("payment_status"))

@@ -21,63 +21,135 @@ void RestfulTenantCtrlBase::getOne(const HttpRequestPtr &req,
     drogon::orm::Mapper<Tenant> mapper(dbClientPtr);
     mapper.findByPrimaryKey(
         id,
-        [req, callbackPtr, this](Tenant r) {
-            (*callbackPtr)(HttpResponse::newHttpJsonResponse(makeJson(req, r)));
-        },
-        [callbackPtr](const DrogonDbException &e) {
-            const drogon::orm::UnexpectedRows *s=dynamic_cast<const drogon::orm::UnexpectedRows *>(&e.base());
-            if(s)
+        [req, callbackPtr, this](Tenant r)
+        {
+            Json::Value ret;
+            ret["code"] = k200OK;
+            ret["message"] = "ok";
+            if (r.getValueOfIsDeleted())
             {
-                auto resp = HttpResponse::newHttpResponse();
-                resp->setStatusCode(k404NotFound);
+                ret["data"] = Json::nullValue;
+            }
+            else
+            {
+                ret["data"] = makeJson(req, r);
+            }
+            (*callbackPtr)(HttpResponse::newHttpJsonResponse(ret));
+        },
+        [callbackPtr](const DrogonDbException &e)
+        {
+            const drogon::orm::UnexpectedRows *s = dynamic_cast<const drogon::orm::UnexpectedRows *>(&e.base());
+            if (s)
+            {
+                Json::Value ret;
+                ret["code"] = k404NotFound;
+                ret["message"] = "No such resource";
+                auto resp = HttpResponse::newHttpJsonResponse(ret);
                 (*callbackPtr)(resp);
                 return;
             }
-            LOG_ERROR<<e.base().what();
+            LOG_ERROR << e.base().what();
             Json::Value ret;
-            ret["error"] = "database error";
+            ret["code"] = k500InternalServerError;
+            ret["message"] = "database error";
             auto resp = HttpResponse::newHttpJsonResponse(ret);
-            resp->setStatusCode(k500InternalServerError);
             (*callbackPtr)(resp);
         });
 }
 
+void RestfulTenantCtrlBase::getToken(const HttpRequestPtr &req,
+                                     std::function<void(const HttpResponsePtr &)> &&callback,
+                                     Tenant::PrimaryKeyType &&id)
+{
+    std::string jwt_secret_;
+    // 从配置文件读取JWT secret
+    auto &config = drogon::app().getCustomConfig();
+    if (config.isMember("jwt") && config["jwt"].isMember("secret_key"))
+    {
+        jwt_secret_ = config["jwt"]["secret_key"].asString();
+    }
+    else
+    {
+        LOG_ERROR << "JWT secret not found in config file";
+        throw std::runtime_error("JWT secret not configured");
+    }
 
+    auto dbClientPtr = getDbClient();
+    // 创建Mapper对象
+    drogon::orm::Mapper<drogon_model::saas_restaurant::Tenant> tenantMapper(dbClientPtr);
+
+    // 使用Mapper进行查询，添加is_deleted = 0条件
+    auto criteria = drogon::orm::Criteria("tenant_id", id) &&
+                    drogon::orm::Criteria("is_deleted", 0);
+    std::vector<drogon_model::saas_restaurant::Tenant> tenants = tenantMapper.findBy(criteria);
+
+    Json::Value response;
+
+    // 检查是否找到用户
+    if (tenants.empty())
+    {
+        response["code"] = k400BadRequest;
+        response["message"] = "找不到租户";
+        response["data"] = Json::Value::null;
+        auto resp = HttpResponse::newHttpJsonResponse(response);
+        callback(resp);
+        return;
+    }
+    auto tenant = tenants[0];
+    // 生成JWT token
+    auto token = jwt::create()
+                     .set_issuer("saas-restaurant")
+                     .set_type("JWS")
+                     .set_issued_at(std::chrono::system_clock::now())
+                     .set_expires_at(std::chrono::system_clock::now() + std::chrono::hours(24))
+                     .set_payload_claim("tenant_name", jwt::claim(tenant.getValueOfTenantName()))
+                     .set_payload_claim("tenant_id", jwt::claim(std::to_string(tenant.getValueOfTenantId())))
+                     .sign(jwt::algorithm::hs256{jwt_secret_});
+
+    response["code"] = k200OK;
+    response["message"] = "ok";
+    response["data"]["token"] = token;
+    response["data"]["tenant_id"] = tenant.getValueOfTenantId();
+    response["data"]["tenant_name"] = tenant.getValueOfTenantName();
+
+    auto resp = HttpResponse::newHttpJsonResponse(response);
+    callback(resp);
+}
 void RestfulTenantCtrlBase::updateOne(const HttpRequestPtr &req,
                                       std::function<void(const HttpResponsePtr &)> &&callback,
                                       Tenant::PrimaryKeyType &&id)
 {
-    auto jsonPtr=req->jsonObject();
-    if(!jsonPtr)
+    auto jsonPtr = req->jsonObject();
+    if (!jsonPtr)
     {
         Json::Value ret;
-        ret["error"]="No json object is found in the request";
-        auto resp= HttpResponse::newHttpJsonResponse(ret);
-        resp->setStatusCode(k400BadRequest);
+        ret["code"] = k400BadRequest;
+        ret["message"] = "No json object is found in the request";
+        auto resp = HttpResponse::newHttpJsonResponse(ret);
         callback(resp);
         return;
     }
     Tenant object;
     std::string err;
-    if(!doCustomValidations(*jsonPtr, err))
+    if (!doCustomValidations(*jsonPtr, err))
     {
         Json::Value ret;
-        ret["error"] = err;
-        auto resp= HttpResponse::newHttpJsonResponse(ret);
-        resp->setStatusCode(k400BadRequest);
+        ret["code"] = k400BadRequest;
+        ret["message"] = err;
+        auto resp = HttpResponse::newHttpJsonResponse(ret);
         callback(resp);
         return;
     }
     try
     {
-        if(isMasquerading())
+        if (isMasquerading())
         {
-            if(!Tenant::validateMasqueradedJsonForUpdate(*jsonPtr, masqueradingVector(), err))
+            if (!Tenant::validateMasqueradedJsonForUpdate(*jsonPtr, masqueradingVector(), err))
             {
                 Json::Value ret;
-                ret["error"] = err;
-                auto resp= HttpResponse::newHttpJsonResponse(ret);
-                resp->setStatusCode(k400BadRequest);
+                ret["code"] = k400BadRequest;
+                ret["message"] = err;
+                auto resp = HttpResponse::newHttpJsonResponse(ret);
                 callback(resp);
                 return;
             }
@@ -85,34 +157,34 @@ void RestfulTenantCtrlBase::updateOne(const HttpRequestPtr &req,
         }
         else
         {
-            if(!Tenant::validateJsonForUpdate(*jsonPtr, err))
+            if (!Tenant::validateJsonForUpdate(*jsonPtr, err))
             {
                 Json::Value ret;
-                ret["error"] = err;
-                auto resp= HttpResponse::newHttpJsonResponse(ret);
-                resp->setStatusCode(k400BadRequest);
+                ret["code"] = k400BadRequest;
+                ret["message"] = err;
+                auto resp = HttpResponse::newHttpJsonResponse(ret);
                 callback(resp);
                 return;
             }
             object.updateByJson(*jsonPtr);
         }
     }
-    catch(const Json::Exception &e)
+    catch (const Json::Exception &e)
     {
         LOG_ERROR << e.what();
         Json::Value ret;
-        ret["error"]="Field type error";
-        auto resp= HttpResponse::newHttpJsonResponse(ret);
-        resp->setStatusCode(k400BadRequest);
+        ret["code"] = k400BadRequest;
+        ret["message"] = "Field type error";
+        auto resp = HttpResponse::newHttpJsonResponse(ret);
         callback(resp);
-        return;        
+        return;
     }
-    if(object.getPrimaryKey() != id)
+    if (object.getPrimaryKey() != id)
     {
         Json::Value ret;
-        ret["error"]="Bad primary key";
-        auto resp= HttpResponse::newHttpJsonResponse(ret);
-        resp->setStatusCode(k400BadRequest);
+        ret["code"] = k400BadRequest;
+        ret["message"] = "Bad primary key";
+        auto resp = HttpResponse::newHttpJsonResponse(ret);
         callback(resp);
         return;
     }
@@ -125,42 +197,44 @@ void RestfulTenantCtrlBase::updateOne(const HttpRequestPtr &req,
 
     mapper.update(
         object,
-        [callbackPtr](const size_t count) 
+        [callbackPtr](const size_t count)
         {
-            if(count == 1)
-            {
-                auto resp = HttpResponse::newHttpResponse();
-                resp->setStatusCode(k202Accepted);
-                (*callbackPtr)(resp);
-            }
-            else if(count == 0)
+            if (count == 1)
             {
                 Json::Value ret;
-                ret["error"]="No resources are updated";
+                ret["code"] = k200OK;
+                ret["message"] = "ok";
                 auto resp = HttpResponse::newHttpJsonResponse(ret);
-                resp->setStatusCode(k404NotFound);
+                (*callbackPtr)(resp);
+            }
+            else if (count == 0)
+            {
+                Json::Value ret;
+                ret["code"] = k404NotFound;
+                ret["message"] = "No resources are updated";
+                auto resp = HttpResponse::newHttpJsonResponse(ret);
                 (*callbackPtr)(resp);
             }
             else
             {
                 LOG_FATAL << "More than one resource is updated: " << count;
                 Json::Value ret;
-                ret["error"] = "database error";
+                ret["code"] = k500InternalServerError;
+                ret["message"] = "database error";
                 auto resp = HttpResponse::newHttpJsonResponse(ret);
-                resp->setStatusCode(k500InternalServerError);
                 (*callbackPtr)(resp);
             }
         },
-        [callbackPtr](const DrogonDbException &e) {
+        [callbackPtr](const DrogonDbException &e)
+        {
             LOG_ERROR << e.base().what();
             Json::Value ret;
-            ret["error"] = "database error";
+            ret["code"] = k500InternalServerError;
+            ret["message"] = "database error";
             auto resp = HttpResponse::newHttpJsonResponse(ret);
-            resp->setStatusCode(k500InternalServerError);
             (*callbackPtr)(resp);
         });
 }
-
 
 void RestfulTenantCtrlBase::deleteOne(const HttpRequestPtr &req,
                                       std::function<void(const HttpResponsePtr &)> &&callback,
@@ -174,14 +248,15 @@ void RestfulTenantCtrlBase::deleteOne(const HttpRequestPtr &req,
     drogon::orm::Mapper<Tenant> mapper(dbClientPtr);
     mapper.deleteByPrimaryKey(
         id,
-        [callbackPtr](const size_t count) {
-            if(count == 1)
+        [callbackPtr](const size_t count)
+        {
+            if (count == 1)
             {
                 auto resp = HttpResponse::newHttpResponse();
                 resp->setStatusCode(k204NoContent);
                 (*callbackPtr)(resp);
             }
-            else if(count == 0)
+            else if (count == 0)
             {
                 Json::Value ret;
                 ret["error"] = "No resources deleted";
@@ -199,7 +274,8 @@ void RestfulTenantCtrlBase::deleteOne(const HttpRequestPtr &req,
                 (*callbackPtr)(resp);
             }
         },
-        [callbackPtr](const DrogonDbException &e) {
+        [callbackPtr](const DrogonDbException &e)
+        {
             LOG_ERROR << e.base().what();
             Json::Value ret;
             ret["error"] = "database error";
@@ -216,19 +292,19 @@ void RestfulTenantCtrlBase::get(const HttpRequestPtr &req,
     drogon::orm::Mapper<Tenant> mapper(dbClientPtr);
     auto &parameters = req->parameters();
     auto iter = parameters.find("sort");
-    if(iter != parameters.end())
+    if (iter != parameters.end())
     {
         auto sortFields = drogon::utils::splitString(iter->second, ",");
-        for(auto &field : sortFields)
+        for (auto &field : sortFields)
         {
-            if(field.empty())
+            if (field.empty())
                 continue;
-            if(field[0] == '+')
+            if (field[0] == '+')
             {
                 field = field.substr(1);
                 mapper.orderBy(field, SortOrder::ASC);
             }
-            else if(field[0] == '-')
+            else if (field[0] == '-')
             {
                 field = field.substr(1);
                 mapper.orderBy(field, SortOrder::DESC);
@@ -240,148 +316,164 @@ void RestfulTenantCtrlBase::get(const HttpRequestPtr &req,
         }
     }
     iter = parameters.find("offset");
-    if(iter != parameters.end())
+    if (iter != parameters.end())
     {
-        try{
+        try
+        {
             auto offset = std::stoll(iter->second);
             mapper.offset(offset);
         }
-        catch(...)
+        catch (...)
         {
-            auto resp = HttpResponse::newHttpResponse();
-            resp->setStatusCode(k400BadRequest);
+            Json::Value ret;
+            ret["code"] = k400BadRequest;
+            ret["message"] = "Invalid offset value";
+            auto resp = HttpResponse::newHttpJsonResponse(ret);
             callback(resp);
             return;
         }
     }
     iter = parameters.find("limit");
-    if(iter != parameters.end())
+    if (iter != parameters.end())
     {
-        try{
+        try
+        {
             auto limit = std::stoll(iter->second);
             mapper.limit(limit);
         }
-        catch(...)
+        catch (...)
         {
-            auto resp = HttpResponse::newHttpResponse();
-            resp->setStatusCode(k400BadRequest);
+            Json::Value ret;
+            ret["code"] = k400BadRequest;
+            ret["message"] = "Invalid limit value";
+            auto resp = HttpResponse::newHttpJsonResponse(ret);
             callback(resp);
             return;
         }
-    }    
+    }
     auto callbackPtr =
         std::make_shared<std::function<void(const HttpResponsePtr &)>>(
             std::move(callback));
     auto jsonPtr = req->jsonObject();
-    if(jsonPtr && jsonPtr->isMember("filter"))
+    if (jsonPtr && jsonPtr->isMember("filter"))
     {
-        try{
+        try
+        {
             auto criteria = makeCriteria((*jsonPtr)["filter"]);
-            mapper.findBy(criteria,
-                [req, callbackPtr, this](const std::vector<Tenant> &v) {
+            mapper.findBy(criteria, [req, callbackPtr, this](const std::vector<Tenant> &v)
+                          {
+                    Json::Value list;
                     Json::Value ret;
-                    ret.resize(0);
+                    list.resize(0);
                     for (auto &obj : v)
                     {
-                        ret.append(makeJson(req, obj));
+                        if(obj.getValueOfIsDeleted())
+                        continue;
+                        list.append(makeJson(req, obj));
                     }
-                    (*callbackPtr)(HttpResponse::newHttpJsonResponse(ret));
-                },
-                [callbackPtr](const DrogonDbException &e) { 
+                    ret["code"] = k200OK;
+                    ret["message"] = "ok";
+                    ret["data"] = list;
+                    (*callbackPtr)(HttpResponse::newHttpJsonResponse(ret)); }, [callbackPtr](const DrogonDbException &e)
+                          { 
                     LOG_ERROR << e.base().what();
                     Json::Value ret;
-                    ret["error"] = "database error";
+                    ret["code"] =k500InternalServerError;
+                    ret["message"] = "database error";
                     auto resp = HttpResponse::newHttpJsonResponse(ret);
-                    resp->setStatusCode(k500InternalServerError);
-                    (*callbackPtr)(resp);    
-                });
+                    (*callbackPtr)(resp); });
         }
-        catch(const std::exception &e)
+        catch (const std::exception &e)
         {
             LOG_ERROR << e.what();
             Json::Value ret;
-            ret["error"] = e.what();
+            ret["code"] = k400BadRequest;
+            ret["message"] = e.what();
             auto resp = HttpResponse::newHttpJsonResponse(ret);
-            resp->setStatusCode(k400BadRequest);
             (*callbackPtr)(resp);
-            return;    
+            return;
         }
     }
     else
     {
-        mapper.findAll([req, callbackPtr, this](const std::vector<Tenant> &v) {
+        mapper.findAll([req, callbackPtr, this](const std::vector<Tenant> &v)
+                       {
+                Json::Value list;
                 Json::Value ret;
-                ret.resize(0);
+                list.resize(0);
                 for (auto &obj : v)
                 {
-                    ret.append(makeJson(req, obj));
+                    if(obj.getValueOfIsDeleted())
+                        continue;
+                    list.append(makeJson(req, obj));
                 }
-                (*callbackPtr)(HttpResponse::newHttpJsonResponse(ret));
-            },
-            [callbackPtr](const DrogonDbException &e) { 
-                LOG_ERROR << e.base().what();
-                Json::Value ret;
-                ret["error"] = "database error";
-                auto resp = HttpResponse::newHttpJsonResponse(ret);
-                resp->setStatusCode(k500InternalServerError);
-                (*callbackPtr)(resp);    
-            });
+                ret["code"] = k200OK;
+                ret["message"] = "ok";
+                ret["data"] = list;
+                (*callbackPtr)(HttpResponse::newHttpJsonResponse(ret)); },
+                       [callbackPtr](const DrogonDbException &e)
+                       {
+                           LOG_ERROR << e.base().what();
+                           Json::Value ret;
+                           ret["code"] = k500InternalServerError;
+                           ret["message"] = "database error";
+                           auto resp = HttpResponse::newHttpJsonResponse(ret);
+                           (*callbackPtr)(resp);
+                       });
     }
 }
 
 void RestfulTenantCtrlBase::create(const HttpRequestPtr &req,
                                    std::function<void(const HttpResponsePtr &)> &&callback)
 {
-    auto jsonPtr=req->jsonObject();
-    if(!jsonPtr)
+    auto jsonPtr = req->jsonObject();
+    if (!jsonPtr)
     {
         Json::Value ret;
-        ret["error"]="No json object is found in the request";
-        auto resp= HttpResponse::newHttpJsonResponse(ret);
-        resp->setStatusCode(k400BadRequest);
+        ret["code"] = k400BadRequest;
+        ret["message"] = "No json object is found in the request";
+        auto resp = HttpResponse::newHttpJsonResponse(ret);
         callback(resp);
         return;
     }
     std::string err;
-    if(!doCustomValidations(*jsonPtr, err))
+    if (!doCustomValidations(*jsonPtr, err))
     {
         Json::Value ret;
-        ret["error"] = err;
-        auto resp= HttpResponse::newHttpJsonResponse(ret);
-        resp->setStatusCode(k400BadRequest);
+        ret["code"] = k400BadRequest;
+        ret["message"] = err;
+        auto resp = HttpResponse::newHttpJsonResponse(ret);
         callback(resp);
         return;
     }
-    if(isMasquerading())
+    if (isMasquerading())
     {
-        if(!Tenant::validateMasqueradedJsonForCreation(*jsonPtr, masqueradingVector(), err))
+        if (!Tenant::validateMasqueradedJsonForCreation(*jsonPtr, masqueradingVector(), err))
         {
             Json::Value ret;
-            ret["error"] = err;
-            auto resp= HttpResponse::newHttpJsonResponse(ret);
-            resp->setStatusCode(k400BadRequest);
+            ret["code"] = k400BadRequest;
+            ret["message"] = err;
+            auto resp = HttpResponse::newHttpJsonResponse(ret);
             callback(resp);
             return;
         }
     }
     else
     {
-        if(!Tenant::validateJsonForCreation(*jsonPtr, err))
+        if (!Tenant::validateJsonForCreation(*jsonPtr, err))
         {
             Json::Value ret;
-            ret["error"] = err;
-            auto resp= HttpResponse::newHttpJsonResponse(ret);
-            resp->setStatusCode(k400BadRequest);
+            ret["code"] = k400BadRequest;
+            ret["message"] = err;
+            auto resp = HttpResponse::newHttpJsonResponse(ret);
             callback(resp);
             return;
         }
-    }   
-    try 
+    }
+    try
     {
-        Tenant object = 
-            (isMasquerading()? 
-             Tenant(*jsonPtr, masqueradingVector()) : 
-             Tenant(*jsonPtr));
+        Tenant object =
+            (isMasquerading() ? Tenant(*jsonPtr, masqueradingVector()) : Tenant(*jsonPtr));
         auto dbClientPtr = getDbClient();
         auto callbackPtr =
             std::make_shared<std::function<void(const HttpResponsePtr &)>>(
@@ -389,29 +481,34 @@ void RestfulTenantCtrlBase::create(const HttpRequestPtr &req,
         drogon::orm::Mapper<Tenant> mapper(dbClientPtr);
         mapper.insert(
             object,
-            [req, callbackPtr, this](Tenant newObject){
-                (*callbackPtr)(HttpResponse::newHttpJsonResponse(
-                    makeJson(req, newObject)));
+            [req, callbackPtr, this](Tenant newObject)
+            {
+                Json::Value ret;
+                ret["code"] = k200OK;
+                ret["message"] = "ok";
+                ret["data"]["tenant_id"] = newObject.getValueOfTenantId();
+                (*callbackPtr)(HttpResponse::newHttpJsonResponse(ret));
             },
-            [callbackPtr](const DrogonDbException &e){
+            [callbackPtr](const DrogonDbException &e)
+            {
                 LOG_ERROR << e.base().what();
                 Json::Value ret;
-                ret["error"] = "database error";
+                ret["code"] = k500InternalServerError;
+                ret["message"] = "database error";
                 auto resp = HttpResponse::newHttpJsonResponse(ret);
-                resp->setStatusCode(k500InternalServerError);
-                (*callbackPtr)(resp);   
+                (*callbackPtr)(resp);
             });
     }
-    catch(const Json::Exception &e)
+    catch (const Json::Exception &e)
     {
         LOG_ERROR << e.what();
         Json::Value ret;
-        ret["error"]="Field type error";
-        auto resp= HttpResponse::newHttpJsonResponse(ret);
-        resp->setStatusCode(k400BadRequest);
+        ret["code"] = k400BadRequest;
+        ret["message"] = "Field type error";
+        auto resp = HttpResponse::newHttpJsonResponse(ret);
         callback(resp);
-        return;        
-    }   
+        return;
+    }
 }
 
 /*
@@ -422,32 +519,30 @@ void RestfulTenantCtrlBase::update(const HttpRequestPtr &req,
 }*/
 
 RestfulTenantCtrlBase::RestfulTenantCtrlBase()
-    : RestfulController({
-          "tenant_id",
-          "tenant_name",
-          "email",
-          "phone",
-          "status",
-          "tenant_token",
-          "created_at",
-          "updated_at",
-          "is_deleted"
-      })
+    : RestfulController({"tenant_id",
+                         "tenant_name",
+                         "email",
+                         "phone",
+                         "status",
+                         "tenant_token",
+                         "created_at",
+                         "updated_at",
+                         "is_deleted"})
 {
-   /**
-    * The items in the vector are aliases of column names in the table.
-    * if one item is set to an empty string, the related column is not sent
-    * to clients.
-    */
+    /**
+     * The items in the vector are aliases of column names in the table.
+     * if one item is set to an empty string, the related column is not sent
+     * to clients.
+     */
     enableMasquerading({
-        "tenant_id", // the alias for the tenant_id column.
-        "tenant_name", // the alias for the tenant_name column.
-        "email", // the alias for the email column.
-        "phone", // the alias for the phone column.
-        "status", // the alias for the status column.
+        "tenant_id",    // the alias for the tenant_id column.
+        "tenant_name",  // the alias for the tenant_name column.
+        "email",        // the alias for the email column.
+        "phone",        // the alias for the phone column.
+        "status",       // the alias for the status column.
         "tenant_token", // the alias for the tenant_token column.
-        "created_at", // the alias for the created_at column.
-        "updated_at", // the alias for the updated_at column.
-        "is_deleted"  // the alias for the is_deleted column.
+        "created_at",   // the alias for the created_at column.
+        "updated_at",   // the alias for the updated_at column.
+        "is_deleted"    // the alias for the is_deleted column.
     });
 }

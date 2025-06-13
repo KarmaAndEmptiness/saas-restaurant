@@ -52,7 +52,7 @@ class Order
         static const std::string _user_id;
         static const std::string _total_amount;
         static const std::string _discount_ammout;
-        static const std::string _payment_method_id;
+        static const std::string _payment_method;
         static const std::string _payment_status;
         static const std::string _order_status;
         static const std::string _delivery_address;
@@ -168,15 +168,15 @@ class Order
     void setDiscountAmmout(std::string &&pDiscountAmmout) noexcept;
     void setDiscountAmmoutToNull() noexcept;
 
-    /**  For column payment_method_id  */
-    ///Get the value of the column payment_method_id, returns the default value if the column is null
-    const std::string &getValueOfPaymentMethodId() const noexcept;
+    /**  For column payment_method  */
+    ///Get the value of the column payment_method, returns the default value if the column is null
+    const std::string &getValueOfPaymentMethod() const noexcept;
     ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-    const std::shared_ptr<std::string> &getPaymentMethodId() const noexcept;
-    ///Set the value of the column payment_method_id
-    void setPaymentMethodId(const std::string &pPaymentMethodId) noexcept;
-    void setPaymentMethodId(std::string &&pPaymentMethodId) noexcept;
-    void setPaymentMethodIdToNull() noexcept;
+    const std::shared_ptr<std::string> &getPaymentMethod() const noexcept;
+    ///Set the value of the column payment_method
+    void setPaymentMethod(const std::string &pPaymentMethod) noexcept;
+    void setPaymentMethod(std::string &&pPaymentMethod) noexcept;
+    void setPaymentMethodToNull() noexcept;
 
     /**  For column payment_status  */
     ///Get the value of the column payment_status, returns the default value if the column is null
@@ -291,7 +291,7 @@ class Order
     std::shared_ptr<uint32_t> userId_;
     std::shared_ptr<std::string> totalAmount_;
     std::shared_ptr<std::string> discountAmmout_;
-    std::shared_ptr<std::string> paymentMethodId_;
+    std::shared_ptr<std::string> paymentMethod_;
     std::shared_ptr<std::string> paymentStatus_;
     std::shared_ptr<std::string> orderStatus_;
     std::shared_ptr<std::string> deliveryAddress_;
@@ -358,7 +358,7 @@ class Order
         }
         if(dirtyFlag_[6])
         {
-            sql += "payment_method_id,";
+            sql += "payment_method,";
             ++parametersCount;
         }
         if(dirtyFlag_[7])

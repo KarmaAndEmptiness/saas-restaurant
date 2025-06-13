@@ -27,12 +27,16 @@ public:
   ADD_METHOD_TO(RestfulTenantCtrl::deleteOne, "/api/tenant/{1}", Delete, Options, "AuthFilter");
   ADD_METHOD_TO(RestfulTenantCtrl::get, "/api/tenant", Get, Options, "AuthFilter");
   ADD_METHOD_TO(RestfulTenantCtrl::create, "/api/tenant", Post, Options, "AuthFilter");
+  ADD_METHOD_TO(RestfulTenantCtrl::getToken, "/api/tenant/getToken/{1}", Get, Options, "AuthFilter");
   // ADD_METHOD_TO(RestfulTenantCtrl::update,"/api/tenant",Put,Options,"AuthFilter");
   METHOD_LIST_END
 
   void getOne(const HttpRequestPtr &req,
               std::function<void(const HttpResponsePtr &)> &&callback,
               Tenant::PrimaryKeyType &&id);
+  void getToken(const HttpRequestPtr &req,
+                std::function<void(const HttpResponsePtr &)> &&callback,
+                Tenant::PrimaryKeyType &&id);
   void updateOne(const HttpRequestPtr &req,
                  std::function<void(const HttpResponsePtr &)> &&callback,
                  Tenant::PrimaryKeyType &&id);
