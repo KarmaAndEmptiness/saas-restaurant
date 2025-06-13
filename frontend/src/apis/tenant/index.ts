@@ -1,5 +1,5 @@
 import http from '@/utils/request'
-export interface Tenant {
+export interface TenantType {
   created_at:string,
     email:string,
     is_deleted: number,
@@ -14,16 +14,16 @@ export interface Tenant {
 
 //获取租户列表
 export const getTenants = () => {
-  return http.get<Tenant[]>('/api/tenant');
+  return http.get<TenantType[]>('/api/tenant');
 }
 
 //添加租户
-export const createTenant = (data:Tenant) => {
+export const createTenant = (data:TenantType) => {
   return http.post('/api/tenant',{...data,is_deleted:0});
 }
 
 //更新租户
-export const updateTenant = (tenantId:number,data:Tenant) => {
+export const updateTenant = (tenantId:number,data:TenantType) => {
   return http.put('/api/tenant/'+tenantId,{...data,tenant_id:tenantId});
 }
 

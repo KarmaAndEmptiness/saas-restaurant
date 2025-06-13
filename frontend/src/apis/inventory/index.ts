@@ -38,12 +38,12 @@ export const getUsers = () => {
 }
 
 //添加用户
-export const createUser = (data:User) => {
+export const createUser = (data:InventoryType) => {
   return http.post('/api/user',{...data,is_deleted:0});
 }
 
 //更新用户
-export const updateUser = (userId:number,data:User) => {
+export const updateUser = (userId:number,data:InventoryType) => {
   return http.put('/api/user/'+userId,data);
 }
 
