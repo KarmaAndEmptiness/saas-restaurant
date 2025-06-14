@@ -14,11 +14,12 @@ interface Navigation {
 const navs: Navigation[] = [
   { name: "租户管理", path: "/home/tenant" },
   { name: "员工管理", path: "/home/staff" },
+  { name: "角色管理", path: "/home/role" },
   { name: "菜品管理", path: "/home/goods" },
   { name: "分店管理", path: "/home/branch" },
   { name: "客户下单", path: "/home/place-order" },
   { name: "订单列表", path: "/home/order-list" },
-  { name: "客户管理", path: "/home/client" },
+  // { name: "客户管理", path: "/home/client" },
   { name: "会员管理", path: "/home/member" },
   { name: "库存管理", path: "/home/inventory" },
   { name: "报表中心", path: "/home/report" },

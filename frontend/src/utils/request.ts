@@ -58,10 +58,10 @@ class Request {
         // 生成请求唯一标识
         const requestKey = `${config.method}-${config.url}-${JSON.stringify(config.params)}-${JSON.stringify(config.data)}`
 
-        // 取消重复请求
-        if (pendingRequests.has(requestKey)) {
-          pendingRequests.get(requestKey)?.abort()
-        }
+        // // 取消重复请求
+        // if (pendingRequests.has(requestKey)) {
+        //   pendingRequests.get(requestKey)?.abort()
+        // }
         pendingRequests.set(requestKey, controller)
 
         // 添加认证 token

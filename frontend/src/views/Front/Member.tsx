@@ -5,8 +5,10 @@ import {
   getMemberLevels,
   createMember,
   updateMember,
+  getConsumptionRecords,
   type MemberType,
   type MemberLevelType,
+  type ConsumptionRecordType,
 } from "@/apis/front/member";
 import { getUserInfo, getUsers, type UserInfo } from "@/apis/profile";
 
@@ -47,12 +49,16 @@ function Member() {
     status: "活跃",
   });
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
+  const [consumptionRecords, setConsumptionRecords] = useState<
+    ConsumptionRecordType[]
+  >([]);
+  const [loadingRecords, setLoadingRecords] = useState(false);
 
   const filteredMembers = members.filter((member) => {
     const matchSearch =
       member.name?.includes(searchTerm) ||
       member.phone?.includes(searchTerm) ||
-      `${member.member_id}`?.includes(searchTerm);
+      member.member_no?.includes(searchTerm);
     const matchLevel = levelFilter === "全部" || member.level === levelFilter;
     const matchStatus =
       statusFilter === "全部" || member.status === statusFilter;
@@ -78,22 +84,23 @@ function Member() {
     return colors[status] || colors.非活跃;
   };
 
-  const mockConsumptionHistory: ConsumptionRecord[] = [
-    {
-      id: "O001",
-      date: "2024-01-15",
-      amount: 238,
-      points: 238,
-      orderItems: ["红烧狮子头", "清炒时蔬", "龙井虾仁"],
-    },
-    {
-      id: "O002",
-      date: "2024-01-10",
-      amount: 156,
-      points: 156,
-      orderItems: ["粤式烧鸭", "清炒时蔬"],
-    },
-  ];
+  const fetchConsumptionRecords = async (memberId: number) => {
+    setLoadingRecords(true);
+    try {
+      const records = await getConsumptionRecords(memberId);
+      setConsumptionRecords(records);
+    } catch (error) {
+      console.error("获取消费记录失败:", error);
+    } finally {
+      setLoadingRecords(false);
+    }
+  };
+
+  const handleOpenConsumptionHistory = (member: MemberType) => {
+    setSelectedMember(member);
+    setShowConsumptionHistory(true);
+    fetchConsumptionRecords(member.member_id);
+  };
 
   useEffect(() => {
     async function fetchData() {
@@ -319,7 +326,7 @@ function Member() {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {filteredMembers.map((member) => (
-              <tr key={member.member_id} className="hover:bg-gray-50">
+              <tr key={member.member_no} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <div>
@@ -330,7 +337,7 @@ function Member() {
                         {member.phone}
                       </div>
                       <div className="text-xs text-gray-400">
-                        {member.member_id}
+                        {member.member_no}
                       </div>
                     </div>
                   </div>
@@ -366,10 +373,7 @@ function Member() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <button
-                    onClick={() => {
-                      setSelectedMember(member);
-                      setShowConsumptionHistory(true);
-                    }}
+                    onClick={() => handleOpenConsumptionHistory(member)}
                     className="text-indigo-600 hover:text-indigo-900 mr-4"
                   >
                     消费记录
@@ -552,6 +556,7 @@ function Member() {
                 onClick={() => {
                   setShowConsumptionHistory(false);
                   setSelectedMember(null);
+                  setConsumptionRecords([]);
                 }}
                 className="text-gray-400 hover:text-gray-500"
               >
@@ -571,37 +576,46 @@ function Member() {
               </button>
             </div>
 
-            <div className="space-y-4">
-              {mockConsumptionHistory.map((record) => (
-                <div
-                  key={record.id}
-                  className="border rounded-lg p-4 hover:bg-gray-50"
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-sm text-gray-600">{record.date}</p>
-                      <p className="mt-1 text-sm">
-                        {record.orderItems.join("、")}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-lg font-semibold">
-                        ¥{record.amount.toFixed(2)}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        获得积分: {record.points}
-                      </p>
+            {loadingRecords ? (
+              <div className="flex justify-center items-center h-48">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+              </div>
+            ) : consumptionRecords.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">暂无消费记录</div>
+            ) : (
+              <div className="space-y-4">
+                {consumptionRecords.map((record) => (
+                  <div
+                    key={record.record_id}
+                    className="border rounded-lg p-4 hover:bg-gray-50"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-sm text-gray-600">
+                          {new Date(record.created_at).toLocaleString()}
+                        </p>
+                        <p className="mt-1 text-sm">{record.order_items}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-semibold">
+                          ¥{parseFloat(record.amount).toFixed(2)}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          获得积分: {record.points}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
 
             <div className="mt-6 flex justify-end">
               <button
                 onClick={() => {
                   setShowConsumptionHistory(false);
                   setSelectedMember(null);
+                  setConsumptionRecords([]);
                 }}
                 className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
               >

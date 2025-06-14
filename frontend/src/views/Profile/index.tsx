@@ -43,7 +43,7 @@ function Profile() {
 
   const handleSave = async () => {
     try {
-      await updateUserInfo(user_id, formData);
+      await updateUserInfo(user_id ? +user_id : null, formData);
       setProfile(formData);
       setIsEditing(false);
     } catch (error) {
@@ -66,8 +66,9 @@ function Profile() {
     try {
       // 上传文件
       const { file_url } = await uploadFile({ file });
+      const userId = localStorage.getItem("user_id");
       // 更新用户信息
-      await updateUserInfo(localStorage.getItem("user_id"), {
+      await updateUserInfo(userId ? parseInt(userId) : null, {
         ...profile,
         avatar_url: file_url,
       });

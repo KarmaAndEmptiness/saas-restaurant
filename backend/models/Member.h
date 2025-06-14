@@ -38,6 +38,7 @@ namespace drogon_model
 {
 namespace saas_restaurant
 {
+class ConsumptionRecord;
 class MemberLevel;
 class Tenant;
 class User;
@@ -51,6 +52,7 @@ class Member
         static const std::string _user_id;
         static const std::string _tenant_id;
         static const std::string _level_id;
+        static const std::string _member_no;
         static const std::string _points;
         static const std::string _total_points;
         static const std::string _total_spent;
@@ -145,6 +147,16 @@ class Member
     void setLevelId(const uint32_t &pLevelId) noexcept;
     void setLevelIdToNull() noexcept;
 
+    /**  For column member_no  */
+    ///Get the value of the column member_no, returns the default value if the column is null
+    const std::string &getValueOfMemberNo() const noexcept;
+    ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
+    const std::shared_ptr<std::string> &getMemberNo() const noexcept;
+    ///Set the value of the column member_no
+    void setMemberNo(const std::string &pMemberNo) noexcept;
+    void setMemberNo(std::string &&pMemberNo) noexcept;
+    void setMemberNoToNull() noexcept;
+
     /**  For column points  */
     ///Get the value of the column points, returns the default value if the column is null
     const uint32_t &getValueOfPoints() const noexcept;
@@ -220,7 +232,7 @@ class Member
     void setIsDeletedToNull() noexcept;
 
 
-    static size_t getColumnNumber() noexcept {  return 12;  }
+    static size_t getColumnNumber() noexcept {  return 13;  }
     static const std::string &getColumnName(size_t index) noexcept(false);
 
     Json::Value toJson() const;
@@ -238,6 +250,10 @@ class Member
     void getMemberLevel(const drogon::orm::DbClientPtr &clientPtr,
                         const std::function<void(MemberLevel)> &rcb,
                         const drogon::orm::ExceptionCallback &ecb) const;
+    std::vector<ConsumptionRecord> getConsumption_records(const drogon::orm::DbClientPtr &clientPtr) const;
+    void getConsumption_records(const drogon::orm::DbClientPtr &clientPtr,
+                                const std::function<void(std::vector<ConsumptionRecord>)> &rcb,
+                                const drogon::orm::ExceptionCallback &ecb) const;
   private:
     friend drogon::orm::Mapper<Member>;
     friend drogon::orm::BaseBuilder<Member, true, true>;
@@ -257,6 +273,7 @@ class Member
     std::shared_ptr<uint32_t> userId_;
     std::shared_ptr<uint32_t> tenantId_;
     std::shared_ptr<uint32_t> levelId_;
+    std::shared_ptr<std::string> memberNo_;
     std::shared_ptr<uint32_t> points_;
     std::shared_ptr<uint32_t> totalPoints_;
     std::shared_ptr<std::string> totalSpent_;
@@ -276,7 +293,7 @@ class Member
         const bool notNull_;
     };
     static const std::vector<MetaData> metaData_;
-    bool dirtyFlag_[12]={ false };
+    bool dirtyFlag_[13]={ false };
   public:
     static const std::string &sqlForFindingByPrimaryKey()
     {
@@ -313,41 +330,46 @@ class Member
         }
         if(dirtyFlag_[4])
         {
-            sql += "points,";
+            sql += "member_no,";
             ++parametersCount;
         }
         if(dirtyFlag_[5])
         {
-            sql += "total_points,";
+            sql += "points,";
             ++parametersCount;
         }
         if(dirtyFlag_[6])
         {
-            sql += "total_spent,";
+            sql += "total_points,";
             ++parametersCount;
         }
         if(dirtyFlag_[7])
         {
-            sql += "expire_date,";
+            sql += "total_spent,";
             ++parametersCount;
         }
         if(dirtyFlag_[8])
+        {
+            sql += "expire_date,";
+            ++parametersCount;
+        }
+        if(dirtyFlag_[9])
         {
             sql += "status,";
             ++parametersCount;
         }
         sql += "created_at,";
         ++parametersCount;
-        if(!dirtyFlag_[9])
+        if(!dirtyFlag_[10])
         {
             needSelection=true;
         }
-        if(dirtyFlag_[10])
+        if(dirtyFlag_[11])
         {
             sql += "updated_at,";
             ++parametersCount;
         }
-        if(dirtyFlag_[11])
+        if(dirtyFlag_[12])
         {
             sql += "is_deleted,";
             ++parametersCount;
@@ -407,16 +429,21 @@ class Member
             sql.append("?,");
 
         }
-        else
-        {
-            sql +="default,";
-        }
         if(dirtyFlag_[10])
         {
             sql.append("?,");
 
         }
+        else
+        {
+            sql +="default,";
+        }
         if(dirtyFlag_[11])
+        {
+            sql.append("?,");
+
+        }
+        if(dirtyFlag_[12])
         {
             sql.append("?,");
 

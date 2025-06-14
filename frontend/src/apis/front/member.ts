@@ -15,6 +15,7 @@ export interface MemberType {
     name: string,
     phone: string,
     level:string,
+    member_no:string|null
 }
 export interface MemberLevelType{
 
@@ -27,6 +28,16 @@ benefits:string| null,
     required_spent: string,
     tenant_id: number
                     
+}
+export interface ConsumptionRecordType
+{
+amount: string,
+      created_at: string,
+      member_id: number,
+      order_items: string,
+      points: string,
+      record_id: number,
+      tenant_id: number
 }
 //获取会员列表
 export const getMembers=()=>{
@@ -55,4 +66,8 @@ export const getMemberLevel=(levelId:number)=>{
 //获取会员等级列表
 export const getMemberLevels=()=>{
   return http.get<MemberLevelType[]>('/api/memberlevel');
+}
+//获取会员消费记录
+export const getConsumptionRecords=(memberId:number)=>{
+  return http.get<ConsumptionRecordType[]>('/api/consumptionrecord/member/'+memberId);
 }
