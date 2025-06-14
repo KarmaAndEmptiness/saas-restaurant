@@ -39,6 +39,7 @@ namespace drogon_model
 namespace saas_restaurant
 {
 class Dish;
+class InventoryRecord;
 class Tenant;
 
 class Inventory
@@ -50,7 +51,13 @@ class Inventory
         static const std::string _dish_id;
         static const std::string _tenant_id;
         static const std::string _quantity;
+        static const std::string _item_name;
+        static const std::string _item_category;
+        static const std::string _item_cost;
         static const std::string _min_stock;
+        static const std::string _max_stock;
+        static const std::string _supplier;
+        static const std::string _status;
         static const std::string _location;
         static const std::string _created_at;
         static const std::string _updated_at;
@@ -141,6 +148,36 @@ class Inventory
     void setQuantity(const int32_t &pQuantity) noexcept;
     void setQuantityToNull() noexcept;
 
+    /**  For column item_name  */
+    ///Get the value of the column item_name, returns the default value if the column is null
+    const std::string &getValueOfItemName() const noexcept;
+    ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
+    const std::shared_ptr<std::string> &getItemName() const noexcept;
+    ///Set the value of the column item_name
+    void setItemName(const std::string &pItemName) noexcept;
+    void setItemName(std::string &&pItemName) noexcept;
+    void setItemNameToNull() noexcept;
+
+    /**  For column item_category  */
+    ///Get the value of the column item_category, returns the default value if the column is null
+    const std::string &getValueOfItemCategory() const noexcept;
+    ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
+    const std::shared_ptr<std::string> &getItemCategory() const noexcept;
+    ///Set the value of the column item_category
+    void setItemCategory(const std::string &pItemCategory) noexcept;
+    void setItemCategory(std::string &&pItemCategory) noexcept;
+    void setItemCategoryToNull() noexcept;
+
+    /**  For column item_cost  */
+    ///Get the value of the column item_cost, returns the default value if the column is null
+    const std::string &getValueOfItemCost() const noexcept;
+    ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
+    const std::shared_ptr<std::string> &getItemCost() const noexcept;
+    ///Set the value of the column item_cost
+    void setItemCost(const std::string &pItemCost) noexcept;
+    void setItemCost(std::string &&pItemCost) noexcept;
+    void setItemCostToNull() noexcept;
+
     /**  For column min_stock  */
     ///Get the value of the column min_stock, returns the default value if the column is null
     const int32_t &getValueOfMinStock() const noexcept;
@@ -149,6 +186,35 @@ class Inventory
     ///Set the value of the column min_stock
     void setMinStock(const int32_t &pMinStock) noexcept;
     void setMinStockToNull() noexcept;
+
+    /**  For column max_stock  */
+    ///Get the value of the column max_stock, returns the default value if the column is null
+    const int32_t &getValueOfMaxStock() const noexcept;
+    ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
+    const std::shared_ptr<int32_t> &getMaxStock() const noexcept;
+    ///Set the value of the column max_stock
+    void setMaxStock(const int32_t &pMaxStock) noexcept;
+    void setMaxStockToNull() noexcept;
+
+    /**  For column supplier  */
+    ///Get the value of the column supplier, returns the default value if the column is null
+    const std::string &getValueOfSupplier() const noexcept;
+    ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
+    const std::shared_ptr<std::string> &getSupplier() const noexcept;
+    ///Set the value of the column supplier
+    void setSupplier(const std::string &pSupplier) noexcept;
+    void setSupplier(std::string &&pSupplier) noexcept;
+    void setSupplierToNull() noexcept;
+
+    /**  For column status  */
+    ///Get the value of the column status, returns the default value if the column is null
+    const std::string &getValueOfStatus() const noexcept;
+    ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
+    const std::shared_ptr<std::string> &getStatus() const noexcept;
+    ///Set the value of the column status
+    void setStatus(const std::string &pStatus) noexcept;
+    void setStatus(std::string &&pStatus) noexcept;
+    void setStatusToNull() noexcept;
 
     /**  For column location  */
     ///Get the value of the column location, returns the default value if the column is null
@@ -188,7 +254,7 @@ class Inventory
     void setIsDeletedToNull() noexcept;
 
 
-    static size_t getColumnNumber() noexcept {  return 9;  }
+    static size_t getColumnNumber() noexcept {  return 15;  }
     static const std::string &getColumnName(size_t index) noexcept(false);
 
     Json::Value toJson() const;
@@ -202,6 +268,10 @@ class Inventory
     void getDish(const drogon::orm::DbClientPtr &clientPtr,
                  const std::function<void(Dish)> &rcb,
                  const drogon::orm::ExceptionCallback &ecb) const;
+    std::vector<InventoryRecord> getInventory_records(const drogon::orm::DbClientPtr &clientPtr) const;
+    void getInventory_records(const drogon::orm::DbClientPtr &clientPtr,
+                              const std::function<void(std::vector<InventoryRecord>)> &rcb,
+                              const drogon::orm::ExceptionCallback &ecb) const;
   private:
     friend drogon::orm::Mapper<Inventory>;
     friend drogon::orm::BaseBuilder<Inventory, true, true>;
@@ -221,7 +291,13 @@ class Inventory
     std::shared_ptr<uint32_t> dishId_;
     std::shared_ptr<uint32_t> tenantId_;
     std::shared_ptr<int32_t> quantity_;
+    std::shared_ptr<std::string> itemName_;
+    std::shared_ptr<std::string> itemCategory_;
+    std::shared_ptr<std::string> itemCost_;
     std::shared_ptr<int32_t> minStock_;
+    std::shared_ptr<int32_t> maxStock_;
+    std::shared_ptr<std::string> supplier_;
+    std::shared_ptr<std::string> status_;
     std::shared_ptr<std::string> location_;
     std::shared_ptr<::trantor::Date> createdAt_;
     std::shared_ptr<::trantor::Date> updatedAt_;
@@ -237,7 +313,7 @@ class Inventory
         const bool notNull_;
     };
     static const std::vector<MetaData> metaData_;
-    bool dirtyFlag_[9]={ false };
+    bool dirtyFlag_[15]={ false };
   public:
     static const std::string &sqlForFindingByPrimaryKey()
     {
@@ -274,27 +350,57 @@ class Inventory
         }
         if(dirtyFlag_[4])
         {
-            sql += "min_stock,";
+            sql += "item_name,";
             ++parametersCount;
         }
         if(dirtyFlag_[5])
+        {
+            sql += "item_category,";
+            ++parametersCount;
+        }
+        if(dirtyFlag_[6])
+        {
+            sql += "item_cost,";
+            ++parametersCount;
+        }
+        if(dirtyFlag_[7])
+        {
+            sql += "min_stock,";
+            ++parametersCount;
+        }
+        if(dirtyFlag_[8])
+        {
+            sql += "max_stock,";
+            ++parametersCount;
+        }
+        if(dirtyFlag_[9])
+        {
+            sql += "supplier,";
+            ++parametersCount;
+        }
+        if(dirtyFlag_[10])
+        {
+            sql += "status,";
+            ++parametersCount;
+        }
+        if(dirtyFlag_[11])
         {
             sql += "location,";
             ++parametersCount;
         }
         sql += "created_at,";
         ++parametersCount;
-        if(!dirtyFlag_[6])
+        if(!dirtyFlag_[12])
         {
             needSelection=true;
         }
         sql += "updated_at,";
         ++parametersCount;
-        if(!dirtyFlag_[7])
+        if(!dirtyFlag_[13])
         {
             needSelection=true;
         }
-        if(dirtyFlag_[8])
+        if(dirtyFlag_[14])
         {
             sql += "is_deleted,";
             ++parametersCount;
@@ -339,11 +445,32 @@ class Inventory
             sql.append("?,");
 
         }
-        else
-        {
-            sql +="default,";
-        }
         if(dirtyFlag_[7])
+        {
+            sql.append("?,");
+
+        }
+        if(dirtyFlag_[8])
+        {
+            sql.append("?,");
+
+        }
+        if(dirtyFlag_[9])
+        {
+            sql.append("?,");
+
+        }
+        if(dirtyFlag_[10])
+        {
+            sql.append("?,");
+
+        }
+        if(dirtyFlag_[11])
+        {
+            sql.append("?,");
+
+        }
+        if(dirtyFlag_[12])
         {
             sql.append("?,");
 
@@ -352,7 +479,16 @@ class Inventory
         {
             sql +="default,";
         }
-        if(dirtyFlag_[8])
+        if(dirtyFlag_[13])
+        {
+            sql.append("?,");
+
+        }
+        else
+        {
+            sql +="default,";
+        }
+        if(dirtyFlag_[14])
         {
             sql.append("?,");
 

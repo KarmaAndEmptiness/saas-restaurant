@@ -1,67 +1,57 @@
 import http from '@/utils/request'
 export interface InventoryType{
-      address:string | null,
-    avatar_url:string | null,
-    birthday: string|null,
-    roles?: string[] | null,
-    city: string|null,
-    created_at: string |null,
-    email: string | null,
-    gender: string|null,
-    is_deleted: number,
-    last_login: string | null,
-    password: string | null,
-    phone: string | null,
-    province: string|null,
-    status: string|null,
-    tenant_id: number,
-    updated_at:string,
-    user_id: number,
-    username: string
-
-}
-export interface UserRole
-{
-    user_id: number,
-    role_id: number,
+      inventory_id: number;
+      is_deleted: number;
+      item_category: string;
+      item_cost: string;
+      item_name: string;
+      max_stock: number;
+      min_stock: number;
+      quantity: number;
+      status: "正常" | "偏低" | "紧缺" | "过剩"|string;
+      supplier: string;
+      tenant_id: number;
+      updated_at: string;
 }
 
-export interface Role
-{
-    role_id: number,
-    role_name:string,
-    description: string|null
+export interface InventoryRecordType{
+  created_at: string;
+      item_id: number;
+      operator_id: number;
+      quantity: string;
+      record_id: number;
+      record_type: "入库" | "出库";
+      remark: string;
+      tenant_id: number;
+      operator?:string;
 }
-//获取用户列表
-export const getUsers = () => {
-  return http.get('/api/user');
+//获取库存列表
+export const getInventories = () => {
+  return http.get('/api/inventory');
 }
 
-//添加用户
-export const createUser = (data:InventoryType) => {
-  return http.post('/api/user',{...data,is_deleted:0});
+//添加库存
+export const createInventory = (data:InventoryType) => {
+  return http.post('/api/inventory',{...data,is_deleted:0});
 }
 
-//更新用户
-export const updateUser = (userId:number,data:InventoryType) => {
-  return http.put('/api/user/'+userId,data);
+//更新库存
+export const updateInventory = (iventoryId:number,data:InventoryType) => {
+  return http.put('/api/inventory/'+iventoryId,data);
 }
 
 //删除用户
-export const deleteUser = (userId:number) => {
-  return http.put('/api/user/'+userId, {user_id:userId, is_deleted: 1 });
+export const deleteInventory = (inventoryId:number) => {
+  return http.put('/api/inventory/'+inventoryId, {inventory_id:inventoryId, is_deleted: 1 });
 }
 
-//获取用户角色关联
-export const getUserRole = (userId:number) => {
-  return http.get<UserRole[]>('/api/userrole/user/'+userId);
-}
-//根据角色ID获取角色
-export const getRole = (roleId:number) => {
-  return http.get<Role>('/api/role/'+roleId);
+//根据ID获取出入库记录
+export const getInventoryRecordsByInventoryId = (inventoryId:number) => {
+  return http.get<InventoryRecordType[]>('/api/inventoryrecord/inventory/'+inventoryId);
 }
 
-//获取角色列表
-export const getRoles = () => {
-  return http.get<Role[]>('/api/role');
+//创建出入库记录
+export const  createInventoryRecord= (data:InventoryRecordType) => {
+  return http.post('/api/inventoryrecord',data);
 }
+

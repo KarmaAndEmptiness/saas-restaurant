@@ -328,6 +328,27 @@
                 "target_key": "permission_category_id",
                 "enable_reverse": true
             },
+            {
+                "type": "has many",
+                "original_table_name": "inventory",
+                "original_table_alias": "",
+                "original_key": "inventory_id",
+                "target_table_name": "inventory_record",
+                "target_table_alias": "inventory_records",
+                "target_key": "item_id",
+                "enable_reverse": true
+            },
+
+            {
+                "type": "has many",
+                "original_table_name": "member",
+                "original_table_alias": "",
+                "original_key": "member_id",
+                "target_table_name": "consumption_record",
+                "target_table_alias": "consumption_records",
+                "target_key": "member_id",
+                "enable_reverse": true
+            },
 
             {
                 "type": "many to many",
@@ -385,6 +406,6 @@
         // directory: The directory where the controller source files are stored.
         "directory": "controllers",
         // generate_base_only: false by default. Set to true to avoid overwriting custom subclasses.
-        "generate_base_only": false
+        "generate_base_only": true
     }
 }

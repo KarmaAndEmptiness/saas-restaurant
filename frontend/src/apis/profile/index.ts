@@ -21,8 +21,8 @@ export interface UserInfo {
 export const getUserInfo=(id:string|number | null)=>{
   return http.get<UserInfo>('/api/user/'+id);
 }
-export const updateUserInfo=(id:string | null,data:UserInfo)=>{
-  return http.put('/api/user/'+id,data);
+export const updateUserInfo=(userId:number | null,data:UserInfo)=>{
+  return http.put('/api/user/'+userId,{...data, user_id: userId});
 }
 
 export const getUsers = () => {

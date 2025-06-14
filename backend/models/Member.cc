@@ -6,6 +6,7 @@
  */
 
 #include "Member.h"
+#include "ConsumptionRecord.h"
 #include "MemberLevel.h"
 #include "Tenant.h"
 #include "User.h"
@@ -20,6 +21,7 @@ const std::string Member::Cols::_member_id = "member_id";
 const std::string Member::Cols::_user_id = "user_id";
 const std::string Member::Cols::_tenant_id = "tenant_id";
 const std::string Member::Cols::_level_id = "level_id";
+const std::string Member::Cols::_member_no = "member_no";
 const std::string Member::Cols::_points = "points";
 const std::string Member::Cols::_total_points = "total_points";
 const std::string Member::Cols::_total_spent = "total_spent";
@@ -37,6 +39,7 @@ const std::vector<typename Member::MetaData> Member::metaData_={
 {"user_id","uint32_t","int(10) unsigned",4,0,0,0},
 {"tenant_id","uint32_t","int(10) unsigned",4,0,0,0},
 {"level_id","uint32_t","int(10) unsigned",4,0,0,0},
+{"member_no","std::string","varchar(255)",255,0,0,0},
 {"points","uint32_t","int(10) unsigned",4,0,0,0},
 {"total_points","uint32_t","int(10) unsigned",4,0,0,0},
 {"total_spent","std::string","varchar(255)",255,0,0,0},
@@ -70,6 +73,10 @@ Member::Member(const Row &r, const ssize_t indexOffset) noexcept
         if(!r["level_id"].isNull())
         {
             levelId_=std::make_shared<uint32_t>(r["level_id"].as<uint32_t>());
+        }
+        if(!r["member_no"].isNull())
+        {
+            memberNo_=std::make_shared<std::string>(r["member_no"].as<std::string>());
         }
         if(!r["points"].isNull())
         {
@@ -161,7 +168,7 @@ Member::Member(const Row &r, const ssize_t indexOffset) noexcept
     else
     {
         size_t offset = (size_t)indexOffset;
-        if(offset + 12 > r.size())
+        if(offset + 13 > r.size())
         {
             LOG_FATAL << "Invalid SQL result for this model";
             return;
@@ -190,19 +197,24 @@ Member::Member(const Row &r, const ssize_t indexOffset) noexcept
         index = offset + 4;
         if(!r[index].isNull())
         {
-            points_=std::make_shared<uint32_t>(r[index].as<uint32_t>());
+            memberNo_=std::make_shared<std::string>(r[index].as<std::string>());
         }
         index = offset + 5;
         if(!r[index].isNull())
         {
-            totalPoints_=std::make_shared<uint32_t>(r[index].as<uint32_t>());
+            points_=std::make_shared<uint32_t>(r[index].as<uint32_t>());
         }
         index = offset + 6;
         if(!r[index].isNull())
         {
-            totalSpent_=std::make_shared<std::string>(r[index].as<std::string>());
+            totalPoints_=std::make_shared<uint32_t>(r[index].as<uint32_t>());
         }
         index = offset + 7;
+        if(!r[index].isNull())
+        {
+            totalSpent_=std::make_shared<std::string>(r[index].as<std::string>());
+        }
+        index = offset + 8;
         if(!r[index].isNull())
         {
             auto timeStr = r[index].as<std::string>();
@@ -225,12 +237,12 @@ Member::Member(const Row &r, const ssize_t indexOffset) noexcept
                 expireDate_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
             }
         }
-        index = offset + 8;
+        index = offset + 9;
         if(!r[index].isNull())
         {
             status_=std::make_shared<std::string>(r[index].as<std::string>());
         }
-        index = offset + 9;
+        index = offset + 10;
         if(!r[index].isNull())
         {
             auto timeStr = r[index].as<std::string>();
@@ -253,7 +265,7 @@ Member::Member(const Row &r, const ssize_t indexOffset) noexcept
                 createdAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
             }
         }
-        index = offset + 10;
+        index = offset + 11;
         if(!r[index].isNull())
         {
             auto timeStr = r[index].as<std::string>();
@@ -276,7 +288,7 @@ Member::Member(const Row &r, const ssize_t indexOffset) noexcept
                 updatedAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
             }
         }
-        index = offset + 11;
+        index = offset + 12;
         if(!r[index].isNull())
         {
             isDeleted_=std::make_shared<int8_t>(r[index].as<int8_t>());
@@ -287,7 +299,7 @@ Member::Member(const Row &r, const ssize_t indexOffset) noexcept
 
 Member::Member(const Json::Value &pJson, const std::vector<std::string> &pMasqueradingVector) noexcept(false)
 {
-    if(pMasqueradingVector.size() != 12)
+    if(pMasqueradingVector.size() != 13)
     {
         LOG_ERROR << "Bad masquerading vector";
         return;
@@ -329,7 +341,7 @@ Member::Member(const Json::Value &pJson, const std::vector<std::string> &pMasque
         dirtyFlag_[4] = true;
         if(!pJson[pMasqueradingVector[4]].isNull())
         {
-            points_=std::make_shared<uint32_t>((uint32_t)pJson[pMasqueradingVector[4]].asUInt64());
+            memberNo_=std::make_shared<std::string>(pJson[pMasqueradingVector[4]].asString());
         }
     }
     if(!pMasqueradingVector[5].empty() && pJson.isMember(pMasqueradingVector[5]))
@@ -337,7 +349,7 @@ Member::Member(const Json::Value &pJson, const std::vector<std::string> &pMasque
         dirtyFlag_[5] = true;
         if(!pJson[pMasqueradingVector[5]].isNull())
         {
-            totalPoints_=std::make_shared<uint32_t>((uint32_t)pJson[pMasqueradingVector[5]].asUInt64());
+            points_=std::make_shared<uint32_t>((uint32_t)pJson[pMasqueradingVector[5]].asUInt64());
         }
     }
     if(!pMasqueradingVector[6].empty() && pJson.isMember(pMasqueradingVector[6]))
@@ -345,7 +357,7 @@ Member::Member(const Json::Value &pJson, const std::vector<std::string> &pMasque
         dirtyFlag_[6] = true;
         if(!pJson[pMasqueradingVector[6]].isNull())
         {
-            totalSpent_=std::make_shared<std::string>(pJson[pMasqueradingVector[6]].asString());
+            totalPoints_=std::make_shared<uint32_t>((uint32_t)pJson[pMasqueradingVector[6]].asUInt64());
         }
     }
     if(!pMasqueradingVector[7].empty() && pJson.isMember(pMasqueradingVector[7]))
@@ -353,7 +365,15 @@ Member::Member(const Json::Value &pJson, const std::vector<std::string> &pMasque
         dirtyFlag_[7] = true;
         if(!pJson[pMasqueradingVector[7]].isNull())
         {
-            auto timeStr = pJson[pMasqueradingVector[7]].asString();
+            totalSpent_=std::make_shared<std::string>(pJson[pMasqueradingVector[7]].asString());
+        }
+    }
+    if(!pMasqueradingVector[8].empty() && pJson.isMember(pMasqueradingVector[8]))
+    {
+        dirtyFlag_[8] = true;
+        if(!pJson[pMasqueradingVector[8]].isNull())
+        {
+            auto timeStr = pJson[pMasqueradingVector[8]].asString();
             struct tm stm;
             memset(&stm,0,sizeof(stm));
             auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
@@ -374,38 +394,12 @@ Member::Member(const Json::Value &pJson, const std::vector<std::string> &pMasque
             }
         }
     }
-    if(!pMasqueradingVector[8].empty() && pJson.isMember(pMasqueradingVector[8]))
-    {
-        dirtyFlag_[8] = true;
-        if(!pJson[pMasqueradingVector[8]].isNull())
-        {
-            status_=std::make_shared<std::string>(pJson[pMasqueradingVector[8]].asString());
-        }
-    }
     if(!pMasqueradingVector[9].empty() && pJson.isMember(pMasqueradingVector[9]))
     {
         dirtyFlag_[9] = true;
         if(!pJson[pMasqueradingVector[9]].isNull())
         {
-            auto timeStr = pJson[pMasqueradingVector[9]].asString();
-            struct tm stm;
-            memset(&stm,0,sizeof(stm));
-            auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
-            time_t t = mktime(&stm);
-            size_t decimalNum = 0;
-            if(p)
-            {
-                if(*p=='.')
-                {
-                    std::string decimals(p+1,&timeStr[timeStr.length()]);
-                    while(decimals.length()<6)
-                    {
-                        decimals += "0";
-                    }
-                    decimalNum = (size_t)atol(decimals.c_str());
-                }
-                createdAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
-            }
+            status_=std::make_shared<std::string>(pJson[pMasqueradingVector[9]].asString());
         }
     }
     if(!pMasqueradingVector[10].empty() && pJson.isMember(pMasqueradingVector[10]))
@@ -430,7 +424,7 @@ Member::Member(const Json::Value &pJson, const std::vector<std::string> &pMasque
                     }
                     decimalNum = (size_t)atol(decimals.c_str());
                 }
-                updatedAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
+                createdAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
             }
         }
     }
@@ -439,7 +433,33 @@ Member::Member(const Json::Value &pJson, const std::vector<std::string> &pMasque
         dirtyFlag_[11] = true;
         if(!pJson[pMasqueradingVector[11]].isNull())
         {
-            isDeleted_=std::make_shared<int8_t>((int8_t)pJson[pMasqueradingVector[11]].asInt64());
+            auto timeStr = pJson[pMasqueradingVector[11]].asString();
+            struct tm stm;
+            memset(&stm,0,sizeof(stm));
+            auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
+            time_t t = mktime(&stm);
+            size_t decimalNum = 0;
+            if(p)
+            {
+                if(*p=='.')
+                {
+                    std::string decimals(p+1,&timeStr[timeStr.length()]);
+                    while(decimals.length()<6)
+                    {
+                        decimals += "0";
+                    }
+                    decimalNum = (size_t)atol(decimals.c_str());
+                }
+                updatedAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
+            }
+        }
+    }
+    if(!pMasqueradingVector[12].empty() && pJson.isMember(pMasqueradingVector[12]))
+    {
+        dirtyFlag_[12] = true;
+        if(!pJson[pMasqueradingVector[12]].isNull())
+        {
+            isDeleted_=std::make_shared<int8_t>((int8_t)pJson[pMasqueradingVector[12]].asInt64());
         }
     }
 }
@@ -478,9 +498,17 @@ Member::Member(const Json::Value &pJson) noexcept(false)
             levelId_=std::make_shared<uint32_t>((uint32_t)pJson["level_id"].asUInt64());
         }
     }
-    if(pJson.isMember("points"))
+    if(pJson.isMember("member_no"))
     {
         dirtyFlag_[4]=true;
+        if(!pJson["member_no"].isNull())
+        {
+            memberNo_=std::make_shared<std::string>(pJson["member_no"].asString());
+        }
+    }
+    if(pJson.isMember("points"))
+    {
+        dirtyFlag_[5]=true;
         if(!pJson["points"].isNull())
         {
             points_=std::make_shared<uint32_t>((uint32_t)pJson["points"].asUInt64());
@@ -488,7 +516,7 @@ Member::Member(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("total_points"))
     {
-        dirtyFlag_[5]=true;
+        dirtyFlag_[6]=true;
         if(!pJson["total_points"].isNull())
         {
             totalPoints_=std::make_shared<uint32_t>((uint32_t)pJson["total_points"].asUInt64());
@@ -496,7 +524,7 @@ Member::Member(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("total_spent"))
     {
-        dirtyFlag_[6]=true;
+        dirtyFlag_[7]=true;
         if(!pJson["total_spent"].isNull())
         {
             totalSpent_=std::make_shared<std::string>(pJson["total_spent"].asString());
@@ -504,7 +532,7 @@ Member::Member(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("expire_date"))
     {
-        dirtyFlag_[7]=true;
+        dirtyFlag_[8]=true;
         if(!pJson["expire_date"].isNull())
         {
             auto timeStr = pJson["expire_date"].asString();
@@ -530,7 +558,7 @@ Member::Member(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("status"))
     {
-        dirtyFlag_[8]=true;
+        dirtyFlag_[9]=true;
         if(!pJson["status"].isNull())
         {
             status_=std::make_shared<std::string>(pJson["status"].asString());
@@ -538,7 +566,7 @@ Member::Member(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("created_at"))
     {
-        dirtyFlag_[9]=true;
+        dirtyFlag_[10]=true;
         if(!pJson["created_at"].isNull())
         {
             auto timeStr = pJson["created_at"].asString();
@@ -564,7 +592,7 @@ Member::Member(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("updated_at"))
     {
-        dirtyFlag_[10]=true;
+        dirtyFlag_[11]=true;
         if(!pJson["updated_at"].isNull())
         {
             auto timeStr = pJson["updated_at"].asString();
@@ -590,7 +618,7 @@ Member::Member(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("is_deleted"))
     {
-        dirtyFlag_[11]=true;
+        dirtyFlag_[12]=true;
         if(!pJson["is_deleted"].isNull())
         {
             isDeleted_=std::make_shared<int8_t>((int8_t)pJson["is_deleted"].asInt64());
@@ -601,7 +629,7 @@ Member::Member(const Json::Value &pJson) noexcept(false)
 void Member::updateByMasqueradedJson(const Json::Value &pJson,
                                             const std::vector<std::string> &pMasqueradingVector) noexcept(false)
 {
-    if(pMasqueradingVector.size() != 12)
+    if(pMasqueradingVector.size() != 13)
     {
         LOG_ERROR << "Bad masquerading vector";
         return;
@@ -642,7 +670,7 @@ void Member::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[4] = true;
         if(!pJson[pMasqueradingVector[4]].isNull())
         {
-            points_=std::make_shared<uint32_t>((uint32_t)pJson[pMasqueradingVector[4]].asUInt64());
+            memberNo_=std::make_shared<std::string>(pJson[pMasqueradingVector[4]].asString());
         }
     }
     if(!pMasqueradingVector[5].empty() && pJson.isMember(pMasqueradingVector[5]))
@@ -650,7 +678,7 @@ void Member::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[5] = true;
         if(!pJson[pMasqueradingVector[5]].isNull())
         {
-            totalPoints_=std::make_shared<uint32_t>((uint32_t)pJson[pMasqueradingVector[5]].asUInt64());
+            points_=std::make_shared<uint32_t>((uint32_t)pJson[pMasqueradingVector[5]].asUInt64());
         }
     }
     if(!pMasqueradingVector[6].empty() && pJson.isMember(pMasqueradingVector[6]))
@@ -658,7 +686,7 @@ void Member::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[6] = true;
         if(!pJson[pMasqueradingVector[6]].isNull())
         {
-            totalSpent_=std::make_shared<std::string>(pJson[pMasqueradingVector[6]].asString());
+            totalPoints_=std::make_shared<uint32_t>((uint32_t)pJson[pMasqueradingVector[6]].asUInt64());
         }
     }
     if(!pMasqueradingVector[7].empty() && pJson.isMember(pMasqueradingVector[7]))
@@ -666,7 +694,15 @@ void Member::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[7] = true;
         if(!pJson[pMasqueradingVector[7]].isNull())
         {
-            auto timeStr = pJson[pMasqueradingVector[7]].asString();
+            totalSpent_=std::make_shared<std::string>(pJson[pMasqueradingVector[7]].asString());
+        }
+    }
+    if(!pMasqueradingVector[8].empty() && pJson.isMember(pMasqueradingVector[8]))
+    {
+        dirtyFlag_[8] = true;
+        if(!pJson[pMasqueradingVector[8]].isNull())
+        {
+            auto timeStr = pJson[pMasqueradingVector[8]].asString();
             struct tm stm;
             memset(&stm,0,sizeof(stm));
             auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
@@ -687,38 +723,12 @@ void Member::updateByMasqueradedJson(const Json::Value &pJson,
             }
         }
     }
-    if(!pMasqueradingVector[8].empty() && pJson.isMember(pMasqueradingVector[8]))
-    {
-        dirtyFlag_[8] = true;
-        if(!pJson[pMasqueradingVector[8]].isNull())
-        {
-            status_=std::make_shared<std::string>(pJson[pMasqueradingVector[8]].asString());
-        }
-    }
     if(!pMasqueradingVector[9].empty() && pJson.isMember(pMasqueradingVector[9]))
     {
         dirtyFlag_[9] = true;
         if(!pJson[pMasqueradingVector[9]].isNull())
         {
-            auto timeStr = pJson[pMasqueradingVector[9]].asString();
-            struct tm stm;
-            memset(&stm,0,sizeof(stm));
-            auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
-            time_t t = mktime(&stm);
-            size_t decimalNum = 0;
-            if(p)
-            {
-                if(*p=='.')
-                {
-                    std::string decimals(p+1,&timeStr[timeStr.length()]);
-                    while(decimals.length()<6)
-                    {
-                        decimals += "0";
-                    }
-                    decimalNum = (size_t)atol(decimals.c_str());
-                }
-                createdAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
-            }
+            status_=std::make_shared<std::string>(pJson[pMasqueradingVector[9]].asString());
         }
     }
     if(!pMasqueradingVector[10].empty() && pJson.isMember(pMasqueradingVector[10]))
@@ -743,7 +753,7 @@ void Member::updateByMasqueradedJson(const Json::Value &pJson,
                     }
                     decimalNum = (size_t)atol(decimals.c_str());
                 }
-                updatedAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
+                createdAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
             }
         }
     }
@@ -752,7 +762,33 @@ void Member::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[11] = true;
         if(!pJson[pMasqueradingVector[11]].isNull())
         {
-            isDeleted_=std::make_shared<int8_t>((int8_t)pJson[pMasqueradingVector[11]].asInt64());
+            auto timeStr = pJson[pMasqueradingVector[11]].asString();
+            struct tm stm;
+            memset(&stm,0,sizeof(stm));
+            auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
+            time_t t = mktime(&stm);
+            size_t decimalNum = 0;
+            if(p)
+            {
+                if(*p=='.')
+                {
+                    std::string decimals(p+1,&timeStr[timeStr.length()]);
+                    while(decimals.length()<6)
+                    {
+                        decimals += "0";
+                    }
+                    decimalNum = (size_t)atol(decimals.c_str());
+                }
+                updatedAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
+            }
+        }
+    }
+    if(!pMasqueradingVector[12].empty() && pJson.isMember(pMasqueradingVector[12]))
+    {
+        dirtyFlag_[12] = true;
+        if(!pJson[pMasqueradingVector[12]].isNull())
+        {
+            isDeleted_=std::make_shared<int8_t>((int8_t)pJson[pMasqueradingVector[12]].asInt64());
         }
     }
 }
@@ -790,9 +826,17 @@ void Member::updateByJson(const Json::Value &pJson) noexcept(false)
             levelId_=std::make_shared<uint32_t>((uint32_t)pJson["level_id"].asUInt64());
         }
     }
-    if(pJson.isMember("points"))
+    if(pJson.isMember("member_no"))
     {
         dirtyFlag_[4] = true;
+        if(!pJson["member_no"].isNull())
+        {
+            memberNo_=std::make_shared<std::string>(pJson["member_no"].asString());
+        }
+    }
+    if(pJson.isMember("points"))
+    {
+        dirtyFlag_[5] = true;
         if(!pJson["points"].isNull())
         {
             points_=std::make_shared<uint32_t>((uint32_t)pJson["points"].asUInt64());
@@ -800,7 +844,7 @@ void Member::updateByJson(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("total_points"))
     {
-        dirtyFlag_[5] = true;
+        dirtyFlag_[6] = true;
         if(!pJson["total_points"].isNull())
         {
             totalPoints_=std::make_shared<uint32_t>((uint32_t)pJson["total_points"].asUInt64());
@@ -808,7 +852,7 @@ void Member::updateByJson(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("total_spent"))
     {
-        dirtyFlag_[6] = true;
+        dirtyFlag_[7] = true;
         if(!pJson["total_spent"].isNull())
         {
             totalSpent_=std::make_shared<std::string>(pJson["total_spent"].asString());
@@ -816,7 +860,7 @@ void Member::updateByJson(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("expire_date"))
     {
-        dirtyFlag_[7] = true;
+        dirtyFlag_[8] = true;
         if(!pJson["expire_date"].isNull())
         {
             auto timeStr = pJson["expire_date"].asString();
@@ -842,7 +886,7 @@ void Member::updateByJson(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("status"))
     {
-        dirtyFlag_[8] = true;
+        dirtyFlag_[9] = true;
         if(!pJson["status"].isNull())
         {
             status_=std::make_shared<std::string>(pJson["status"].asString());
@@ -850,7 +894,7 @@ void Member::updateByJson(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("created_at"))
     {
-        dirtyFlag_[9] = true;
+        dirtyFlag_[10] = true;
         if(!pJson["created_at"].isNull())
         {
             auto timeStr = pJson["created_at"].asString();
@@ -876,7 +920,7 @@ void Member::updateByJson(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("updated_at"))
     {
-        dirtyFlag_[10] = true;
+        dirtyFlag_[11] = true;
         if(!pJson["updated_at"].isNull())
         {
             auto timeStr = pJson["updated_at"].asString();
@@ -902,7 +946,7 @@ void Member::updateByJson(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("is_deleted"))
     {
-        dirtyFlag_[11] = true;
+        dirtyFlag_[12] = true;
         if(!pJson["is_deleted"].isNull())
         {
             isDeleted_=std::make_shared<int8_t>((int8_t)pJson["is_deleted"].asInt64());
@@ -998,6 +1042,33 @@ void Member::setLevelIdToNull() noexcept
     dirtyFlag_[3] = true;
 }
 
+const std::string &Member::getValueOfMemberNo() const noexcept
+{
+    static const std::string defaultValue = std::string();
+    if(memberNo_)
+        return *memberNo_;
+    return defaultValue;
+}
+const std::shared_ptr<std::string> &Member::getMemberNo() const noexcept
+{
+    return memberNo_;
+}
+void Member::setMemberNo(const std::string &pMemberNo) noexcept
+{
+    memberNo_ = std::make_shared<std::string>(pMemberNo);
+    dirtyFlag_[4] = true;
+}
+void Member::setMemberNo(std::string &&pMemberNo) noexcept
+{
+    memberNo_ = std::make_shared<std::string>(std::move(pMemberNo));
+    dirtyFlag_[4] = true;
+}
+void Member::setMemberNoToNull() noexcept
+{
+    memberNo_.reset();
+    dirtyFlag_[4] = true;
+}
+
 const uint32_t &Member::getValueOfPoints() const noexcept
 {
     static const uint32_t defaultValue = uint32_t();
@@ -1012,12 +1083,12 @@ const std::shared_ptr<uint32_t> &Member::getPoints() const noexcept
 void Member::setPoints(const uint32_t &pPoints) noexcept
 {
     points_ = std::make_shared<uint32_t>(pPoints);
-    dirtyFlag_[4] = true;
+    dirtyFlag_[5] = true;
 }
 void Member::setPointsToNull() noexcept
 {
     points_.reset();
-    dirtyFlag_[4] = true;
+    dirtyFlag_[5] = true;
 }
 
 const uint32_t &Member::getValueOfTotalPoints() const noexcept
@@ -1034,12 +1105,12 @@ const std::shared_ptr<uint32_t> &Member::getTotalPoints() const noexcept
 void Member::setTotalPoints(const uint32_t &pTotalPoints) noexcept
 {
     totalPoints_ = std::make_shared<uint32_t>(pTotalPoints);
-    dirtyFlag_[5] = true;
+    dirtyFlag_[6] = true;
 }
 void Member::setTotalPointsToNull() noexcept
 {
     totalPoints_.reset();
-    dirtyFlag_[5] = true;
+    dirtyFlag_[6] = true;
 }
 
 const std::string &Member::getValueOfTotalSpent() const noexcept
@@ -1056,17 +1127,17 @@ const std::shared_ptr<std::string> &Member::getTotalSpent() const noexcept
 void Member::setTotalSpent(const std::string &pTotalSpent) noexcept
 {
     totalSpent_ = std::make_shared<std::string>(pTotalSpent);
-    dirtyFlag_[6] = true;
+    dirtyFlag_[7] = true;
 }
 void Member::setTotalSpent(std::string &&pTotalSpent) noexcept
 {
     totalSpent_ = std::make_shared<std::string>(std::move(pTotalSpent));
-    dirtyFlag_[6] = true;
+    dirtyFlag_[7] = true;
 }
 void Member::setTotalSpentToNull() noexcept
 {
     totalSpent_.reset();
-    dirtyFlag_[6] = true;
+    dirtyFlag_[7] = true;
 }
 
 const ::trantor::Date &Member::getValueOfExpireDate() const noexcept
@@ -1083,12 +1154,12 @@ const std::shared_ptr<::trantor::Date> &Member::getExpireDate() const noexcept
 void Member::setExpireDate(const ::trantor::Date &pExpireDate) noexcept
 {
     expireDate_ = std::make_shared<::trantor::Date>(pExpireDate);
-    dirtyFlag_[7] = true;
+    dirtyFlag_[8] = true;
 }
 void Member::setExpireDateToNull() noexcept
 {
     expireDate_.reset();
-    dirtyFlag_[7] = true;
+    dirtyFlag_[8] = true;
 }
 
 const std::string &Member::getValueOfStatus() const noexcept
@@ -1105,17 +1176,17 @@ const std::shared_ptr<std::string> &Member::getStatus() const noexcept
 void Member::setStatus(const std::string &pStatus) noexcept
 {
     status_ = std::make_shared<std::string>(pStatus);
-    dirtyFlag_[8] = true;
+    dirtyFlag_[9] = true;
 }
 void Member::setStatus(std::string &&pStatus) noexcept
 {
     status_ = std::make_shared<std::string>(std::move(pStatus));
-    dirtyFlag_[8] = true;
+    dirtyFlag_[9] = true;
 }
 void Member::setStatusToNull() noexcept
 {
     status_.reset();
-    dirtyFlag_[8] = true;
+    dirtyFlag_[9] = true;
 }
 
 const ::trantor::Date &Member::getValueOfCreatedAt() const noexcept
@@ -1132,12 +1203,12 @@ const std::shared_ptr<::trantor::Date> &Member::getCreatedAt() const noexcept
 void Member::setCreatedAt(const ::trantor::Date &pCreatedAt) noexcept
 {
     createdAt_ = std::make_shared<::trantor::Date>(pCreatedAt);
-    dirtyFlag_[9] = true;
+    dirtyFlag_[10] = true;
 }
 void Member::setCreatedAtToNull() noexcept
 {
     createdAt_.reset();
-    dirtyFlag_[9] = true;
+    dirtyFlag_[10] = true;
 }
 
 const ::trantor::Date &Member::getValueOfUpdatedAt() const noexcept
@@ -1154,12 +1225,12 @@ const std::shared_ptr<::trantor::Date> &Member::getUpdatedAt() const noexcept
 void Member::setUpdatedAt(const ::trantor::Date &pUpdatedAt) noexcept
 {
     updatedAt_ = std::make_shared<::trantor::Date>(pUpdatedAt);
-    dirtyFlag_[10] = true;
+    dirtyFlag_[11] = true;
 }
 void Member::setUpdatedAtToNull() noexcept
 {
     updatedAt_.reset();
-    dirtyFlag_[10] = true;
+    dirtyFlag_[11] = true;
 }
 
 const int8_t &Member::getValueOfIsDeleted() const noexcept
@@ -1176,12 +1247,12 @@ const std::shared_ptr<int8_t> &Member::getIsDeleted() const noexcept
 void Member::setIsDeleted(const int8_t &pIsDeleted) noexcept
 {
     isDeleted_ = std::make_shared<int8_t>(pIsDeleted);
-    dirtyFlag_[11] = true;
+    dirtyFlag_[12] = true;
 }
 void Member::setIsDeletedToNull() noexcept
 {
     isDeleted_.reset();
-    dirtyFlag_[11] = true;
+    dirtyFlag_[12] = true;
 }
 
 void Member::updateId(const uint64_t id)
@@ -1195,6 +1266,7 @@ const std::vector<std::string> &Member::insertColumns() noexcept
         "user_id",
         "tenant_id",
         "level_id",
+        "member_no",
         "points",
         "total_points",
         "total_spent",
@@ -1244,6 +1316,17 @@ void Member::outputArgs(drogon::orm::internal::SqlBinder &binder) const
     }
     if(dirtyFlag_[4])
     {
+        if(getMemberNo())
+        {
+            binder << getValueOfMemberNo();
+        }
+        else
+        {
+            binder << nullptr;
+        }
+    }
+    if(dirtyFlag_[5])
+    {
         if(getPoints())
         {
             binder << getValueOfPoints();
@@ -1253,7 +1336,7 @@ void Member::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[5])
+    if(dirtyFlag_[6])
     {
         if(getTotalPoints())
         {
@@ -1264,7 +1347,7 @@ void Member::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[6])
+    if(dirtyFlag_[7])
     {
         if(getTotalSpent())
         {
@@ -1275,7 +1358,7 @@ void Member::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[7])
+    if(dirtyFlag_[8])
     {
         if(getExpireDate())
         {
@@ -1286,7 +1369,7 @@ void Member::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[8])
+    if(dirtyFlag_[9])
     {
         if(getStatus())
         {
@@ -1297,7 +1380,7 @@ void Member::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[9])
+    if(dirtyFlag_[10])
     {
         if(getCreatedAt())
         {
@@ -1308,7 +1391,7 @@ void Member::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[10])
+    if(dirtyFlag_[11])
     {
         if(getUpdatedAt())
         {
@@ -1319,7 +1402,7 @@ void Member::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[11])
+    if(dirtyFlag_[12])
     {
         if(getIsDeleted())
         {
@@ -1379,6 +1462,10 @@ const std::vector<std::string> Member::updateColumns() const
     {
         ret.push_back(getColumnName(11));
     }
+    if(dirtyFlag_[12])
+    {
+        ret.push_back(getColumnName(12));
+    }
     return ret;
 }
 
@@ -1419,6 +1506,17 @@ void Member::updateArgs(drogon::orm::internal::SqlBinder &binder) const
     }
     if(dirtyFlag_[4])
     {
+        if(getMemberNo())
+        {
+            binder << getValueOfMemberNo();
+        }
+        else
+        {
+            binder << nullptr;
+        }
+    }
+    if(dirtyFlag_[5])
+    {
         if(getPoints())
         {
             binder << getValueOfPoints();
@@ -1428,7 +1526,7 @@ void Member::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[5])
+    if(dirtyFlag_[6])
     {
         if(getTotalPoints())
         {
@@ -1439,7 +1537,7 @@ void Member::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[6])
+    if(dirtyFlag_[7])
     {
         if(getTotalSpent())
         {
@@ -1450,7 +1548,7 @@ void Member::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[7])
+    if(dirtyFlag_[8])
     {
         if(getExpireDate())
         {
@@ -1461,7 +1559,7 @@ void Member::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[8])
+    if(dirtyFlag_[9])
     {
         if(getStatus())
         {
@@ -1472,7 +1570,7 @@ void Member::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[9])
+    if(dirtyFlag_[10])
     {
         if(getCreatedAt())
         {
@@ -1483,7 +1581,7 @@ void Member::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[10])
+    if(dirtyFlag_[11])
     {
         if(getUpdatedAt())
         {
@@ -1494,7 +1592,7 @@ void Member::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[11])
+    if(dirtyFlag_[12])
     {
         if(getIsDeleted())
         {
@@ -1540,6 +1638,14 @@ Json::Value Member::toJson() const
     else
     {
         ret["level_id"]=Json::Value();
+    }
+    if(getMemberNo())
+    {
+        ret["member_no"]=getValueOfMemberNo();
+    }
+    else
+    {
+        ret["member_no"]=Json::Value();
     }
     if(getPoints())
     {
@@ -1612,7 +1718,7 @@ Json::Value Member::toMasqueradedJson(
     const std::vector<std::string> &pMasqueradingVector) const
 {
     Json::Value ret;
-    if(pMasqueradingVector.size() == 12)
+    if(pMasqueradingVector.size() == 13)
     {
         if(!pMasqueradingVector[0].empty())
         {
@@ -1660,9 +1766,9 @@ Json::Value Member::toMasqueradedJson(
         }
         if(!pMasqueradingVector[4].empty())
         {
-            if(getPoints())
+            if(getMemberNo())
             {
-                ret[pMasqueradingVector[4]]=getValueOfPoints();
+                ret[pMasqueradingVector[4]]=getValueOfMemberNo();
             }
             else
             {
@@ -1671,9 +1777,9 @@ Json::Value Member::toMasqueradedJson(
         }
         if(!pMasqueradingVector[5].empty())
         {
-            if(getTotalPoints())
+            if(getPoints())
             {
-                ret[pMasqueradingVector[5]]=getValueOfTotalPoints();
+                ret[pMasqueradingVector[5]]=getValueOfPoints();
             }
             else
             {
@@ -1682,9 +1788,9 @@ Json::Value Member::toMasqueradedJson(
         }
         if(!pMasqueradingVector[6].empty())
         {
-            if(getTotalSpent())
+            if(getTotalPoints())
             {
-                ret[pMasqueradingVector[6]]=getValueOfTotalSpent();
+                ret[pMasqueradingVector[6]]=getValueOfTotalPoints();
             }
             else
             {
@@ -1693,9 +1799,9 @@ Json::Value Member::toMasqueradedJson(
         }
         if(!pMasqueradingVector[7].empty())
         {
-            if(getExpireDate())
+            if(getTotalSpent())
             {
-                ret[pMasqueradingVector[7]]=getExpireDate()->toDbStringLocal();
+                ret[pMasqueradingVector[7]]=getValueOfTotalSpent();
             }
             else
             {
@@ -1704,9 +1810,9 @@ Json::Value Member::toMasqueradedJson(
         }
         if(!pMasqueradingVector[8].empty())
         {
-            if(getStatus())
+            if(getExpireDate())
             {
-                ret[pMasqueradingVector[8]]=getValueOfStatus();
+                ret[pMasqueradingVector[8]]=getExpireDate()->toDbStringLocal();
             }
             else
             {
@@ -1715,9 +1821,9 @@ Json::Value Member::toMasqueradedJson(
         }
         if(!pMasqueradingVector[9].empty())
         {
-            if(getCreatedAt())
+            if(getStatus())
             {
-                ret[pMasqueradingVector[9]]=getCreatedAt()->toDbStringLocal();
+                ret[pMasqueradingVector[9]]=getValueOfStatus();
             }
             else
             {
@@ -1726,9 +1832,9 @@ Json::Value Member::toMasqueradedJson(
         }
         if(!pMasqueradingVector[10].empty())
         {
-            if(getUpdatedAt())
+            if(getCreatedAt())
             {
-                ret[pMasqueradingVector[10]]=getUpdatedAt()->toDbStringLocal();
+                ret[pMasqueradingVector[10]]=getCreatedAt()->toDbStringLocal();
             }
             else
             {
@@ -1737,13 +1843,24 @@ Json::Value Member::toMasqueradedJson(
         }
         if(!pMasqueradingVector[11].empty())
         {
-            if(getIsDeleted())
+            if(getUpdatedAt())
             {
-                ret[pMasqueradingVector[11]]=getValueOfIsDeleted();
+                ret[pMasqueradingVector[11]]=getUpdatedAt()->toDbStringLocal();
             }
             else
             {
                 ret[pMasqueradingVector[11]]=Json::Value();
+            }
+        }
+        if(!pMasqueradingVector[12].empty())
+        {
+            if(getIsDeleted())
+            {
+                ret[pMasqueradingVector[12]]=getValueOfIsDeleted();
+            }
+            else
+            {
+                ret[pMasqueradingVector[12]]=Json::Value();
             }
         }
         return ret;
@@ -1780,6 +1897,14 @@ Json::Value Member::toMasqueradedJson(
     else
     {
         ret["level_id"]=Json::Value();
+    }
+    if(getMemberNo())
+    {
+        ret["member_no"]=getValueOfMemberNo();
+    }
+    else
+    {
+        ret["member_no"]=Json::Value();
     }
     if(getPoints())
     {
@@ -1870,44 +1995,49 @@ bool Member::validateJsonForCreation(const Json::Value &pJson, std::string &err)
         if(!validJsonOfField(3, "level_id", pJson["level_id"], err, true))
             return false;
     }
+    if(pJson.isMember("member_no"))
+    {
+        if(!validJsonOfField(4, "member_no", pJson["member_no"], err, true))
+            return false;
+    }
     if(pJson.isMember("points"))
     {
-        if(!validJsonOfField(4, "points", pJson["points"], err, true))
+        if(!validJsonOfField(5, "points", pJson["points"], err, true))
             return false;
     }
     if(pJson.isMember("total_points"))
     {
-        if(!validJsonOfField(5, "total_points", pJson["total_points"], err, true))
+        if(!validJsonOfField(6, "total_points", pJson["total_points"], err, true))
             return false;
     }
     if(pJson.isMember("total_spent"))
     {
-        if(!validJsonOfField(6, "total_spent", pJson["total_spent"], err, true))
+        if(!validJsonOfField(7, "total_spent", pJson["total_spent"], err, true))
             return false;
     }
     if(pJson.isMember("expire_date"))
     {
-        if(!validJsonOfField(7, "expire_date", pJson["expire_date"], err, true))
+        if(!validJsonOfField(8, "expire_date", pJson["expire_date"], err, true))
             return false;
     }
     if(pJson.isMember("status"))
     {
-        if(!validJsonOfField(8, "status", pJson["status"], err, true))
+        if(!validJsonOfField(9, "status", pJson["status"], err, true))
             return false;
     }
     if(pJson.isMember("created_at"))
     {
-        if(!validJsonOfField(9, "created_at", pJson["created_at"], err, true))
+        if(!validJsonOfField(10, "created_at", pJson["created_at"], err, true))
             return false;
     }
     if(pJson.isMember("updated_at"))
     {
-        if(!validJsonOfField(10, "updated_at", pJson["updated_at"], err, true))
+        if(!validJsonOfField(11, "updated_at", pJson["updated_at"], err, true))
             return false;
     }
     if(pJson.isMember("is_deleted"))
     {
-        if(!validJsonOfField(11, "is_deleted", pJson["is_deleted"], err, true))
+        if(!validJsonOfField(12, "is_deleted", pJson["is_deleted"], err, true))
             return false;
     }
     return true;
@@ -1916,7 +2046,7 @@ bool Member::validateMasqueradedJsonForCreation(const Json::Value &pJson,
                                                 const std::vector<std::string> &pMasqueradingVector,
                                                 std::string &err)
 {
-    if(pMasqueradingVector.size() != 12)
+    if(pMasqueradingVector.size() != 13)
     {
         err = "Bad masquerading vector";
         return false;
@@ -2018,6 +2148,14 @@ bool Member::validateMasqueradedJsonForCreation(const Json::Value &pJson,
                   return false;
           }
       }
+      if(!pMasqueradingVector[12].empty())
+      {
+          if(pJson.isMember(pMasqueradingVector[12]))
+          {
+              if(!validJsonOfField(12, pMasqueradingVector[12], pJson[pMasqueradingVector[12]], err, true))
+                  return false;
+          }
+      }
     }
     catch(const Json::LogicError &e)
     {
@@ -2053,44 +2191,49 @@ bool Member::validateJsonForUpdate(const Json::Value &pJson, std::string &err)
         if(!validJsonOfField(3, "level_id", pJson["level_id"], err, false))
             return false;
     }
+    if(pJson.isMember("member_no"))
+    {
+        if(!validJsonOfField(4, "member_no", pJson["member_no"], err, false))
+            return false;
+    }
     if(pJson.isMember("points"))
     {
-        if(!validJsonOfField(4, "points", pJson["points"], err, false))
+        if(!validJsonOfField(5, "points", pJson["points"], err, false))
             return false;
     }
     if(pJson.isMember("total_points"))
     {
-        if(!validJsonOfField(5, "total_points", pJson["total_points"], err, false))
+        if(!validJsonOfField(6, "total_points", pJson["total_points"], err, false))
             return false;
     }
     if(pJson.isMember("total_spent"))
     {
-        if(!validJsonOfField(6, "total_spent", pJson["total_spent"], err, false))
+        if(!validJsonOfField(7, "total_spent", pJson["total_spent"], err, false))
             return false;
     }
     if(pJson.isMember("expire_date"))
     {
-        if(!validJsonOfField(7, "expire_date", pJson["expire_date"], err, false))
+        if(!validJsonOfField(8, "expire_date", pJson["expire_date"], err, false))
             return false;
     }
     if(pJson.isMember("status"))
     {
-        if(!validJsonOfField(8, "status", pJson["status"], err, false))
+        if(!validJsonOfField(9, "status", pJson["status"], err, false))
             return false;
     }
     if(pJson.isMember("created_at"))
     {
-        if(!validJsonOfField(9, "created_at", pJson["created_at"], err, false))
+        if(!validJsonOfField(10, "created_at", pJson["created_at"], err, false))
             return false;
     }
     if(pJson.isMember("updated_at"))
     {
-        if(!validJsonOfField(10, "updated_at", pJson["updated_at"], err, false))
+        if(!validJsonOfField(11, "updated_at", pJson["updated_at"], err, false))
             return false;
     }
     if(pJson.isMember("is_deleted"))
     {
-        if(!validJsonOfField(11, "is_deleted", pJson["is_deleted"], err, false))
+        if(!validJsonOfField(12, "is_deleted", pJson["is_deleted"], err, false))
             return false;
     }
     return true;
@@ -2099,7 +2242,7 @@ bool Member::validateMasqueradedJsonForUpdate(const Json::Value &pJson,
                                               const std::vector<std::string> &pMasqueradingVector,
                                               std::string &err)
 {
-    if(pMasqueradingVector.size() != 12)
+    if(pMasqueradingVector.size() != 13)
     {
         err = "Bad masquerading vector";
         return false;
@@ -2168,6 +2311,11 @@ bool Member::validateMasqueradedJsonForUpdate(const Json::Value &pJson,
       if(!pMasqueradingVector[11].empty() && pJson.isMember(pMasqueradingVector[11]))
       {
           if(!validJsonOfField(11, pMasqueradingVector[11], pJson[pMasqueradingVector[11]], err, false))
+              return false;
+      }
+      if(!pMasqueradingVector[12].empty() && pJson.isMember(pMasqueradingVector[12]))
+      {
+          if(!validJsonOfField(12, pMasqueradingVector[12], pJson[pMasqueradingVector[12]], err, false))
               return false;
       }
     }
@@ -2241,11 +2389,19 @@ bool Member::validJsonOfField(size_t index,
             {
                 return true;
             }
-            if(!pJson.isUInt())
+            if(!pJson.isString())
             {
                 err="Type error in the "+fieldName+" field";
                 return false;
             }
+            if(pJson.isString() && std::strlen(pJson.asCString()) > 255)
+            {
+                err="String length exceeds limit for the " +
+                    fieldName +
+                    " field (the maximum value is 255)";
+                return false;
+            }
+
             break;
         case 5:
             if(pJson.isNull())
@@ -2259,6 +2415,17 @@ bool Member::validJsonOfField(size_t index,
             }
             break;
         case 6:
+            if(pJson.isNull())
+            {
+                return true;
+            }
+            if(!pJson.isUInt())
+            {
+                err="Type error in the "+fieldName+" field";
+                return false;
+            }
+            break;
+        case 7:
             if(pJson.isNull())
             {
                 return true;
@@ -2277,7 +2444,7 @@ bool Member::validJsonOfField(size_t index,
             }
 
             break;
-        case 7:
+        case 8:
             if(pJson.isNull())
             {
                 return true;
@@ -2288,7 +2455,7 @@ bool Member::validJsonOfField(size_t index,
                 return false;
             }
             break;
-        case 8:
+        case 9:
             if(pJson.isNull())
             {
                 return true;
@@ -2307,17 +2474,6 @@ bool Member::validJsonOfField(size_t index,
             }
 
             break;
-        case 9:
-            if(pJson.isNull())
-            {
-                return true;
-            }
-            if(!pJson.isString())
-            {
-                err="Type error in the "+fieldName+" field";
-                return false;
-            }
-            break;
         case 10:
             if(pJson.isNull())
             {
@@ -2330,6 +2486,17 @@ bool Member::validJsonOfField(size_t index,
             }
             break;
         case 11:
+            if(pJson.isNull())
+            {
+                return true;
+            }
+            if(!pJson.isString())
+            {
+                err="Type error in the "+fieldName+" field";
+                return false;
+            }
+            break;
+        case 12:
             if(pJson.isNull())
             {
                 return true;
@@ -2472,6 +2639,42 @@ void Member::getMemberLevel(const DbClientPtr &clientPtr,
                     {
                         rcb(MemberLevel(r[0]));
                     }
+               }
+               >> ecb;
+}
+std::vector<ConsumptionRecord> Member::getConsumption_records(const DbClientPtr &clientPtr) const {
+    static const std::string sql = "select * from consumption_record where member_id = ?";
+    Result r(nullptr);
+    {
+        auto binder = *clientPtr << sql;
+        binder << *memberId_ << Mode::Blocking >>
+            [&r](const Result &result) { r = result; };
+        binder.exec();
+    }
+    std::vector<ConsumptionRecord> ret;
+    ret.reserve(r.size());
+    for (auto const &row : r)
+    {
+        ret.emplace_back(ConsumptionRecord(row));
+    }
+    return ret;
+}
+
+void Member::getConsumption_records(const DbClientPtr &clientPtr,
+                                    const std::function<void(std::vector<ConsumptionRecord>)> &rcb,
+                                    const ExceptionCallback &ecb) const
+{
+    static const std::string sql = "select * from consumption_record where member_id = ?";
+    *clientPtr << sql
+               << *memberId_
+               >> [rcb = std::move(rcb)](const Result &r){
+                   std::vector<ConsumptionRecord> ret;
+                   ret.reserve(r.size());
+                   for (auto const &row : r)
+                   {
+                       ret.emplace_back(ConsumptionRecord(row));
+                   }
+                   rcb(ret);
                }
                >> ecb;
 }

@@ -12,7 +12,6 @@ import Log from "@/views/Tenant/Log";
 import Warning from "@/views/Tenant/Warning";
 import Staff from "@/views/Admin";
 import PlaceOrder from "@/views/Front";
-import Client from "@/views/Front/Client";
 import Goods from "@/views/Admin/Goods";
 import Profile from "@/views/Profile";
 import Setting from "@/views/Profile/Setting";
@@ -22,6 +21,7 @@ import Report from "@/views/Report";
 import Notification from "@/views/Notification";
 import Branch from "@/views/Admin/Branch";
 import OrderList from "@/views/Front/OrderList";
+import Role from "@/views/Admin/Role";
 
 const routes: RouteObject[] = [
   {
@@ -93,10 +93,10 @@ const routes: RouteObject[] = [
         ),
       },
       {
-        path: "client",
+        path: "role",
         element: (
           <AuthGuard>
-            <Client />
+            <Role />
           </AuthGuard>
         ),
       },

@@ -287,34 +287,28 @@ void RestfulMemberCtrlBase::get(const HttpRequestPtr &req,
             auto criteria = makeCriteria((*jsonPtr)["filter"]);
             mapper.findBy(criteria, [req, callbackPtr, this](const std::vector<Member> &v)
                           {
-                    Json::Value list;
                     Json::Value ret;
-                    list.resize(0);
+                    ret.resize(0);
                     for (auto &obj : v)
                     {
-                        if(obj.getValueOfIsDeleted())
-                        continue;
-                       list.append(makeJson(req, obj));
+                        ret.append(makeJson(req, obj));
                     }
-                    ret["code"]=k200OK;
-                    ret["message"]="ok";
-                    ret["data"] = list;
                     (*callbackPtr)(HttpResponse::newHttpJsonResponse(ret)); }, [callbackPtr](const DrogonDbException &e)
                           { 
                     LOG_ERROR << e.base().what();
                     Json::Value ret;
-                    ret["code"] =k500InternalServerError;
-                    ret["message"] = "database error";
+                    ret["error"] = "database error";
                     auto resp = HttpResponse::newHttpJsonResponse(ret);
+                    resp->setStatusCode(k500InternalServerError);
                     (*callbackPtr)(resp); });
         }
         catch (const std::exception &e)
         {
             LOG_ERROR << e.what();
             Json::Value ret;
-            ret["code"] = k400BadRequest;
-            ret["message"] = e.what();
+            ret["error"] = e.what();
             auto resp = HttpResponse::newHttpJsonResponse(ret);
+            resp->setStatusCode(k400BadRequest);
             (*callbackPtr)(resp);
             return;
         }
@@ -329,12 +323,12 @@ void RestfulMemberCtrlBase::get(const HttpRequestPtr &req,
                 for (auto &obj : v)
                 {
                     if(obj.getValueOfIsDeleted())
-                        continue;
+                    continue;
                     list.append(makeJson(req, obj));
                 }
                 ret["code"]=k200OK;
                 ret["message"]="ok";
-                ret["data"] = list;
+                ret["data"]=list;
                 (*callbackPtr)(HttpResponse::newHttpJsonResponse(ret)); },
                        [callbackPtr](const DrogonDbException &e)
                        {
@@ -404,27 +398,16 @@ void RestfulMemberCtrlBase::create(const HttpRequestPtr &req,
             std::make_shared<std::function<void(const HttpResponsePtr &)>>(
                 std::move(callback));
         drogon::orm::Mapper<Member> mapper(dbClientPtr);
-        auto criteria = drogon::orm::Criteria(Member::Cols::_user_id,
-                                              CompareOperator::EQ,
-                                              object.getValueOfUserId());
-        mapper.findBy(criteria, [req, callbackPtr, this](const std::vector<Member> &v)
-                      {
-                if (v.size() > 0)
-                {
-                    Json::Value ret;
-                    ret["code"] = k400BadRequest;
-                    ret["message"] = "User already has a member record";
-                    auto resp = HttpResponse::newHttpJsonResponse(ret);
-                    (*callbackPtr)(resp);
-                    return;
-                } }, [callbackPtr](const DrogonDbException &e)
-                      {
-                LOG_ERROR << e.base().what();
-                Json::Value ret;
-                ret["code"] = k500InternalServerError;
-                ret["message"] = "database error";
-                auto resp = HttpResponse::newHttpJsonResponse(ret);
-                (*callbackPtr)(resp); });
+        auto criteria = drogon::orm::Criteria(Member::Cols::_user_id, drogon::orm::CompareOperator::EQ, object.getValueOfUserId()) && drogon::orm::Criteria(Member::Cols::_is_deleted, drogon::orm::CompareOperator::EQ, 0);
+        if (!mapper.findBy(criteria).empty())
+        {
+            Json::Value ret;
+            ret["code"] = k400BadRequest;
+            ret["message"] = "member is already exists";
+            auto resp = HttpResponse::newHttpJsonResponse(ret);
+            (*callbackPtr)(resp);
+            return;
+        }
         mapper.insert(
             object,
             [req, callbackPtr, this](Member newObject)
@@ -432,7 +415,7 @@ void RestfulMemberCtrlBase::create(const HttpRequestPtr &req,
                 Json::Value ret;
                 ret["code"] = k200OK;
                 ret["message"] = "ok";
-                ret["data"]["member_id"] = newObject.getPrimaryKey();
+                ret["data"][Member::primaryKeyName] = newObject.getPrimaryKey();
                 (*callbackPtr)(HttpResponse::newHttpJsonResponse(ret));
             },
             [callbackPtr](const DrogonDbException &e)
@@ -469,6 +452,7 @@ RestfulMemberCtrlBase::RestfulMemberCtrlBase()
                          "user_id",
                          "tenant_id",
                          "level_id",
+                         "member_no",
                          "points",
                          "total_points",
                          "total_spent",
@@ -488,6 +472,7 @@ RestfulMemberCtrlBase::RestfulMemberCtrlBase()
         "user_id",      // the alias for the user_id column.
         "tenant_id",    // the alias for the tenant_id column.
         "level_id",     // the alias for the level_id column.
+        "member_no",    // the alias for the member_no column.
         "points",       // the alias for the points column.
         "total_points", // the alias for the total_points column.
         "total_spent",  // the alias for the total_spent column.
