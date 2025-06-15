@@ -104,17 +104,18 @@ CREATE TABLE `saas_restaurant`.`marketing_campaign`  (
 
 CREATE TABLE `saas_restaurant`.`member`  (
   `member_id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '会员ID',
-  `user_id` int UNSIGNED NULL COMMENT '关联用户ID',
   `tenant_id` int UNSIGNED NULL COMMENT '所属租户ID',
   `level_id` int UNSIGNED NULL COMMENT '关联会员等级表ID',
-  `member_no` varchar(255) NULL COMMENT '会员编号',
+  `username` varchar(255) NULL COMMENT '会员用户名',
+  `password` varchar(255) NULL COMMENT '会员密码',
+  `phone` varchar(255) NULL COMMENT '会员手机号',
   `points` int UNSIGNED NULL COMMENT '当前可用积分',
   `total_points` int UNSIGNED NULL COMMENT '历史累计积分',
   `total_spent` varchar(255) NULL COMMENT '累计消费金额',
   `expire_date` timestamp NULL COMMENT '会员有效期',
   `status` varchar(50) NULL COMMENT '会员状态',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `updated_at` timestamp NULL COMMENT '更新时间',
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `is_deleted` tinyint(1) NULL COMMENT '软删除标记（0：未删除，1：已删除）',
   PRIMARY KEY (`member_id`)
 );
@@ -268,7 +269,6 @@ ALTER TABLE `saas_restaurant`.`inventory_record` ADD CONSTRAINT `FK_inventory_re
 ALTER TABLE `saas_restaurant`.`inventory_record` ADD CONSTRAINT `FK_inventory_record_item_id` FOREIGN KEY (`item_id`) REFERENCES `saas_restaurant`.`inventory` (`inventory_id`);
 ALTER TABLE `saas_restaurant`.`marketing_campaign` ADD CONSTRAINT `FK_marketing_campaign_tenant_id` FOREIGN KEY (`tenant_id`) REFERENCES `saas_restaurant`.`tenant` (`tenant_id`);
 ALTER TABLE `saas_restaurant`.`marketing_campaign` ADD CONSTRAINT `FK_marketing_campaign_level_id` FOREIGN KEY (`level_id`) REFERENCES `saas_restaurant`.`member_level` (`level_id`);
-ALTER TABLE `saas_restaurant`.`member` ADD CONSTRAINT `FK_member_user_id` FOREIGN KEY (`user_id`) REFERENCES `saas_restaurant`.`user` (`user_id`);
 ALTER TABLE `saas_restaurant`.`member` ADD CONSTRAINT `FK_member_tenant_id` FOREIGN KEY (`tenant_id`) REFERENCES `saas_restaurant`.`tenant` (`tenant_id`);
 ALTER TABLE `saas_restaurant`.`member` ADD CONSTRAINT `FK_member_level_id` FOREIGN KEY (`level_id`) REFERENCES `saas_restaurant`.`member_level` (`level_id`);
 ALTER TABLE `saas_restaurant`.`member_level` ADD CONSTRAINT `FK_member_level_tenant_id` FOREIGN KEY (`tenant_id`) REFERENCES `saas_restaurant`.`tenant` (`tenant_id`);
