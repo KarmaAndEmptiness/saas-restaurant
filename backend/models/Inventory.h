@@ -38,7 +38,6 @@ namespace drogon_model
 {
 namespace saas_restaurant
 {
-class Dish;
 class InventoryRecord;
 class Tenant;
 
@@ -48,7 +47,6 @@ class Inventory
     struct Cols
     {
         static const std::string _inventory_id;
-        static const std::string _dish_id;
         static const std::string _tenant_id;
         static const std::string _quantity;
         static const std::string _item_name;
@@ -120,15 +118,6 @@ class Inventory
     const std::shared_ptr<uint32_t> &getInventoryId() const noexcept;
     ///Set the value of the column inventory_id
     void setInventoryId(const uint32_t &pInventoryId) noexcept;
-
-    /**  For column dish_id  */
-    ///Get the value of the column dish_id, returns the default value if the column is null
-    const uint32_t &getValueOfDishId() const noexcept;
-    ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-    const std::shared_ptr<uint32_t> &getDishId() const noexcept;
-    ///Set the value of the column dish_id
-    void setDishId(const uint32_t &pDishId) noexcept;
-    void setDishIdToNull() noexcept;
 
     /**  For column tenant_id  */
     ///Get the value of the column tenant_id, returns the default value if the column is null
@@ -254,7 +243,7 @@ class Inventory
     void setIsDeletedToNull() noexcept;
 
 
-    static size_t getColumnNumber() noexcept {  return 15;  }
+    static size_t getColumnNumber() noexcept {  return 14;  }
     static const std::string &getColumnName(size_t index) noexcept(false);
 
     Json::Value toJson() const;
@@ -264,10 +253,6 @@ class Inventory
     void getTenant(const drogon::orm::DbClientPtr &clientPtr,
                    const std::function<void(Tenant)> &rcb,
                    const drogon::orm::ExceptionCallback &ecb) const;
-    Dish getDish(const drogon::orm::DbClientPtr &clientPtr) const;
-    void getDish(const drogon::orm::DbClientPtr &clientPtr,
-                 const std::function<void(Dish)> &rcb,
-                 const drogon::orm::ExceptionCallback &ecb) const;
     std::vector<InventoryRecord> getInventory_records(const drogon::orm::DbClientPtr &clientPtr) const;
     void getInventory_records(const drogon::orm::DbClientPtr &clientPtr,
                               const std::function<void(std::vector<InventoryRecord>)> &rcb,
@@ -288,7 +273,6 @@ class Inventory
     ///For mysql or sqlite3
     void updateId(const uint64_t id);
     std::shared_ptr<uint32_t> inventoryId_;
-    std::shared_ptr<uint32_t> dishId_;
     std::shared_ptr<uint32_t> tenantId_;
     std::shared_ptr<int32_t> quantity_;
     std::shared_ptr<std::string> itemName_;
@@ -313,7 +297,7 @@ class Inventory
         const bool notNull_;
     };
     static const std::vector<MetaData> metaData_;
-    bool dirtyFlag_[15]={ false };
+    bool dirtyFlag_[14]={ false };
   public:
     static const std::string &sqlForFindingByPrimaryKey()
     {
@@ -335,72 +319,67 @@ class Inventory
             ++parametersCount;
         if(dirtyFlag_[1])
         {
-            sql += "dish_id,";
+            sql += "tenant_id,";
             ++parametersCount;
         }
         if(dirtyFlag_[2])
         {
-            sql += "tenant_id,";
+            sql += "quantity,";
             ++parametersCount;
         }
         if(dirtyFlag_[3])
         {
-            sql += "quantity,";
+            sql += "item_name,";
             ++parametersCount;
         }
         if(dirtyFlag_[4])
         {
-            sql += "item_name,";
+            sql += "item_category,";
             ++parametersCount;
         }
         if(dirtyFlag_[5])
         {
-            sql += "item_category,";
+            sql += "item_cost,";
             ++parametersCount;
         }
         if(dirtyFlag_[6])
         {
-            sql += "item_cost,";
+            sql += "min_stock,";
             ++parametersCount;
         }
         if(dirtyFlag_[7])
         {
-            sql += "min_stock,";
+            sql += "max_stock,";
             ++parametersCount;
         }
         if(dirtyFlag_[8])
         {
-            sql += "max_stock,";
+            sql += "supplier,";
             ++parametersCount;
         }
         if(dirtyFlag_[9])
         {
-            sql += "supplier,";
-            ++parametersCount;
-        }
-        if(dirtyFlag_[10])
-        {
             sql += "status,";
             ++parametersCount;
         }
-        if(dirtyFlag_[11])
+        if(dirtyFlag_[10])
         {
             sql += "location,";
             ++parametersCount;
         }
         sql += "created_at,";
         ++parametersCount;
-        if(!dirtyFlag_[12])
+        if(!dirtyFlag_[11])
         {
             needSelection=true;
         }
         sql += "updated_at,";
         ++parametersCount;
-        if(!dirtyFlag_[13])
+        if(!dirtyFlag_[12])
         {
             needSelection=true;
         }
-        if(dirtyFlag_[14])
+        if(dirtyFlag_[13])
         {
             sql += "is_deleted,";
             ++parametersCount;
@@ -470,6 +449,10 @@ class Inventory
             sql.append("?,");
 
         }
+        else
+        {
+            sql +="default,";
+        }
         if(dirtyFlag_[12])
         {
             sql.append("?,");
@@ -480,15 +463,6 @@ class Inventory
             sql +="default,";
         }
         if(dirtyFlag_[13])
-        {
-            sql.append("?,");
-
-        }
-        else
-        {
-            sql +="default,";
-        }
-        if(dirtyFlag_[14])
         {
             sql.append("?,");
 

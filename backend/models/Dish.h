@@ -39,7 +39,6 @@ namespace drogon_model
 namespace saas_restaurant
 {
 class DishCategory;
-class Inventory;
 class Tenant;
 
 class Dish
@@ -55,6 +54,8 @@ class Dish
         static const std::string _cost_price;
         static const std::string _origin_price;
         static const std::string _description;
+        static const std::string _sales;
+        static const std::string _stock;
         static const std::string _cover_img;
         static const std::string _status;
         static const std::string _sort_order;
@@ -188,6 +189,24 @@ class Dish
     void setDescription(std::string &&pDescription) noexcept;
     void setDescriptionToNull() noexcept;
 
+    /**  For column sales  */
+    ///Get the value of the column sales, returns the default value if the column is null
+    const uint32_t &getValueOfSales() const noexcept;
+    ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
+    const std::shared_ptr<uint32_t> &getSales() const noexcept;
+    ///Set the value of the column sales
+    void setSales(const uint32_t &pSales) noexcept;
+    void setSalesToNull() noexcept;
+
+    /**  For column stock  */
+    ///Get the value of the column stock, returns the default value if the column is null
+    const uint32_t &getValueOfStock() const noexcept;
+    ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
+    const std::shared_ptr<uint32_t> &getStock() const noexcept;
+    ///Set the value of the column stock
+    void setStock(const uint32_t &pStock) noexcept;
+    void setStockToNull() noexcept;
+
     /**  For column cover_img  */
     ///Get the value of the column cover_img, returns the default value if the column is null
     const std::string &getValueOfCoverImg() const noexcept;
@@ -245,7 +264,7 @@ class Dish
     void setUpdatedAtToNull() noexcept;
 
 
-    static size_t getColumnNumber() noexcept {  return 14;  }
+    static size_t getColumnNumber() noexcept {  return 16;  }
     static const std::string &getColumnName(size_t index) noexcept(false);
 
     Json::Value toJson() const;
@@ -259,10 +278,6 @@ class Dish
     void getDishCategory(const drogon::orm::DbClientPtr &clientPtr,
                          const std::function<void(DishCategory)> &rcb,
                          const drogon::orm::ExceptionCallback &ecb) const;
-    std::vector<Inventory> getInventories(const drogon::orm::DbClientPtr &clientPtr) const;
-    void getInventories(const drogon::orm::DbClientPtr &clientPtr,
-                        const std::function<void(std::vector<Inventory>)> &rcb,
-                        const drogon::orm::ExceptionCallback &ecb) const;
   private:
     friend drogon::orm::Mapper<Dish>;
     friend drogon::orm::BaseBuilder<Dish, true, true>;
@@ -286,6 +301,8 @@ class Dish
     std::shared_ptr<std::string> costPrice_;
     std::shared_ptr<std::string> originPrice_;
     std::shared_ptr<std::string> description_;
+    std::shared_ptr<uint32_t> sales_;
+    std::shared_ptr<uint32_t> stock_;
     std::shared_ptr<std::string> coverImg_;
     std::shared_ptr<std::string> status_;
     std::shared_ptr<int32_t> sortOrder_;
@@ -303,7 +320,7 @@ class Dish
         const bool notNull_;
     };
     static const std::vector<MetaData> metaData_;
-    bool dirtyFlag_[14]={ false };
+    bool dirtyFlag_[16]={ false };
   public:
     static const std::string &sqlForFindingByPrimaryKey()
     {
@@ -360,33 +377,43 @@ class Dish
         }
         if(dirtyFlag_[8])
         {
-            sql += "cover_img,";
+            sql += "sales,";
             ++parametersCount;
         }
         if(dirtyFlag_[9])
         {
-            sql += "status,";
+            sql += "stock,";
             ++parametersCount;
         }
         if(dirtyFlag_[10])
         {
-            sql += "sort_order,";
+            sql += "cover_img,";
             ++parametersCount;
         }
         if(dirtyFlag_[11])
+        {
+            sql += "status,";
+            ++parametersCount;
+        }
+        if(dirtyFlag_[12])
+        {
+            sql += "sort_order,";
+            ++parametersCount;
+        }
+        if(dirtyFlag_[13])
         {
             sql += "is_deleted,";
             ++parametersCount;
         }
         sql += "created_at,";
         ++parametersCount;
-        if(!dirtyFlag_[12])
+        if(!dirtyFlag_[14])
         {
             needSelection=true;
         }
         sql += "updated_at,";
         ++parametersCount;
-        if(!dirtyFlag_[13])
+        if(!dirtyFlag_[15])
         {
             needSelection=true;
         }
@@ -460,11 +487,21 @@ class Dish
             sql.append("?,");
 
         }
+        if(dirtyFlag_[13])
+        {
+            sql.append("?,");
+
+        }
+        if(dirtyFlag_[14])
+        {
+            sql.append("?,");
+
+        }
         else
         {
             sql +="default,";
         }
-        if(dirtyFlag_[13])
+        if(dirtyFlag_[15])
         {
             sql.append("?,");
 

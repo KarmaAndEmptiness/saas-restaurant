@@ -449,7 +449,6 @@ void RestfulInventoryCtrlBase::update(const HttpRequestPtr &req,
 
 RestfulInventoryCtrlBase::RestfulInventoryCtrlBase()
     : RestfulController({"inventory_id",
-                         "dish_id",
                          "tenant_id",
                          "quantity",
                          "item_name",
@@ -471,7 +470,6 @@ RestfulInventoryCtrlBase::RestfulInventoryCtrlBase()
      */
     enableMasquerading({
         "inventory_id",  // the alias for the inventory_id column.
-        "dish_id",       // the alias for the dish_id column.
         "tenant_id",     // the alias for the tenant_id column.
         "quantity",      // the alias for the quantity column.
         "item_name",     // the alias for the item_name column.
