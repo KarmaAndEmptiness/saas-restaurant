@@ -8,7 +8,7 @@
 #include "User.h"
 #include "Branch.h"
 #include "MarketingCampaign.h"
-#include "Order.h"
+#include "OrderTable.h"
 #include "Role.h"
 #include "Tenant.h"
 #include "UserRole.h"
@@ -3353,8 +3353,8 @@ void User::getMarketing_campaigns(const DbClientPtr &clientPtr,
                }
                >> ecb;
 }
-std::vector<Order> User::getOrders(const DbClientPtr &clientPtr) const {
-    static const std::string sql = "select * from order where user_id = ?";
+std::vector<OrderTable> User::getOrders(const DbClientPtr &clientPtr) const {
+    static const std::string sql = "select * from order_table where user_id = ?";
     Result r(nullptr);
     {
         auto binder = *clientPtr << sql;
@@ -3362,28 +3362,28 @@ std::vector<Order> User::getOrders(const DbClientPtr &clientPtr) const {
             [&r](const Result &result) { r = result; };
         binder.exec();
     }
-    std::vector<Order> ret;
+    std::vector<OrderTable> ret;
     ret.reserve(r.size());
     for (auto const &row : r)
     {
-        ret.emplace_back(Order(row));
+        ret.emplace_back(OrderTable(row));
     }
     return ret;
 }
 
 void User::getOrders(const DbClientPtr &clientPtr,
-                     const std::function<void(std::vector<Order>)> &rcb,
+                     const std::function<void(std::vector<OrderTable>)> &rcb,
                      const ExceptionCallback &ecb) const
 {
-    static const std::string sql = "select * from order where user_id = ?";
+    static const std::string sql = "select * from order_table where user_id = ?";
     *clientPtr << sql
                << *userId_
                >> [rcb = std::move(rcb)](const Result &r){
-                   std::vector<Order> ret;
+                   std::vector<OrderTable> ret;
                    ret.reserve(r.size());
                    for (auto const &row : r)
                    {
-                       ret.emplace_back(Order(row));
+                       ret.emplace_back(OrderTable(row));
                    }
                    rcb(ret);
                }

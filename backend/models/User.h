@@ -40,7 +40,7 @@ namespace saas_restaurant
 {
 class Branch;
 class MarketingCampaign;
-class Order;
+class OrderTable;
 class Role;
 class Tenant;
 class UserRole;
@@ -300,9 +300,9 @@ class User
     void getMarketing_campaigns(const drogon::orm::DbClientPtr &clientPtr,
                                 const std::function<void(std::vector<MarketingCampaign>)> &rcb,
                                 const drogon::orm::ExceptionCallback &ecb) const;
-    std::vector<Order> getOrders(const drogon::orm::DbClientPtr &clientPtr) const;
+    std::vector<OrderTable> getOrders(const drogon::orm::DbClientPtr &clientPtr) const;
     void getOrders(const drogon::orm::DbClientPtr &clientPtr,
-                   const std::function<void(std::vector<Order>)> &rcb,
+                   const std::function<void(std::vector<OrderTable>)> &rcb,
                    const drogon::orm::ExceptionCallback &ecb) const;
     std::vector<std::pair<Role,UserRole>> getRoles(const drogon::orm::DbClientPtr &clientPtr) const;
     void getRoles(const drogon::orm::DbClientPtr &clientPtr,

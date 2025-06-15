@@ -46,7 +46,7 @@ class MarketingCampaign;
 class Member;
 class MemberLevel;
 class Menu;
-class Order;
+class OrderTable;
 class Permission;
 class PermissionCategory;
 class Role;
@@ -259,9 +259,9 @@ class Tenant
     void getMenus(const drogon::orm::DbClientPtr &clientPtr,
                   const std::function<void(std::vector<Menu>)> &rcb,
                   const drogon::orm::ExceptionCallback &ecb) const;
-    std::vector<Order> getOrders(const drogon::orm::DbClientPtr &clientPtr) const;
+    std::vector<OrderTable> getOrders(const drogon::orm::DbClientPtr &clientPtr) const;
     void getOrders(const drogon::orm::DbClientPtr &clientPtr,
-                   const std::function<void(std::vector<Order>)> &rcb,
+                   const std::function<void(std::vector<OrderTable>)> &rcb,
                    const drogon::orm::ExceptionCallback &ecb) const;
     std::vector<Permission> getPermissions(const drogon::orm::DbClientPtr &clientPtr) const;
     void getPermissions(const drogon::orm::DbClientPtr &clientPtr,
