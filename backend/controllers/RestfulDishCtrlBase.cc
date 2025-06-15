@@ -214,6 +214,144 @@ void RestfulDishCtrlBase::deleteOne(const HttpRequestPtr &req,
         });
 }
 
+void RestfulDishCtrlBase::getHotDishes(const HttpRequestPtr &req,
+                                       std::function<void(const HttpResponsePtr &)> &&callback)
+{
+    auto dbClientPtr = getDbClient();
+    drogon::orm::Mapper<Dish> mapper(dbClientPtr);
+    auto &parameters = req->parameters();
+    auto iter = parameters.find("sort");
+    if (iter != parameters.end())
+    {
+        auto sortFields = drogon::utils::splitString(iter->second, ",");
+        for (auto &field : sortFields)
+        {
+            if (field.empty())
+                continue;
+            if (field[0] == '+')
+            {
+                field = field.substr(1);
+                mapper.orderBy(field, SortOrder::ASC);
+            }
+            else if (field[0] == '-')
+            {
+                field = field.substr(1);
+                mapper.orderBy(field, SortOrder::DESC);
+            }
+            else
+            {
+                mapper.orderBy(field, SortOrder::ASC);
+            }
+        }
+    }
+    iter = parameters.find("offset");
+    if (iter != parameters.end())
+    {
+        try
+        {
+            auto offset = std::stoll(iter->second);
+            mapper.offset(offset);
+        }
+        catch (...)
+        {
+            auto resp = HttpResponse::newHttpResponse();
+            resp->setStatusCode(k400BadRequest);
+            callback(resp);
+            return;
+        }
+    }
+    iter = parameters.find("limit");
+    if (iter != parameters.end())
+    {
+        try
+        {
+            auto limit = std::stoll(iter->second);
+            mapper.limit(limit);
+        }
+        catch (...)
+        {
+            auto resp = HttpResponse::newHttpResponse();
+            resp->setStatusCode(k400BadRequest);
+            callback(resp);
+            return;
+        }
+    }
+    auto callbackPtr =
+        std::make_shared<std::function<void(const HttpResponsePtr &)>>(
+            std::move(callback));
+    auto jsonPtr = req->jsonObject();
+    if (jsonPtr && jsonPtr->isMember("filter"))
+    {
+        try
+        {
+            auto criteria = makeCriteria((*jsonPtr)["filter"]);
+            mapper.findBy(criteria, [req, callbackPtr, this](const std::vector<Dish> &v)
+                          {
+                    Json::Value ret;
+                    ret.resize(0);
+                    for (auto &obj : v)
+                    {
+                        ret.append(makeJson(req, obj));
+                    }
+                    (*callbackPtr)(HttpResponse::newHttpJsonResponse(ret)); }, [callbackPtr](const DrogonDbException &e)
+                          { 
+                    LOG_ERROR << e.base().what();
+                    Json::Value ret;
+                    ret["error"] = "database error";
+                    auto resp = HttpResponse::newHttpJsonResponse(ret);
+                    resp->setStatusCode(k500InternalServerError);
+                    (*callbackPtr)(resp); });
+        }
+        catch (const std::exception &e)
+        {
+            LOG_ERROR << e.what();
+            Json::Value ret;
+            ret["error"] = e.what();
+            auto resp = HttpResponse::newHttpJsonResponse(ret);
+            resp->setStatusCode(k400BadRequest);
+            (*callbackPtr)(resp);
+            return;
+        }
+    }
+    else
+    {
+        mapper.findAll([req, callbackPtr, this](const std::vector<Dish> &v)
+                       {
+                Json::Value list;
+                Json::Value ret;
+                list.resize(0);
+                //返回前3条数据
+                if (v.size() > 3)
+                {
+                    for (size_t i = 0; i < 3; ++i)
+                    {
+                        if(v[i].getValueOfIsDeleted())
+                        continue;
+                        list.append(makeJson(req, v[i]));
+                    }
+                }
+                else
+                for (auto &obj : v)
+                {
+                    if(obj.getValueOfIsDeleted())
+                    continue;
+                    list.append(makeJson(req, obj));
+                }
+                ret["code"]=k200OK;
+                ret["message"]="ok";
+                ret["data"]=list;
+                (*callbackPtr)(HttpResponse::newHttpJsonResponse(ret)); },
+                       [callbackPtr](const DrogonDbException &e)
+                       {
+                           LOG_ERROR << e.base().what();
+                           Json::Value ret;
+                           ret["error"] = "database error";
+                           auto resp = HttpResponse::newHttpJsonResponse(ret);
+                           resp->setStatusCode(k500InternalServerError);
+                           (*callbackPtr)(resp);
+                       });
+    }
+}
 void RestfulDishCtrlBase::get(const HttpRequestPtr &req,
                               std::function<void(const HttpResponsePtr &)> &&callback)
 {
