@@ -56,16 +56,6 @@
             },
 
             {
-                "type": "has one",
-                "original_table_name": "user",
-                "original_table_alias": "",
-                "original_key": "user_id",
-                "target_table_name": "member",
-                "target_table_alias": "",
-                "target_key": "user_id",
-                "enable_reverse": true
-            },
-            {
                 "type": "has many",
                 "original_table_name": "tenant",
                 "original_table_alias": "",
