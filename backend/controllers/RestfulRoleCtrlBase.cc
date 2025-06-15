@@ -56,9 +56,9 @@ void RestfulRoleCtrlBase::updateOne(const HttpRequestPtr &req,
     if (!jsonPtr)
     {
         Json::Value ret;
-        ret["error"] = "No json object is found in the request";
+        ret["code"] = k400BadRequest;
+        ret["message"] = "No json object is found in the request";
         auto resp = HttpResponse::newHttpJsonResponse(ret);
-        resp->setStatusCode(k400BadRequest);
         callback(resp);
         return;
     }
@@ -67,9 +67,9 @@ void RestfulRoleCtrlBase::updateOne(const HttpRequestPtr &req,
     if (!doCustomValidations(*jsonPtr, err))
     {
         Json::Value ret;
-        ret["error"] = err;
+        ret["code"] = k400BadRequest;
+        ret["message"] = err;
         auto resp = HttpResponse::newHttpJsonResponse(ret);
-        resp->setStatusCode(k400BadRequest);
         callback(resp);
         return;
     }
@@ -80,9 +80,9 @@ void RestfulRoleCtrlBase::updateOne(const HttpRequestPtr &req,
             if (!Role::validateMasqueradedJsonForUpdate(*jsonPtr, masqueradingVector(), err))
             {
                 Json::Value ret;
-                ret["error"] = err;
+                ret["code"] = k400BadRequest;
+                ret["message"] = err;
                 auto resp = HttpResponse::newHttpJsonResponse(ret);
-                resp->setStatusCode(k400BadRequest);
                 callback(resp);
                 return;
             }
@@ -93,9 +93,9 @@ void RestfulRoleCtrlBase::updateOne(const HttpRequestPtr &req,
             if (!Role::validateJsonForUpdate(*jsonPtr, err))
             {
                 Json::Value ret;
-                ret["error"] = err;
+                ret["code"] = k400BadRequest;
+                ret["message"] = err;
                 auto resp = HttpResponse::newHttpJsonResponse(ret);
-                resp->setStatusCode(k400BadRequest);
                 callback(resp);
                 return;
             }
@@ -106,18 +106,18 @@ void RestfulRoleCtrlBase::updateOne(const HttpRequestPtr &req,
     {
         LOG_ERROR << e.what();
         Json::Value ret;
-        ret["error"] = "Field type error";
+        ret["code"] = k400BadRequest;
+        ret["message"] = "Field type error";
         auto resp = HttpResponse::newHttpJsonResponse(ret);
-        resp->setStatusCode(k400BadRequest);
         callback(resp);
         return;
     }
     if (object.getPrimaryKey() != id)
     {
         Json::Value ret;
-        ret["error"] = "Bad primary key";
+        ret["code"] = k400BadRequest;
+        ret["message"] = "Bad primary key";
         auto resp = HttpResponse::newHttpJsonResponse(ret);
-        resp->setStatusCode(k400BadRequest);
         callback(resp);
         return;
     }
@@ -134,25 +134,27 @@ void RestfulRoleCtrlBase::updateOne(const HttpRequestPtr &req,
         {
             if (count == 1)
             {
-                auto resp = HttpResponse::newHttpResponse();
-                resp->setStatusCode(k202Accepted);
+                Json::Value ret;
+                ret["code"] = k200OK;
+                ret["message"] = "ok";
+                auto resp = HttpResponse::newHttpJsonResponse(ret);
                 (*callbackPtr)(resp);
             }
             else if (count == 0)
             {
                 Json::Value ret;
-                ret["error"] = "No resources are updated";
+                ret["code"] = k200OK;
+                ret["message"] = "No resources are updated";
                 auto resp = HttpResponse::newHttpJsonResponse(ret);
-                resp->setStatusCode(k404NotFound);
                 (*callbackPtr)(resp);
             }
             else
             {
                 LOG_FATAL << "More than one resource is updated: " << count;
                 Json::Value ret;
-                ret["error"] = "database error";
+                ret["code"] = k200OK;
+                ret["message"] = "database error";
                 auto resp = HttpResponse::newHttpJsonResponse(ret);
-                resp->setStatusCode(k500InternalServerError);
                 (*callbackPtr)(resp);
             }
         },
@@ -160,9 +162,9 @@ void RestfulRoleCtrlBase::updateOne(const HttpRequestPtr &req,
         {
             LOG_ERROR << e.base().what();
             Json::Value ret;
-            ret["error"] = "database error";
+            ret["code"] = k500InternalServerError;
+            ret["message"] = "database error";
             auto resp = HttpResponse::newHttpJsonResponse(ret);
-            resp->setStatusCode(k500InternalServerError);
             (*callbackPtr)(resp);
         });
 }
@@ -319,12 +321,16 @@ void RestfulRoleCtrlBase::get(const HttpRequestPtr &req,
     {
         mapper.findAll([req, callbackPtr, this](const std::vector<Role> &v)
                        {
+                Json::Value list;
                 Json::Value ret;
-                ret.resize(0);
+                list.resize(0);
                 for (auto &obj : v)
                 {
-                    ret.append(makeJson(req, obj));
+                    list.append(makeJson(req, obj));
                 }
+                ret["code"] = k200OK;
+                ret["message"] = "ok";
+                ret["data"] = list;
                 (*callbackPtr)(HttpResponse::newHttpJsonResponse(ret)); },
                        [callbackPtr](const DrogonDbException &e)
                        {
@@ -345,9 +351,9 @@ void RestfulRoleCtrlBase::create(const HttpRequestPtr &req,
     if (!jsonPtr)
     {
         Json::Value ret;
-        ret["error"] = "No json object is found in the request";
+        ret["code"] = k200OK;
+        ret["message"] = "No json object is found in the request";
         auto resp = HttpResponse::newHttpJsonResponse(ret);
-        resp->setStatusCode(k400BadRequest);
         callback(resp);
         return;
     }
@@ -355,9 +361,9 @@ void RestfulRoleCtrlBase::create(const HttpRequestPtr &req,
     if (!doCustomValidations(*jsonPtr, err))
     {
         Json::Value ret;
-        ret["error"] = err;
+        ret["code"] = k400BadRequest;
+        ret["message"] = err;
         auto resp = HttpResponse::newHttpJsonResponse(ret);
-        resp->setStatusCode(k400BadRequest);
         callback(resp);
         return;
     }
@@ -366,9 +372,9 @@ void RestfulRoleCtrlBase::create(const HttpRequestPtr &req,
         if (!Role::validateMasqueradedJsonForCreation(*jsonPtr, masqueradingVector(), err))
         {
             Json::Value ret;
-            ret["error"] = err;
+            ret["code"] = k400BadRequest;
+            ret["message"] = err;
             auto resp = HttpResponse::newHttpJsonResponse(ret);
-            resp->setStatusCode(k400BadRequest);
             callback(resp);
             return;
         }
@@ -378,9 +384,9 @@ void RestfulRoleCtrlBase::create(const HttpRequestPtr &req,
         if (!Role::validateJsonForCreation(*jsonPtr, err))
         {
             Json::Value ret;
-            ret["error"] = err;
+            ret["code"] = k400BadRequest;
+            ret["message"] = err;
             auto resp = HttpResponse::newHttpJsonResponse(ret);
-            resp->setStatusCode(k400BadRequest);
             callback(resp);
             return;
         }
@@ -398,16 +404,20 @@ void RestfulRoleCtrlBase::create(const HttpRequestPtr &req,
             object,
             [req, callbackPtr, this](Role newObject)
             {
-                (*callbackPtr)(HttpResponse::newHttpJsonResponse(
-                    makeJson(req, newObject)));
+                Json::Value ret;
+                ret["code"] = k200OK;
+                ret["message"] = "ok";
+                ret["data"][Role::primaryKeyName] =
+                    newObject.getPrimaryKey();
+                (*callbackPtr)(HttpResponse::newHttpJsonResponse(ret));
             },
             [callbackPtr](const DrogonDbException &e)
             {
                 LOG_ERROR << e.base().what();
                 Json::Value ret;
-                ret["error"] = "database error";
+                ret["code"] = k500InternalServerError;
+                ret["message"] = "database error";
                 auto resp = HttpResponse::newHttpJsonResponse(ret);
-                resp->setStatusCode(k500InternalServerError);
                 (*callbackPtr)(resp);
             });
     }
@@ -415,9 +425,9 @@ void RestfulRoleCtrlBase::create(const HttpRequestPtr &req,
     {
         LOG_ERROR << e.what();
         Json::Value ret;
-        ret["error"] = "Field type error";
+        ret["code"] = k400BadRequest;
+        ret["message"] = "Field type error";
         auto resp = HttpResponse::newHttpJsonResponse(ret);
-        resp->setStatusCode(k400BadRequest);
         callback(resp);
         return;
     }

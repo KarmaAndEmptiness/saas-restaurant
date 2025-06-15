@@ -1,5 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createOrder, type OrderType } from "@/apis/front/order";
+import {
+  getDishes,
+  getRecommendedDishes,
+  getDishCategories,
+  getDishCategory,
+  type Dish,
+  type DishCategory,
+} from "@/apis/admin/goods";
 
+const baseurl = import.meta.env.VITE_API_BASE_URL;
 interface MenuItem {
   id: string;
   name: string;
@@ -10,7 +20,7 @@ interface MenuItem {
   available: boolean;
 }
 
-interface CartItem extends MenuItem {
+interface CartItem extends Dish {
   quantity: number;
 }
 
@@ -77,6 +87,8 @@ const memberDiscounts = {
 
 function PlaceOrder() {
   const [selectedCategory, setSelectedCategory] = useState("全部");
+  const [recommendedDishes, setRecommendedDishes] = useState<Dish[]>([]);
+  const [dishes, setDishes] = useState<Dish[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [tableNumber, setTableNumber] = useState("");
@@ -93,23 +105,23 @@ function PlaceOrder() {
   const [showOrderStatus, setShowOrderStatus] = useState(false);
   const [currentDiscount, setCurrentDiscount] = useState(1);
 
-  const filteredItems = menuItems.filter((item) => {
-    const matchSearch = item.name
+  const filteredItems = dishes.filter((item) => {
+    const matchSearch = item.dish_name
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
     const matchCategory =
       selectedCategory === "全部" || item.category === selectedCategory;
-    return matchSearch && matchCategory && item.available;
+    return matchSearch && matchCategory;
   });
 
-  const addToCart = (item: MenuItem) => {
+  const addToCart = (item: CartItem) => {
     setCart((currentCart) => {
       const existingItem = currentCart.find(
-        (cartItem) => cartItem.id === item.id
+        (cartItem) => cartItem.dish_id === item.dish_id
       );
       if (existingItem) {
         return currentCart.map((cartItem) =>
-          cartItem.id === item.id
+          cartItem.dish_id === item.dish_id
             ? { ...cartItem, quantity: cartItem.quantity + 1 }
             : cartItem
         );
@@ -118,21 +130,23 @@ function PlaceOrder() {
     });
   };
 
-  const removeFromCart = (itemId: string) => {
-    setCart((currentCart) => currentCart.filter((item) => item.id !== itemId));
+  const removeFromCart = (itemId: number) => {
+    setCart((currentCart) =>
+      currentCart.filter((item) => item.dish_id !== itemId)
+    );
   };
 
-  const updateQuantity = (itemId: string, newQuantity: number) => {
+  const updateQuantity = (itemId: number, newQuantity: number) => {
     if (newQuantity < 1) return;
     setCart((currentCart) =>
       currentCart.map((item) =>
-        item.id === itemId ? { ...item, quantity: newQuantity } : item
+        item.dish_id === itemId ? { ...item, quantity: newQuantity } : item
       )
     );
   };
 
   const totalAmount = cart.reduce(
-    (sum, item) => sum + item.price * item.quantity,
+    (sum, item) => sum + +item.dish_price * item.quantity,
     0
   );
 
@@ -144,6 +158,84 @@ function PlaceOrder() {
     }
   };
 
+  const handleSubmitOrder = async () => {
+    if (!orderDetails.tableNumber) {
+      alert("请输入桌号");
+      return;
+    }
+
+    if (cart.length === 0) {
+      alert("购物车为空");
+      return;
+    }
+
+    // 构建订单详情对象
+    const detailData = {
+      table_number: orderDetails.tableNumber,
+      customer_count: orderDetails.customerCount,
+      utensils_count: orderDetails.utensils,
+      special_requirements: orderDetails.specialRequirements,
+      notes: orderDetails.notes,
+      items: cart.map((item) => ({
+        dish_id: item.dish_id,
+        dish_name: item.dish_name,
+        price: item.dish_price,
+        quantity: item.quantity,
+        subtotal: (+item.dish_price * item.quantity).toString(),
+      })),
+      member_id: membershipId,
+      discount_rate: currentDiscount,
+      subtotal: totalAmount.toString(),
+      discount_amount: (totalAmount - finalAmount).toString(),
+    };
+
+    const orderData: OrderType = {
+      order_status: orderDetails.status,
+      payment_method: orderDetails.paymentMethod,
+      payment_status: "待支付",
+      total_amount: finalAmount.toString(),
+      discount_ammout: (totalAmount - finalAmount).toString(),
+      delivery_address: null,
+      tenant_id: 1,
+      user_id: 1,
+      is_deleted: 0,
+      remark: orderDetails.notes,
+      order_detail: JSON.stringify(detailData),
+    };
+
+    try {
+      await createOrder(orderData);
+      setShowOrderStatus(true);
+      setCart([]);
+      setOrderDetails({
+        tableNumber: "",
+        customerCount: 1,
+        utensils: 1,
+        notes: "",
+        specialRequirements: "",
+        paymentMethod: "微信",
+        status: "待确认",
+      });
+    } catch (error) {
+      alert("提交订单失败");
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    const fetchRecommendedDishes = async () => {
+      const dishes = await getRecommendedDishes();
+      setRecommendedDishes(dishes);
+    };
+    fetchRecommendedDishes();
+  }, []);
+  useEffect(() => {
+    const fetchDishes = async () => {
+      const dishes = await getDishes();
+      setDishes(dishes);
+    };
+    fetchDishes();
+  }, []);
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6">
@@ -170,15 +262,15 @@ function PlaceOrder() {
         <div className="mb-8">
           <h2 className="text-xl font-semibold mb-4">今日推荐</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {recommendedItems.map((item) => (
+            {recommendedDishes.map((item) => (
               <div
-                key={item.id}
+                key={item.dish_id}
                 className="bg-white rounded-lg shadow-md p-4 border border-yellow-200"
               >
                 <div className="relative">
                   <img
-                    src={item.image}
-                    alt={item.name}
+                    src={item.cover_img ? baseurl + item.cover_img : ""}
+                    alt={item.dish_name}
                     className="w-full h-48 object-cover rounded-lg"
                   />
                   <span className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-sm">
@@ -186,11 +278,11 @@ function PlaceOrder() {
                   </span>
                 </div>
                 <div className="mt-4">
-                  <h3 className="text-lg font-medium">{item.name}</h3>
+                  <h3 className="text-lg font-medium">{item.dish_name}</h3>
                   <p className="text-gray-500 text-sm">{item.description}</p>
                   <div className="mt-2 flex justify-between items-center">
                     <span className="text-red-600 font-bold">
-                      ¥{item.price}
+                      ¥{item.dish_price}
                     </span>
                     <button
                       onClick={() => addToCart(item)}
@@ -225,23 +317,26 @@ function PlaceOrder() {
           <div className="flex-1">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredItems.map((item) => (
-                <div key={item.id} className="bg-white rounded-lg shadow p-4">
+                <div
+                  key={item.dish_id}
+                  className="bg-white rounded-lg shadow p-4"
+                >
                   <img
-                    src={item.image}
-                    alt={item.name}
+                    src={item.cover_img ? baseurl + item.cover_img : ""}
+                    alt={item.dish_name}
                     className="w-full h-48 object-cover rounded-lg mb-4"
                   />
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="text-lg font-medium text-gray-900">
-                        {item.name}
+                        {item.dish_name}
                       </h3>
                       <p className="text-sm text-gray-500">
                         {item.description}
                       </p>
                     </div>
                     <span className="text-lg font-bold text-indigo-600">
-                      ¥{item.price}
+                      ¥{item.dish_price}
                     </span>
                   </div>
                   <button
@@ -270,26 +365,28 @@ function PlaceOrder() {
                   <div className="space-y-3 max-h-60 overflow-y-auto">
                     {cart.map((item) => (
                       <div
-                        key={item.id}
+                        key={item.dish_id}
                         className="flex items-center justify-between py-2 border-b"
                       >
                         <div className="flex items-center space-x-3">
                           <img
-                            src={item.image}
-                            alt={item.name}
+                            src={item.cover_img ? baseurl + item.cover_img : ""}
+                            alt={item.dish_name}
                             className="w-12 h-12 rounded-md object-cover"
                           />
                           <div>
-                            <p className="text-sm font-medium">{item.name}</p>
+                            <p className="text-sm font-medium">
+                              {item.dish_name}
+                            </p>
                             <p className="text-sm text-gray-500">
-                              ¥{item.price}
+                              ¥{item.dish_price}
                             </p>
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
                           <button
                             onClick={() =>
-                              updateQuantity(item.id, item.quantity - 1)
+                              updateQuantity(item.dish_id, item.quantity - 1)
                             }
                             className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200"
                           >
@@ -300,14 +397,14 @@ function PlaceOrder() {
                           </span>
                           <button
                             onClick={() =>
-                              updateQuantity(item.id, item.quantity + 1)
+                              updateQuantity(item.dish_id, item.quantity + 1)
                             }
                             className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200"
                           >
                             +
                           </button>
                           <button
-                            onClick={() => removeFromCart(item.id)}
+                            onClick={() => removeFromCart(item.dish_id)}
                             className="ml-2 text-red-500 hover:text-red-700"
                           >
                             <svg
@@ -486,15 +583,7 @@ function PlaceOrder() {
                 </div>
 
                 <button
-                  onClick={() => {
-                    console.log("提交订单", {
-                      orderDetails,
-                      items: cart,
-                      totalAmount: finalAmount,
-                      membershipId,
-                    });
-                    setShowOrderStatus(true);
-                  }}
+                  onClick={handleSubmitOrder}
                   className="mt-4 w-full bg-indigo-600 text-white py-3 rounded-md hover:bg-indigo-700"
                 >
                   确认下单

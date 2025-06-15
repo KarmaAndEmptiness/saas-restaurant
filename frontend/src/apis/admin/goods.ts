@@ -17,7 +17,7 @@ stock?: number | null,
 sales?: number | null,
 
 }
-interface DishCategory {
+export interface DishCategory {
  category_id: number,
     category_name: string,
     created_at:string| null,
@@ -55,7 +55,8 @@ export const getDishCategory = (dishCategoryId:number) => {
   return http.get<DishCategory>('/api/dishcategory/'+dishCategoryId);
 }
 
-//获取角色列表
-// export const getRoles = () => {
-//   return http.get<Role[]>('/api/role');
-// }
+//获取推荐菜品列表
+export const getRecommendedDishes = () => {
+  return http.get<Dish[]>('/api/dish/hot');
+}
+
