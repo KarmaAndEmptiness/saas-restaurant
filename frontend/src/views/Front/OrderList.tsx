@@ -29,7 +29,8 @@ function OrderList() {
       JSON.parse(order.order_detail || "{}").table_number?.includes(searchTerm);
     const matchStatus =
       statusFilter === "全部" || order.order_status === statusFilter;
-    const orderDate = new Date(order.created_at);
+    const orderDate = new Date(order.created_at || "");
+    if (isNaN(orderDate.getTime())) return false; // Skip orders with invalid date
     const today = new Date();
     const isToday =
       orderDate.getDate() === today.getDate() &&
@@ -122,7 +123,7 @@ function OrderList() {
                       {order.order_status}
                     </span>
                     <p className="text-gray-600 mt-1">
-                      {new Date(order.created_at).toLocaleString()}
+                      {new Date(order.created_at || "").toLocaleString()}
                     </p>
                   </div>
                 </div>
