@@ -274,8 +274,8 @@ ALTER TABLE `saas_restaurant`.`member_level` ADD CONSTRAINT `FK_member_level_ten
 ALTER TABLE `saas_restaurant`.`menu` ADD CONSTRAINT `FK_menu_tenant_id` FOREIGN KEY (`tenant_id`) REFERENCES `saas_restaurant`.`tenant` (`tenant_id`);
 ALTER TABLE `saas_restaurant`.`menu` ADD CONSTRAINT `FK_menu_parent_id` FOREIGN KEY (`parent_id`) REFERENCES `saas_restaurant`.`menu` (`menu_id`);
 ALTER TABLE `saas_restaurant`.`menu` ADD CONSTRAINT `FK_menu_permission_id` FOREIGN KEY (`permission_id`) REFERENCES `saas_restaurant`.`permission` (`permission_id`);
-ALTER TABLE `saas_restaurant`.`order_table` ADD CONSTRAINT `FK_order_user_id` FOREIGN KEY (`user_id`) REFERENCES `saas_restaurant`.`user` (`user_id`);
-ALTER TABLE `saas_restaurant`.`order_table` ADD CONSTRAINT `FK_order_tenant_id` FOREIGN KEY (`tenant_id`) REFERENCES `saas_restaurant`.`tenant` (`tenant_id`);
+ALTER TABLE `saas_restaurant`.`order_table` ADD CONSTRAINT `FK_ordertable_user_id` FOREIGN KEY (`user_id`) REFERENCES `saas_restaurant`.`user` (`user_id`);
+ALTER TABLE `saas_restaurant`.`order_table` ADD CONSTRAINT `FK_ordertable_tenant_id` FOREIGN KEY (`tenant_id`) REFERENCES `saas_restaurant`.`tenant` (`tenant_id`);
 ALTER TABLE `saas_restaurant`.`permission` ADD CONSTRAINT `FK_permission_tenant_id` FOREIGN KEY (`tenant_id`) REFERENCES `saas_restaurant`.`tenant` (`tenant_id`);
 ALTER TABLE `saas_restaurant`.`permission` ADD CONSTRAINT `FK_permission_menu_id` FOREIGN KEY (`menu_id`) REFERENCES `saas_restaurant`.`menu` (`menu_id`);
 ALTER TABLE `saas_restaurant`.`permission` ADD CONSTRAINT `FK_permission_permission_category_id` FOREIGN KEY (`permission_category_id`) REFERENCES `saas_restaurant`.`permission_category` (`category_id`);
