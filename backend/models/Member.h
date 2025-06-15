@@ -377,10 +377,11 @@ class Member
         {
             needSelection=true;
         }
-        if(dirtyFlag_[12])
+        sql += "updated_at,";
+        ++parametersCount;
+        if(!dirtyFlag_[12])
         {
-            sql += "updated_at,";
-            ++parametersCount;
+            needSelection=true;
         }
         if(dirtyFlag_[13])
         {
@@ -460,6 +461,10 @@ class Member
         {
             sql.append("?,");
 
+        }
+        else
+        {
+            sql +="default,";
         }
         if(dirtyFlag_[13])
         {

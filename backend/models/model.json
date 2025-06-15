@@ -182,7 +182,7 @@
                 "original_table_name": "tenant",
                 "original_table_alias": "",
                 "original_key": "tenant_id",
-                "target_table_name": "order",
+                "target_table_name": "order_table",
                 "target_table_alias": "orders",
                 "target_key": "tenant_id",
                 "enable_reverse": true
@@ -302,7 +302,7 @@
                 "original_table_name": "user",
                 "original_table_alias": "",
                 "original_key": "user_id",
-                "target_table_name": "order",
+                "target_table_name": "order_table",
                 "target_table_alias": "orders",
                 "target_key": "user_id",
                 "enable_reverse": true

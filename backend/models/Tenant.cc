@@ -14,7 +14,7 @@
 #include "Member.h"
 #include "MemberLevel.h"
 #include "Menu.h"
-#include "Order.h"
+#include "OrderTable.h"
 #include "Permission.h"
 #include "PermissionCategory.h"
 #include "Role.h"
@@ -2262,8 +2262,8 @@ void Tenant::getMenus(const DbClientPtr &clientPtr,
                }
                >> ecb;
 }
-std::vector<Order> Tenant::getOrders(const DbClientPtr &clientPtr) const {
-    static const std::string sql = "select * from order where tenant_id = ?";
+std::vector<OrderTable> Tenant::getOrders(const DbClientPtr &clientPtr) const {
+    static const std::string sql = "select * from order_table where tenant_id = ?";
     Result r(nullptr);
     {
         auto binder = *clientPtr << sql;
@@ -2271,28 +2271,28 @@ std::vector<Order> Tenant::getOrders(const DbClientPtr &clientPtr) const {
             [&r](const Result &result) { r = result; };
         binder.exec();
     }
-    std::vector<Order> ret;
+    std::vector<OrderTable> ret;
     ret.reserve(r.size());
     for (auto const &row : r)
     {
-        ret.emplace_back(Order(row));
+        ret.emplace_back(OrderTable(row));
     }
     return ret;
 }
 
 void Tenant::getOrders(const DbClientPtr &clientPtr,
-                       const std::function<void(std::vector<Order>)> &rcb,
+                       const std::function<void(std::vector<OrderTable>)> &rcb,
                        const ExceptionCallback &ecb) const
 {
-    static const std::string sql = "select * from order where tenant_id = ?";
+    static const std::string sql = "select * from order_table where tenant_id = ?";
     *clientPtr << sql
                << *tenantId_
                >> [rcb = std::move(rcb)](const Result &r){
-                   std::vector<Order> ret;
+                   std::vector<OrderTable> ret;
                    ret.reserve(r.size());
                    for (auto const &row : r)
                    {
-                       ret.emplace_back(Order(row));
+                       ret.emplace_back(OrderTable(row));
                    }
                    rcb(ret);
                }
