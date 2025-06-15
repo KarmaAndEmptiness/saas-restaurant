@@ -7,7 +7,6 @@
 
 #include "Dish.h"
 #include "DishCategory.h"
-#include "Inventory.h"
 #include "Tenant.h"
 #include <drogon/utils/Utilities.h>
 #include <string>
@@ -24,6 +23,8 @@ const std::string Dish::Cols::_dish_price = "dish_price";
 const std::string Dish::Cols::_cost_price = "cost_price";
 const std::string Dish::Cols::_origin_price = "origin_price";
 const std::string Dish::Cols::_description = "description";
+const std::string Dish::Cols::_sales = "sales";
+const std::string Dish::Cols::_stock = "stock";
 const std::string Dish::Cols::_cover_img = "cover_img";
 const std::string Dish::Cols::_status = "status";
 const std::string Dish::Cols::_sort_order = "sort_order";
@@ -43,6 +44,8 @@ const std::vector<typename Dish::MetaData> Dish::metaData_={
 {"cost_price","std::string","varchar(255)",255,0,0,0},
 {"origin_price","std::string","varchar(255)",255,0,0,0},
 {"description","std::string","text",0,0,0,0},
+{"sales","uint32_t","int(10) unsigned",4,0,0,0},
+{"stock","uint32_t","int(10) unsigned",4,0,0,0},
 {"cover_img","std::string","varchar(255)",255,0,0,0},
 {"status","std::string","varchar(50)",50,0,0,0},
 {"sort_order","int32_t","int(11)",4,0,0,0},
@@ -90,6 +93,14 @@ Dish::Dish(const Row &r, const ssize_t indexOffset) noexcept
         if(!r["description"].isNull())
         {
             description_=std::make_shared<std::string>(r["description"].as<std::string>());
+        }
+        if(!r["sales"].isNull())
+        {
+            sales_=std::make_shared<uint32_t>(r["sales"].as<uint32_t>());
+        }
+        if(!r["stock"].isNull())
+        {
+            stock_=std::make_shared<uint32_t>(r["stock"].as<uint32_t>());
         }
         if(!r["cover_img"].isNull())
         {
@@ -155,7 +166,7 @@ Dish::Dish(const Row &r, const ssize_t indexOffset) noexcept
     else
     {
         size_t offset = (size_t)indexOffset;
-        if(offset + 14 > r.size())
+        if(offset + 16 > r.size())
         {
             LOG_FATAL << "Invalid SQL result for this model";
             return;
@@ -204,24 +215,34 @@ Dish::Dish(const Row &r, const ssize_t indexOffset) noexcept
         index = offset + 8;
         if(!r[index].isNull())
         {
-            coverImg_=std::make_shared<std::string>(r[index].as<std::string>());
+            sales_=std::make_shared<uint32_t>(r[index].as<uint32_t>());
         }
         index = offset + 9;
         if(!r[index].isNull())
         {
-            status_=std::make_shared<std::string>(r[index].as<std::string>());
+            stock_=std::make_shared<uint32_t>(r[index].as<uint32_t>());
         }
         index = offset + 10;
         if(!r[index].isNull())
         {
-            sortOrder_=std::make_shared<int32_t>(r[index].as<int32_t>());
+            coverImg_=std::make_shared<std::string>(r[index].as<std::string>());
         }
         index = offset + 11;
         if(!r[index].isNull())
         {
-            isDeleted_=std::make_shared<int8_t>(r[index].as<int8_t>());
+            status_=std::make_shared<std::string>(r[index].as<std::string>());
         }
         index = offset + 12;
+        if(!r[index].isNull())
+        {
+            sortOrder_=std::make_shared<int32_t>(r[index].as<int32_t>());
+        }
+        index = offset + 13;
+        if(!r[index].isNull())
+        {
+            isDeleted_=std::make_shared<int8_t>(r[index].as<int8_t>());
+        }
+        index = offset + 14;
         if(!r[index].isNull())
         {
             auto timeStr = r[index].as<std::string>();
@@ -244,7 +265,7 @@ Dish::Dish(const Row &r, const ssize_t indexOffset) noexcept
                 createdAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
             }
         }
-        index = offset + 13;
+        index = offset + 15;
         if(!r[index].isNull())
         {
             auto timeStr = r[index].as<std::string>();
@@ -273,7 +294,7 @@ Dish::Dish(const Row &r, const ssize_t indexOffset) noexcept
 
 Dish::Dish(const Json::Value &pJson, const std::vector<std::string> &pMasqueradingVector) noexcept(false)
 {
-    if(pMasqueradingVector.size() != 14)
+    if(pMasqueradingVector.size() != 16)
     {
         LOG_ERROR << "Bad masquerading vector";
         return;
@@ -347,7 +368,7 @@ Dish::Dish(const Json::Value &pJson, const std::vector<std::string> &pMasqueradi
         dirtyFlag_[8] = true;
         if(!pJson[pMasqueradingVector[8]].isNull())
         {
-            coverImg_=std::make_shared<std::string>(pJson[pMasqueradingVector[8]].asString());
+            sales_=std::make_shared<uint32_t>((uint32_t)pJson[pMasqueradingVector[8]].asUInt64());
         }
     }
     if(!pMasqueradingVector[9].empty() && pJson.isMember(pMasqueradingVector[9]))
@@ -355,7 +376,7 @@ Dish::Dish(const Json::Value &pJson, const std::vector<std::string> &pMasqueradi
         dirtyFlag_[9] = true;
         if(!pJson[pMasqueradingVector[9]].isNull())
         {
-            status_=std::make_shared<std::string>(pJson[pMasqueradingVector[9]].asString());
+            stock_=std::make_shared<uint32_t>((uint32_t)pJson[pMasqueradingVector[9]].asUInt64());
         }
     }
     if(!pMasqueradingVector[10].empty() && pJson.isMember(pMasqueradingVector[10]))
@@ -363,7 +384,7 @@ Dish::Dish(const Json::Value &pJson, const std::vector<std::string> &pMasqueradi
         dirtyFlag_[10] = true;
         if(!pJson[pMasqueradingVector[10]].isNull())
         {
-            sortOrder_=std::make_shared<int32_t>((int32_t)pJson[pMasqueradingVector[10]].asInt64());
+            coverImg_=std::make_shared<std::string>(pJson[pMasqueradingVector[10]].asString());
         }
     }
     if(!pMasqueradingVector[11].empty() && pJson.isMember(pMasqueradingVector[11]))
@@ -371,7 +392,7 @@ Dish::Dish(const Json::Value &pJson, const std::vector<std::string> &pMasqueradi
         dirtyFlag_[11] = true;
         if(!pJson[pMasqueradingVector[11]].isNull())
         {
-            isDeleted_=std::make_shared<int8_t>((int8_t)pJson[pMasqueradingVector[11]].asInt64());
+            status_=std::make_shared<std::string>(pJson[pMasqueradingVector[11]].asString());
         }
     }
     if(!pMasqueradingVector[12].empty() && pJson.isMember(pMasqueradingVector[12]))
@@ -379,7 +400,23 @@ Dish::Dish(const Json::Value &pJson, const std::vector<std::string> &pMasqueradi
         dirtyFlag_[12] = true;
         if(!pJson[pMasqueradingVector[12]].isNull())
         {
-            auto timeStr = pJson[pMasqueradingVector[12]].asString();
+            sortOrder_=std::make_shared<int32_t>((int32_t)pJson[pMasqueradingVector[12]].asInt64());
+        }
+    }
+    if(!pMasqueradingVector[13].empty() && pJson.isMember(pMasqueradingVector[13]))
+    {
+        dirtyFlag_[13] = true;
+        if(!pJson[pMasqueradingVector[13]].isNull())
+        {
+            isDeleted_=std::make_shared<int8_t>((int8_t)pJson[pMasqueradingVector[13]].asInt64());
+        }
+    }
+    if(!pMasqueradingVector[14].empty() && pJson.isMember(pMasqueradingVector[14]))
+    {
+        dirtyFlag_[14] = true;
+        if(!pJson[pMasqueradingVector[14]].isNull())
+        {
+            auto timeStr = pJson[pMasqueradingVector[14]].asString();
             struct tm stm;
             memset(&stm,0,sizeof(stm));
             auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
@@ -400,12 +437,12 @@ Dish::Dish(const Json::Value &pJson, const std::vector<std::string> &pMasqueradi
             }
         }
     }
-    if(!pMasqueradingVector[13].empty() && pJson.isMember(pMasqueradingVector[13]))
+    if(!pMasqueradingVector[15].empty() && pJson.isMember(pMasqueradingVector[15]))
     {
-        dirtyFlag_[13] = true;
-        if(!pJson[pMasqueradingVector[13]].isNull())
+        dirtyFlag_[15] = true;
+        if(!pJson[pMasqueradingVector[15]].isNull())
         {
-            auto timeStr = pJson[pMasqueradingVector[13]].asString();
+            auto timeStr = pJson[pMasqueradingVector[15]].asString();
             struct tm stm;
             memset(&stm,0,sizeof(stm));
             auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
@@ -494,9 +531,25 @@ Dish::Dish(const Json::Value &pJson) noexcept(false)
             description_=std::make_shared<std::string>(pJson["description"].asString());
         }
     }
-    if(pJson.isMember("cover_img"))
+    if(pJson.isMember("sales"))
     {
         dirtyFlag_[8]=true;
+        if(!pJson["sales"].isNull())
+        {
+            sales_=std::make_shared<uint32_t>((uint32_t)pJson["sales"].asUInt64());
+        }
+    }
+    if(pJson.isMember("stock"))
+    {
+        dirtyFlag_[9]=true;
+        if(!pJson["stock"].isNull())
+        {
+            stock_=std::make_shared<uint32_t>((uint32_t)pJson["stock"].asUInt64());
+        }
+    }
+    if(pJson.isMember("cover_img"))
+    {
+        dirtyFlag_[10]=true;
         if(!pJson["cover_img"].isNull())
         {
             coverImg_=std::make_shared<std::string>(pJson["cover_img"].asString());
@@ -504,7 +557,7 @@ Dish::Dish(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("status"))
     {
-        dirtyFlag_[9]=true;
+        dirtyFlag_[11]=true;
         if(!pJson["status"].isNull())
         {
             status_=std::make_shared<std::string>(pJson["status"].asString());
@@ -512,7 +565,7 @@ Dish::Dish(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("sort_order"))
     {
-        dirtyFlag_[10]=true;
+        dirtyFlag_[12]=true;
         if(!pJson["sort_order"].isNull())
         {
             sortOrder_=std::make_shared<int32_t>((int32_t)pJson["sort_order"].asInt64());
@@ -520,7 +573,7 @@ Dish::Dish(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("is_deleted"))
     {
-        dirtyFlag_[11]=true;
+        dirtyFlag_[13]=true;
         if(!pJson["is_deleted"].isNull())
         {
             isDeleted_=std::make_shared<int8_t>((int8_t)pJson["is_deleted"].asInt64());
@@ -528,7 +581,7 @@ Dish::Dish(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("created_at"))
     {
-        dirtyFlag_[12]=true;
+        dirtyFlag_[14]=true;
         if(!pJson["created_at"].isNull())
         {
             auto timeStr = pJson["created_at"].asString();
@@ -554,7 +607,7 @@ Dish::Dish(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("updated_at"))
     {
-        dirtyFlag_[13]=true;
+        dirtyFlag_[15]=true;
         if(!pJson["updated_at"].isNull())
         {
             auto timeStr = pJson["updated_at"].asString();
@@ -583,7 +636,7 @@ Dish::Dish(const Json::Value &pJson) noexcept(false)
 void Dish::updateByMasqueradedJson(const Json::Value &pJson,
                                             const std::vector<std::string> &pMasqueradingVector) noexcept(false)
 {
-    if(pMasqueradingVector.size() != 14)
+    if(pMasqueradingVector.size() != 16)
     {
         LOG_ERROR << "Bad masquerading vector";
         return;
@@ -656,7 +709,7 @@ void Dish::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[8] = true;
         if(!pJson[pMasqueradingVector[8]].isNull())
         {
-            coverImg_=std::make_shared<std::string>(pJson[pMasqueradingVector[8]].asString());
+            sales_=std::make_shared<uint32_t>((uint32_t)pJson[pMasqueradingVector[8]].asUInt64());
         }
     }
     if(!pMasqueradingVector[9].empty() && pJson.isMember(pMasqueradingVector[9]))
@@ -664,7 +717,7 @@ void Dish::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[9] = true;
         if(!pJson[pMasqueradingVector[9]].isNull())
         {
-            status_=std::make_shared<std::string>(pJson[pMasqueradingVector[9]].asString());
+            stock_=std::make_shared<uint32_t>((uint32_t)pJson[pMasqueradingVector[9]].asUInt64());
         }
     }
     if(!pMasqueradingVector[10].empty() && pJson.isMember(pMasqueradingVector[10]))
@@ -672,7 +725,7 @@ void Dish::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[10] = true;
         if(!pJson[pMasqueradingVector[10]].isNull())
         {
-            sortOrder_=std::make_shared<int32_t>((int32_t)pJson[pMasqueradingVector[10]].asInt64());
+            coverImg_=std::make_shared<std::string>(pJson[pMasqueradingVector[10]].asString());
         }
     }
     if(!pMasqueradingVector[11].empty() && pJson.isMember(pMasqueradingVector[11]))
@@ -680,7 +733,7 @@ void Dish::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[11] = true;
         if(!pJson[pMasqueradingVector[11]].isNull())
         {
-            isDeleted_=std::make_shared<int8_t>((int8_t)pJson[pMasqueradingVector[11]].asInt64());
+            status_=std::make_shared<std::string>(pJson[pMasqueradingVector[11]].asString());
         }
     }
     if(!pMasqueradingVector[12].empty() && pJson.isMember(pMasqueradingVector[12]))
@@ -688,7 +741,23 @@ void Dish::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[12] = true;
         if(!pJson[pMasqueradingVector[12]].isNull())
         {
-            auto timeStr = pJson[pMasqueradingVector[12]].asString();
+            sortOrder_=std::make_shared<int32_t>((int32_t)pJson[pMasqueradingVector[12]].asInt64());
+        }
+    }
+    if(!pMasqueradingVector[13].empty() && pJson.isMember(pMasqueradingVector[13]))
+    {
+        dirtyFlag_[13] = true;
+        if(!pJson[pMasqueradingVector[13]].isNull())
+        {
+            isDeleted_=std::make_shared<int8_t>((int8_t)pJson[pMasqueradingVector[13]].asInt64());
+        }
+    }
+    if(!pMasqueradingVector[14].empty() && pJson.isMember(pMasqueradingVector[14]))
+    {
+        dirtyFlag_[14] = true;
+        if(!pJson[pMasqueradingVector[14]].isNull())
+        {
+            auto timeStr = pJson[pMasqueradingVector[14]].asString();
             struct tm stm;
             memset(&stm,0,sizeof(stm));
             auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
@@ -709,12 +778,12 @@ void Dish::updateByMasqueradedJson(const Json::Value &pJson,
             }
         }
     }
-    if(!pMasqueradingVector[13].empty() && pJson.isMember(pMasqueradingVector[13]))
+    if(!pMasqueradingVector[15].empty() && pJson.isMember(pMasqueradingVector[15]))
     {
-        dirtyFlag_[13] = true;
-        if(!pJson[pMasqueradingVector[13]].isNull())
+        dirtyFlag_[15] = true;
+        if(!pJson[pMasqueradingVector[15]].isNull())
         {
-            auto timeStr = pJson[pMasqueradingVector[13]].asString();
+            auto timeStr = pJson[pMasqueradingVector[15]].asString();
             struct tm stm;
             memset(&stm,0,sizeof(stm));
             auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
@@ -802,9 +871,25 @@ void Dish::updateByJson(const Json::Value &pJson) noexcept(false)
             description_=std::make_shared<std::string>(pJson["description"].asString());
         }
     }
-    if(pJson.isMember("cover_img"))
+    if(pJson.isMember("sales"))
     {
         dirtyFlag_[8] = true;
+        if(!pJson["sales"].isNull())
+        {
+            sales_=std::make_shared<uint32_t>((uint32_t)pJson["sales"].asUInt64());
+        }
+    }
+    if(pJson.isMember("stock"))
+    {
+        dirtyFlag_[9] = true;
+        if(!pJson["stock"].isNull())
+        {
+            stock_=std::make_shared<uint32_t>((uint32_t)pJson["stock"].asUInt64());
+        }
+    }
+    if(pJson.isMember("cover_img"))
+    {
+        dirtyFlag_[10] = true;
         if(!pJson["cover_img"].isNull())
         {
             coverImg_=std::make_shared<std::string>(pJson["cover_img"].asString());
@@ -812,7 +897,7 @@ void Dish::updateByJson(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("status"))
     {
-        dirtyFlag_[9] = true;
+        dirtyFlag_[11] = true;
         if(!pJson["status"].isNull())
         {
             status_=std::make_shared<std::string>(pJson["status"].asString());
@@ -820,7 +905,7 @@ void Dish::updateByJson(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("sort_order"))
     {
-        dirtyFlag_[10] = true;
+        dirtyFlag_[12] = true;
         if(!pJson["sort_order"].isNull())
         {
             sortOrder_=std::make_shared<int32_t>((int32_t)pJson["sort_order"].asInt64());
@@ -828,7 +913,7 @@ void Dish::updateByJson(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("is_deleted"))
     {
-        dirtyFlag_[11] = true;
+        dirtyFlag_[13] = true;
         if(!pJson["is_deleted"].isNull())
         {
             isDeleted_=std::make_shared<int8_t>((int8_t)pJson["is_deleted"].asInt64());
@@ -836,7 +921,7 @@ void Dish::updateByJson(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("created_at"))
     {
-        dirtyFlag_[12] = true;
+        dirtyFlag_[14] = true;
         if(!pJson["created_at"].isNull())
         {
             auto timeStr = pJson["created_at"].asString();
@@ -862,7 +947,7 @@ void Dish::updateByJson(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("updated_at"))
     {
-        dirtyFlag_[13] = true;
+        dirtyFlag_[15] = true;
         if(!pJson["updated_at"].isNull())
         {
             auto timeStr = pJson["updated_at"].asString();
@@ -1089,6 +1174,50 @@ void Dish::setDescriptionToNull() noexcept
     dirtyFlag_[7] = true;
 }
 
+const uint32_t &Dish::getValueOfSales() const noexcept
+{
+    static const uint32_t defaultValue = uint32_t();
+    if(sales_)
+        return *sales_;
+    return defaultValue;
+}
+const std::shared_ptr<uint32_t> &Dish::getSales() const noexcept
+{
+    return sales_;
+}
+void Dish::setSales(const uint32_t &pSales) noexcept
+{
+    sales_ = std::make_shared<uint32_t>(pSales);
+    dirtyFlag_[8] = true;
+}
+void Dish::setSalesToNull() noexcept
+{
+    sales_.reset();
+    dirtyFlag_[8] = true;
+}
+
+const uint32_t &Dish::getValueOfStock() const noexcept
+{
+    static const uint32_t defaultValue = uint32_t();
+    if(stock_)
+        return *stock_;
+    return defaultValue;
+}
+const std::shared_ptr<uint32_t> &Dish::getStock() const noexcept
+{
+    return stock_;
+}
+void Dish::setStock(const uint32_t &pStock) noexcept
+{
+    stock_ = std::make_shared<uint32_t>(pStock);
+    dirtyFlag_[9] = true;
+}
+void Dish::setStockToNull() noexcept
+{
+    stock_.reset();
+    dirtyFlag_[9] = true;
+}
+
 const std::string &Dish::getValueOfCoverImg() const noexcept
 {
     static const std::string defaultValue = std::string();
@@ -1103,17 +1232,17 @@ const std::shared_ptr<std::string> &Dish::getCoverImg() const noexcept
 void Dish::setCoverImg(const std::string &pCoverImg) noexcept
 {
     coverImg_ = std::make_shared<std::string>(pCoverImg);
-    dirtyFlag_[8] = true;
+    dirtyFlag_[10] = true;
 }
 void Dish::setCoverImg(std::string &&pCoverImg) noexcept
 {
     coverImg_ = std::make_shared<std::string>(std::move(pCoverImg));
-    dirtyFlag_[8] = true;
+    dirtyFlag_[10] = true;
 }
 void Dish::setCoverImgToNull() noexcept
 {
     coverImg_.reset();
-    dirtyFlag_[8] = true;
+    dirtyFlag_[10] = true;
 }
 
 const std::string &Dish::getValueOfStatus() const noexcept
@@ -1130,17 +1259,17 @@ const std::shared_ptr<std::string> &Dish::getStatus() const noexcept
 void Dish::setStatus(const std::string &pStatus) noexcept
 {
     status_ = std::make_shared<std::string>(pStatus);
-    dirtyFlag_[9] = true;
+    dirtyFlag_[11] = true;
 }
 void Dish::setStatus(std::string &&pStatus) noexcept
 {
     status_ = std::make_shared<std::string>(std::move(pStatus));
-    dirtyFlag_[9] = true;
+    dirtyFlag_[11] = true;
 }
 void Dish::setStatusToNull() noexcept
 {
     status_.reset();
-    dirtyFlag_[9] = true;
+    dirtyFlag_[11] = true;
 }
 
 const int32_t &Dish::getValueOfSortOrder() const noexcept
@@ -1157,12 +1286,12 @@ const std::shared_ptr<int32_t> &Dish::getSortOrder() const noexcept
 void Dish::setSortOrder(const int32_t &pSortOrder) noexcept
 {
     sortOrder_ = std::make_shared<int32_t>(pSortOrder);
-    dirtyFlag_[10] = true;
+    dirtyFlag_[12] = true;
 }
 void Dish::setSortOrderToNull() noexcept
 {
     sortOrder_.reset();
-    dirtyFlag_[10] = true;
+    dirtyFlag_[12] = true;
 }
 
 const int8_t &Dish::getValueOfIsDeleted() const noexcept
@@ -1179,12 +1308,12 @@ const std::shared_ptr<int8_t> &Dish::getIsDeleted() const noexcept
 void Dish::setIsDeleted(const int8_t &pIsDeleted) noexcept
 {
     isDeleted_ = std::make_shared<int8_t>(pIsDeleted);
-    dirtyFlag_[11] = true;
+    dirtyFlag_[13] = true;
 }
 void Dish::setIsDeletedToNull() noexcept
 {
     isDeleted_.reset();
-    dirtyFlag_[11] = true;
+    dirtyFlag_[13] = true;
 }
 
 const ::trantor::Date &Dish::getValueOfCreatedAt() const noexcept
@@ -1201,12 +1330,12 @@ const std::shared_ptr<::trantor::Date> &Dish::getCreatedAt() const noexcept
 void Dish::setCreatedAt(const ::trantor::Date &pCreatedAt) noexcept
 {
     createdAt_ = std::make_shared<::trantor::Date>(pCreatedAt);
-    dirtyFlag_[12] = true;
+    dirtyFlag_[14] = true;
 }
 void Dish::setCreatedAtToNull() noexcept
 {
     createdAt_.reset();
-    dirtyFlag_[12] = true;
+    dirtyFlag_[14] = true;
 }
 
 const ::trantor::Date &Dish::getValueOfUpdatedAt() const noexcept
@@ -1223,12 +1352,12 @@ const std::shared_ptr<::trantor::Date> &Dish::getUpdatedAt() const noexcept
 void Dish::setUpdatedAt(const ::trantor::Date &pUpdatedAt) noexcept
 {
     updatedAt_ = std::make_shared<::trantor::Date>(pUpdatedAt);
-    dirtyFlag_[13] = true;
+    dirtyFlag_[15] = true;
 }
 void Dish::setUpdatedAtToNull() noexcept
 {
     updatedAt_.reset();
-    dirtyFlag_[13] = true;
+    dirtyFlag_[15] = true;
 }
 
 void Dish::updateId(const uint64_t id)
@@ -1246,6 +1375,8 @@ const std::vector<std::string> &Dish::insertColumns() noexcept
         "cost_price",
         "origin_price",
         "description",
+        "sales",
+        "stock",
         "cover_img",
         "status",
         "sort_order",
@@ -1337,6 +1468,28 @@ void Dish::outputArgs(drogon::orm::internal::SqlBinder &binder) const
     }
     if(dirtyFlag_[8])
     {
+        if(getSales())
+        {
+            binder << getValueOfSales();
+        }
+        else
+        {
+            binder << nullptr;
+        }
+    }
+    if(dirtyFlag_[9])
+    {
+        if(getStock())
+        {
+            binder << getValueOfStock();
+        }
+        else
+        {
+            binder << nullptr;
+        }
+    }
+    if(dirtyFlag_[10])
+    {
         if(getCoverImg())
         {
             binder << getValueOfCoverImg();
@@ -1346,7 +1499,7 @@ void Dish::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[9])
+    if(dirtyFlag_[11])
     {
         if(getStatus())
         {
@@ -1357,7 +1510,7 @@ void Dish::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[10])
+    if(dirtyFlag_[12])
     {
         if(getSortOrder())
         {
@@ -1368,7 +1521,7 @@ void Dish::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[11])
+    if(dirtyFlag_[13])
     {
         if(getIsDeleted())
         {
@@ -1379,7 +1532,7 @@ void Dish::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[12])
+    if(dirtyFlag_[14])
     {
         if(getCreatedAt())
         {
@@ -1390,7 +1543,7 @@ void Dish::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[13])
+    if(dirtyFlag_[15])
     {
         if(getUpdatedAt())
         {
@@ -1457,6 +1610,14 @@ const std::vector<std::string> Dish::updateColumns() const
     if(dirtyFlag_[13])
     {
         ret.push_back(getColumnName(13));
+    }
+    if(dirtyFlag_[14])
+    {
+        ret.push_back(getColumnName(14));
+    }
+    if(dirtyFlag_[15])
+    {
+        ret.push_back(getColumnName(15));
     }
     return ret;
 }
@@ -1542,6 +1703,28 @@ void Dish::updateArgs(drogon::orm::internal::SqlBinder &binder) const
     }
     if(dirtyFlag_[8])
     {
+        if(getSales())
+        {
+            binder << getValueOfSales();
+        }
+        else
+        {
+            binder << nullptr;
+        }
+    }
+    if(dirtyFlag_[9])
+    {
+        if(getStock())
+        {
+            binder << getValueOfStock();
+        }
+        else
+        {
+            binder << nullptr;
+        }
+    }
+    if(dirtyFlag_[10])
+    {
         if(getCoverImg())
         {
             binder << getValueOfCoverImg();
@@ -1551,7 +1734,7 @@ void Dish::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[9])
+    if(dirtyFlag_[11])
     {
         if(getStatus())
         {
@@ -1562,7 +1745,7 @@ void Dish::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[10])
+    if(dirtyFlag_[12])
     {
         if(getSortOrder())
         {
@@ -1573,7 +1756,7 @@ void Dish::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[11])
+    if(dirtyFlag_[13])
     {
         if(getIsDeleted())
         {
@@ -1584,7 +1767,7 @@ void Dish::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[12])
+    if(dirtyFlag_[14])
     {
         if(getCreatedAt())
         {
@@ -1595,7 +1778,7 @@ void Dish::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[13])
+    if(dirtyFlag_[15])
     {
         if(getUpdatedAt())
         {
@@ -1674,6 +1857,22 @@ Json::Value Dish::toJson() const
     {
         ret["description"]=Json::Value();
     }
+    if(getSales())
+    {
+        ret["sales"]=getValueOfSales();
+    }
+    else
+    {
+        ret["sales"]=Json::Value();
+    }
+    if(getStock())
+    {
+        ret["stock"]=getValueOfStock();
+    }
+    else
+    {
+        ret["stock"]=Json::Value();
+    }
     if(getCoverImg())
     {
         ret["cover_img"]=getValueOfCoverImg();
@@ -1729,7 +1928,7 @@ Json::Value Dish::toMasqueradedJson(
     const std::vector<std::string> &pMasqueradingVector) const
 {
     Json::Value ret;
-    if(pMasqueradingVector.size() == 14)
+    if(pMasqueradingVector.size() == 16)
     {
         if(!pMasqueradingVector[0].empty())
         {
@@ -1821,9 +2020,9 @@ Json::Value Dish::toMasqueradedJson(
         }
         if(!pMasqueradingVector[8].empty())
         {
-            if(getCoverImg())
+            if(getSales())
             {
-                ret[pMasqueradingVector[8]]=getValueOfCoverImg();
+                ret[pMasqueradingVector[8]]=getValueOfSales();
             }
             else
             {
@@ -1832,9 +2031,9 @@ Json::Value Dish::toMasqueradedJson(
         }
         if(!pMasqueradingVector[9].empty())
         {
-            if(getStatus())
+            if(getStock())
             {
-                ret[pMasqueradingVector[9]]=getValueOfStatus();
+                ret[pMasqueradingVector[9]]=getValueOfStock();
             }
             else
             {
@@ -1843,9 +2042,9 @@ Json::Value Dish::toMasqueradedJson(
         }
         if(!pMasqueradingVector[10].empty())
         {
-            if(getSortOrder())
+            if(getCoverImg())
             {
-                ret[pMasqueradingVector[10]]=getValueOfSortOrder();
+                ret[pMasqueradingVector[10]]=getValueOfCoverImg();
             }
             else
             {
@@ -1854,9 +2053,9 @@ Json::Value Dish::toMasqueradedJson(
         }
         if(!pMasqueradingVector[11].empty())
         {
-            if(getIsDeleted())
+            if(getStatus())
             {
-                ret[pMasqueradingVector[11]]=getValueOfIsDeleted();
+                ret[pMasqueradingVector[11]]=getValueOfStatus();
             }
             else
             {
@@ -1865,9 +2064,9 @@ Json::Value Dish::toMasqueradedJson(
         }
         if(!pMasqueradingVector[12].empty())
         {
-            if(getCreatedAt())
+            if(getSortOrder())
             {
-                ret[pMasqueradingVector[12]]=getCreatedAt()->toDbStringLocal();
+                ret[pMasqueradingVector[12]]=getValueOfSortOrder();
             }
             else
             {
@@ -1876,13 +2075,35 @@ Json::Value Dish::toMasqueradedJson(
         }
         if(!pMasqueradingVector[13].empty())
         {
-            if(getUpdatedAt())
+            if(getIsDeleted())
             {
-                ret[pMasqueradingVector[13]]=getUpdatedAt()->toDbStringLocal();
+                ret[pMasqueradingVector[13]]=getValueOfIsDeleted();
             }
             else
             {
                 ret[pMasqueradingVector[13]]=Json::Value();
+            }
+        }
+        if(!pMasqueradingVector[14].empty())
+        {
+            if(getCreatedAt())
+            {
+                ret[pMasqueradingVector[14]]=getCreatedAt()->toDbStringLocal();
+            }
+            else
+            {
+                ret[pMasqueradingVector[14]]=Json::Value();
+            }
+        }
+        if(!pMasqueradingVector[15].empty())
+        {
+            if(getUpdatedAt())
+            {
+                ret[pMasqueradingVector[15]]=getUpdatedAt()->toDbStringLocal();
+            }
+            else
+            {
+                ret[pMasqueradingVector[15]]=Json::Value();
             }
         }
         return ret;
@@ -1951,6 +2172,22 @@ Json::Value Dish::toMasqueradedJson(
     else
     {
         ret["description"]=Json::Value();
+    }
+    if(getSales())
+    {
+        ret["sales"]=getValueOfSales();
+    }
+    else
+    {
+        ret["sales"]=Json::Value();
+    }
+    if(getStock())
+    {
+        ret["stock"]=getValueOfStock();
+    }
+    else
+    {
+        ret["stock"]=Json::Value();
     }
     if(getCoverImg())
     {
@@ -2045,34 +2282,44 @@ bool Dish::validateJsonForCreation(const Json::Value &pJson, std::string &err)
         if(!validJsonOfField(7, "description", pJson["description"], err, true))
             return false;
     }
+    if(pJson.isMember("sales"))
+    {
+        if(!validJsonOfField(8, "sales", pJson["sales"], err, true))
+            return false;
+    }
+    if(pJson.isMember("stock"))
+    {
+        if(!validJsonOfField(9, "stock", pJson["stock"], err, true))
+            return false;
+    }
     if(pJson.isMember("cover_img"))
     {
-        if(!validJsonOfField(8, "cover_img", pJson["cover_img"], err, true))
+        if(!validJsonOfField(10, "cover_img", pJson["cover_img"], err, true))
             return false;
     }
     if(pJson.isMember("status"))
     {
-        if(!validJsonOfField(9, "status", pJson["status"], err, true))
+        if(!validJsonOfField(11, "status", pJson["status"], err, true))
             return false;
     }
     if(pJson.isMember("sort_order"))
     {
-        if(!validJsonOfField(10, "sort_order", pJson["sort_order"], err, true))
+        if(!validJsonOfField(12, "sort_order", pJson["sort_order"], err, true))
             return false;
     }
     if(pJson.isMember("is_deleted"))
     {
-        if(!validJsonOfField(11, "is_deleted", pJson["is_deleted"], err, true))
+        if(!validJsonOfField(13, "is_deleted", pJson["is_deleted"], err, true))
             return false;
     }
     if(pJson.isMember("created_at"))
     {
-        if(!validJsonOfField(12, "created_at", pJson["created_at"], err, true))
+        if(!validJsonOfField(14, "created_at", pJson["created_at"], err, true))
             return false;
     }
     if(pJson.isMember("updated_at"))
     {
-        if(!validJsonOfField(13, "updated_at", pJson["updated_at"], err, true))
+        if(!validJsonOfField(15, "updated_at", pJson["updated_at"], err, true))
             return false;
     }
     return true;
@@ -2081,7 +2328,7 @@ bool Dish::validateMasqueradedJsonForCreation(const Json::Value &pJson,
                                               const std::vector<std::string> &pMasqueradingVector,
                                               std::string &err)
 {
-    if(pMasqueradingVector.size() != 14)
+    if(pMasqueradingVector.size() != 16)
     {
         err = "Bad masquerading vector";
         return false;
@@ -2199,6 +2446,22 @@ bool Dish::validateMasqueradedJsonForCreation(const Json::Value &pJson,
                   return false;
           }
       }
+      if(!pMasqueradingVector[14].empty())
+      {
+          if(pJson.isMember(pMasqueradingVector[14]))
+          {
+              if(!validJsonOfField(14, pMasqueradingVector[14], pJson[pMasqueradingVector[14]], err, true))
+                  return false;
+          }
+      }
+      if(!pMasqueradingVector[15].empty())
+      {
+          if(pJson.isMember(pMasqueradingVector[15]))
+          {
+              if(!validJsonOfField(15, pMasqueradingVector[15], pJson[pMasqueradingVector[15]], err, true))
+                  return false;
+          }
+      }
     }
     catch(const Json::LogicError &e)
     {
@@ -2254,34 +2517,44 @@ bool Dish::validateJsonForUpdate(const Json::Value &pJson, std::string &err)
         if(!validJsonOfField(7, "description", pJson["description"], err, false))
             return false;
     }
+    if(pJson.isMember("sales"))
+    {
+        if(!validJsonOfField(8, "sales", pJson["sales"], err, false))
+            return false;
+    }
+    if(pJson.isMember("stock"))
+    {
+        if(!validJsonOfField(9, "stock", pJson["stock"], err, false))
+            return false;
+    }
     if(pJson.isMember("cover_img"))
     {
-        if(!validJsonOfField(8, "cover_img", pJson["cover_img"], err, false))
+        if(!validJsonOfField(10, "cover_img", pJson["cover_img"], err, false))
             return false;
     }
     if(pJson.isMember("status"))
     {
-        if(!validJsonOfField(9, "status", pJson["status"], err, false))
+        if(!validJsonOfField(11, "status", pJson["status"], err, false))
             return false;
     }
     if(pJson.isMember("sort_order"))
     {
-        if(!validJsonOfField(10, "sort_order", pJson["sort_order"], err, false))
+        if(!validJsonOfField(12, "sort_order", pJson["sort_order"], err, false))
             return false;
     }
     if(pJson.isMember("is_deleted"))
     {
-        if(!validJsonOfField(11, "is_deleted", pJson["is_deleted"], err, false))
+        if(!validJsonOfField(13, "is_deleted", pJson["is_deleted"], err, false))
             return false;
     }
     if(pJson.isMember("created_at"))
     {
-        if(!validJsonOfField(12, "created_at", pJson["created_at"], err, false))
+        if(!validJsonOfField(14, "created_at", pJson["created_at"], err, false))
             return false;
     }
     if(pJson.isMember("updated_at"))
     {
-        if(!validJsonOfField(13, "updated_at", pJson["updated_at"], err, false))
+        if(!validJsonOfField(15, "updated_at", pJson["updated_at"], err, false))
             return false;
     }
     return true;
@@ -2290,7 +2563,7 @@ bool Dish::validateMasqueradedJsonForUpdate(const Json::Value &pJson,
                                             const std::vector<std::string> &pMasqueradingVector,
                                             std::string &err)
 {
-    if(pMasqueradingVector.size() != 14)
+    if(pMasqueradingVector.size() != 16)
     {
         err = "Bad masquerading vector";
         return false;
@@ -2369,6 +2642,16 @@ bool Dish::validateMasqueradedJsonForUpdate(const Json::Value &pJson,
       if(!pMasqueradingVector[13].empty() && pJson.isMember(pMasqueradingVector[13]))
       {
           if(!validJsonOfField(13, pMasqueradingVector[13], pJson[pMasqueradingVector[13]], err, false))
+              return false;
+      }
+      if(!pMasqueradingVector[14].empty() && pJson.isMember(pMasqueradingVector[14]))
+      {
+          if(!validJsonOfField(14, pMasqueradingVector[14], pJson[pMasqueradingVector[14]], err, false))
+              return false;
+      }
+      if(!pMasqueradingVector[15].empty() && pJson.isMember(pMasqueradingVector[15]))
+      {
+          if(!validJsonOfField(15, pMasqueradingVector[15], pJson[pMasqueradingVector[15]], err, false))
               return false;
       }
     }
@@ -2518,6 +2801,28 @@ bool Dish::validJsonOfField(size_t index,
             {
                 return true;
             }
+            if(!pJson.isUInt())
+            {
+                err="Type error in the "+fieldName+" field";
+                return false;
+            }
+            break;
+        case 9:
+            if(pJson.isNull())
+            {
+                return true;
+            }
+            if(!pJson.isUInt())
+            {
+                err="Type error in the "+fieldName+" field";
+                return false;
+            }
+            break;
+        case 10:
+            if(pJson.isNull())
+            {
+                return true;
+            }
             if(!pJson.isString())
             {
                 err="Type error in the "+fieldName+" field";
@@ -2532,7 +2837,7 @@ bool Dish::validJsonOfField(size_t index,
             }
 
             break;
-        case 9:
+        case 11:
             if(pJson.isNull())
             {
                 return true;
@@ -2551,29 +2856,29 @@ bool Dish::validJsonOfField(size_t index,
             }
 
             break;
-        case 10:
-            if(pJson.isNull())
-            {
-                return true;
-            }
-            if(!pJson.isInt())
-            {
-                err="Type error in the "+fieldName+" field";
-                return false;
-            }
-            break;
-        case 11:
-            if(pJson.isNull())
-            {
-                return true;
-            }
-            if(!pJson.isInt())
-            {
-                err="Type error in the "+fieldName+" field";
-                return false;
-            }
-            break;
         case 12:
+            if(pJson.isNull())
+            {
+                return true;
+            }
+            if(!pJson.isInt())
+            {
+                err="Type error in the "+fieldName+" field";
+                return false;
+            }
+            break;
+        case 13:
+            if(pJson.isNull())
+            {
+                return true;
+            }
+            if(!pJson.isInt())
+            {
+                err="Type error in the "+fieldName+" field";
+                return false;
+            }
+            break;
+        case 14:
             if(pJson.isNull())
             {
                 return true;
@@ -2584,7 +2889,7 @@ bool Dish::validJsonOfField(size_t index,
                 return false;
             }
             break;
-        case 13:
+        case 15:
             if(pJson.isNull())
             {
                 return true;
@@ -2684,42 +2989,6 @@ void Dish::getDishCategory(const DbClientPtr &clientPtr,
                     {
                         rcb(DishCategory(r[0]));
                     }
-               }
-               >> ecb;
-}
-std::vector<Inventory> Dish::getInventories(const DbClientPtr &clientPtr) const {
-    static const std::string sql = "select * from inventory where dish_id = ?";
-    Result r(nullptr);
-    {
-        auto binder = *clientPtr << sql;
-        binder << *dishId_ << Mode::Blocking >>
-            [&r](const Result &result) { r = result; };
-        binder.exec();
-    }
-    std::vector<Inventory> ret;
-    ret.reserve(r.size());
-    for (auto const &row : r)
-    {
-        ret.emplace_back(Inventory(row));
-    }
-    return ret;
-}
-
-void Dish::getInventories(const DbClientPtr &clientPtr,
-                          const std::function<void(std::vector<Inventory>)> &rcb,
-                          const ExceptionCallback &ecb) const
-{
-    static const std::string sql = "select * from inventory where dish_id = ?";
-    *clientPtr << sql
-               << *dishId_
-               >> [rcb = std::move(rcb)](const Result &r){
-                   std::vector<Inventory> ret;
-                   ret.reserve(r.size());
-                   for (auto const &row : r)
-                   {
-                       ret.emplace_back(Inventory(row));
-                   }
-                   rcb(ret);
                }
                >> ecb;
 }

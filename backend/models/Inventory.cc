@@ -6,7 +6,6 @@
  */
 
 #include "Inventory.h"
-#include "Dish.h"
 #include "InventoryRecord.h"
 #include "Tenant.h"
 #include <drogon/utils/Utilities.h>
@@ -17,7 +16,6 @@ using namespace drogon::orm;
 using namespace drogon_model::saas_restaurant;
 
 const std::string Inventory::Cols::_inventory_id = "inventory_id";
-const std::string Inventory::Cols::_dish_id = "dish_id";
 const std::string Inventory::Cols::_tenant_id = "tenant_id";
 const std::string Inventory::Cols::_quantity = "quantity";
 const std::string Inventory::Cols::_item_name = "item_name";
@@ -37,7 +35,6 @@ const std::string Inventory::tableName = "inventory";
 
 const std::vector<typename Inventory::MetaData> Inventory::metaData_={
 {"inventory_id","uint32_t","int(10) unsigned",4,1,1,1},
-{"dish_id","uint32_t","int(10) unsigned",4,0,0,0},
 {"tenant_id","uint32_t","int(10) unsigned",4,0,0,0},
 {"quantity","int32_t","int(11)",4,0,0,0},
 {"item_name","std::string","varchar(255)",255,0,0,0},
@@ -64,10 +61,6 @@ Inventory::Inventory(const Row &r, const ssize_t indexOffset) noexcept
         if(!r["inventory_id"].isNull())
         {
             inventoryId_=std::make_shared<uint32_t>(r["inventory_id"].as<uint32_t>());
-        }
-        if(!r["dish_id"].isNull())
-        {
-            dishId_=std::make_shared<uint32_t>(r["dish_id"].as<uint32_t>());
         }
         if(!r["tenant_id"].isNull())
         {
@@ -161,7 +154,7 @@ Inventory::Inventory(const Row &r, const ssize_t indexOffset) noexcept
     else
     {
         size_t offset = (size_t)indexOffset;
-        if(offset + 15 > r.size())
+        if(offset + 14 > r.size())
         {
             LOG_FATAL << "Invalid SQL result for this model";
             return;
@@ -175,57 +168,75 @@ Inventory::Inventory(const Row &r, const ssize_t indexOffset) noexcept
         index = offset + 1;
         if(!r[index].isNull())
         {
-            dishId_=std::make_shared<uint32_t>(r[index].as<uint32_t>());
+            tenantId_=std::make_shared<uint32_t>(r[index].as<uint32_t>());
         }
         index = offset + 2;
         if(!r[index].isNull())
         {
-            tenantId_=std::make_shared<uint32_t>(r[index].as<uint32_t>());
+            quantity_=std::make_shared<int32_t>(r[index].as<int32_t>());
         }
         index = offset + 3;
         if(!r[index].isNull())
         {
-            quantity_=std::make_shared<int32_t>(r[index].as<int32_t>());
+            itemName_=std::make_shared<std::string>(r[index].as<std::string>());
         }
         index = offset + 4;
         if(!r[index].isNull())
         {
-            itemName_=std::make_shared<std::string>(r[index].as<std::string>());
+            itemCategory_=std::make_shared<std::string>(r[index].as<std::string>());
         }
         index = offset + 5;
         if(!r[index].isNull())
         {
-            itemCategory_=std::make_shared<std::string>(r[index].as<std::string>());
+            itemCost_=std::make_shared<std::string>(r[index].as<std::string>());
         }
         index = offset + 6;
         if(!r[index].isNull())
         {
-            itemCost_=std::make_shared<std::string>(r[index].as<std::string>());
+            minStock_=std::make_shared<int32_t>(r[index].as<int32_t>());
         }
         index = offset + 7;
         if(!r[index].isNull())
         {
-            minStock_=std::make_shared<int32_t>(r[index].as<int32_t>());
+            maxStock_=std::make_shared<int32_t>(r[index].as<int32_t>());
         }
         index = offset + 8;
         if(!r[index].isNull())
         {
-            maxStock_=std::make_shared<int32_t>(r[index].as<int32_t>());
+            supplier_=std::make_shared<std::string>(r[index].as<std::string>());
         }
         index = offset + 9;
         if(!r[index].isNull())
         {
-            supplier_=std::make_shared<std::string>(r[index].as<std::string>());
+            status_=std::make_shared<std::string>(r[index].as<std::string>());
         }
         index = offset + 10;
         if(!r[index].isNull())
         {
-            status_=std::make_shared<std::string>(r[index].as<std::string>());
+            location_=std::make_shared<std::string>(r[index].as<std::string>());
         }
         index = offset + 11;
         if(!r[index].isNull())
         {
-            location_=std::make_shared<std::string>(r[index].as<std::string>());
+            auto timeStr = r[index].as<std::string>();
+            struct tm stm;
+            memset(&stm,0,sizeof(stm));
+            auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
+            time_t t = mktime(&stm);
+            size_t decimalNum = 0;
+            if(p)
+            {
+                if(*p=='.')
+                {
+                    std::string decimals(p+1,&timeStr[timeStr.length()]);
+                    while(decimals.length()<6)
+                    {
+                        decimals += "0";
+                    }
+                    decimalNum = (size_t)atol(decimals.c_str());
+                }
+                createdAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
+            }
         }
         index = offset + 12;
         if(!r[index].isNull())
@@ -247,33 +258,10 @@ Inventory::Inventory(const Row &r, const ssize_t indexOffset) noexcept
                     }
                     decimalNum = (size_t)atol(decimals.c_str());
                 }
-                createdAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
-            }
-        }
-        index = offset + 13;
-        if(!r[index].isNull())
-        {
-            auto timeStr = r[index].as<std::string>();
-            struct tm stm;
-            memset(&stm,0,sizeof(stm));
-            auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
-            time_t t = mktime(&stm);
-            size_t decimalNum = 0;
-            if(p)
-            {
-                if(*p=='.')
-                {
-                    std::string decimals(p+1,&timeStr[timeStr.length()]);
-                    while(decimals.length()<6)
-                    {
-                        decimals += "0";
-                    }
-                    decimalNum = (size_t)atol(decimals.c_str());
-                }
                 updatedAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
             }
         }
-        index = offset + 14;
+        index = offset + 13;
         if(!r[index].isNull())
         {
             isDeleted_=std::make_shared<int8_t>(r[index].as<int8_t>());
@@ -284,7 +272,7 @@ Inventory::Inventory(const Row &r, const ssize_t indexOffset) noexcept
 
 Inventory::Inventory(const Json::Value &pJson, const std::vector<std::string> &pMasqueradingVector) noexcept(false)
 {
-    if(pMasqueradingVector.size() != 15)
+    if(pMasqueradingVector.size() != 14)
     {
         LOG_ERROR << "Bad masquerading vector";
         return;
@@ -302,7 +290,7 @@ Inventory::Inventory(const Json::Value &pJson, const std::vector<std::string> &p
         dirtyFlag_[1] = true;
         if(!pJson[pMasqueradingVector[1]].isNull())
         {
-            dishId_=std::make_shared<uint32_t>((uint32_t)pJson[pMasqueradingVector[1]].asUInt64());
+            tenantId_=std::make_shared<uint32_t>((uint32_t)pJson[pMasqueradingVector[1]].asUInt64());
         }
     }
     if(!pMasqueradingVector[2].empty() && pJson.isMember(pMasqueradingVector[2]))
@@ -310,7 +298,7 @@ Inventory::Inventory(const Json::Value &pJson, const std::vector<std::string> &p
         dirtyFlag_[2] = true;
         if(!pJson[pMasqueradingVector[2]].isNull())
         {
-            tenantId_=std::make_shared<uint32_t>((uint32_t)pJson[pMasqueradingVector[2]].asUInt64());
+            quantity_=std::make_shared<int32_t>((int32_t)pJson[pMasqueradingVector[2]].asInt64());
         }
     }
     if(!pMasqueradingVector[3].empty() && pJson.isMember(pMasqueradingVector[3]))
@@ -318,7 +306,7 @@ Inventory::Inventory(const Json::Value &pJson, const std::vector<std::string> &p
         dirtyFlag_[3] = true;
         if(!pJson[pMasqueradingVector[3]].isNull())
         {
-            quantity_=std::make_shared<int32_t>((int32_t)pJson[pMasqueradingVector[3]].asInt64());
+            itemName_=std::make_shared<std::string>(pJson[pMasqueradingVector[3]].asString());
         }
     }
     if(!pMasqueradingVector[4].empty() && pJson.isMember(pMasqueradingVector[4]))
@@ -326,7 +314,7 @@ Inventory::Inventory(const Json::Value &pJson, const std::vector<std::string> &p
         dirtyFlag_[4] = true;
         if(!pJson[pMasqueradingVector[4]].isNull())
         {
-            itemName_=std::make_shared<std::string>(pJson[pMasqueradingVector[4]].asString());
+            itemCategory_=std::make_shared<std::string>(pJson[pMasqueradingVector[4]].asString());
         }
     }
     if(!pMasqueradingVector[5].empty() && pJson.isMember(pMasqueradingVector[5]))
@@ -334,7 +322,7 @@ Inventory::Inventory(const Json::Value &pJson, const std::vector<std::string> &p
         dirtyFlag_[5] = true;
         if(!pJson[pMasqueradingVector[5]].isNull())
         {
-            itemCategory_=std::make_shared<std::string>(pJson[pMasqueradingVector[5]].asString());
+            itemCost_=std::make_shared<std::string>(pJson[pMasqueradingVector[5]].asString());
         }
     }
     if(!pMasqueradingVector[6].empty() && pJson.isMember(pMasqueradingVector[6]))
@@ -342,7 +330,7 @@ Inventory::Inventory(const Json::Value &pJson, const std::vector<std::string> &p
         dirtyFlag_[6] = true;
         if(!pJson[pMasqueradingVector[6]].isNull())
         {
-            itemCost_=std::make_shared<std::string>(pJson[pMasqueradingVector[6]].asString());
+            minStock_=std::make_shared<int32_t>((int32_t)pJson[pMasqueradingVector[6]].asInt64());
         }
     }
     if(!pMasqueradingVector[7].empty() && pJson.isMember(pMasqueradingVector[7]))
@@ -350,7 +338,7 @@ Inventory::Inventory(const Json::Value &pJson, const std::vector<std::string> &p
         dirtyFlag_[7] = true;
         if(!pJson[pMasqueradingVector[7]].isNull())
         {
-            minStock_=std::make_shared<int32_t>((int32_t)pJson[pMasqueradingVector[7]].asInt64());
+            maxStock_=std::make_shared<int32_t>((int32_t)pJson[pMasqueradingVector[7]].asInt64());
         }
     }
     if(!pMasqueradingVector[8].empty() && pJson.isMember(pMasqueradingVector[8]))
@@ -358,7 +346,7 @@ Inventory::Inventory(const Json::Value &pJson, const std::vector<std::string> &p
         dirtyFlag_[8] = true;
         if(!pJson[pMasqueradingVector[8]].isNull())
         {
-            maxStock_=std::make_shared<int32_t>((int32_t)pJson[pMasqueradingVector[8]].asInt64());
+            supplier_=std::make_shared<std::string>(pJson[pMasqueradingVector[8]].asString());
         }
     }
     if(!pMasqueradingVector[9].empty() && pJson.isMember(pMasqueradingVector[9]))
@@ -366,7 +354,7 @@ Inventory::Inventory(const Json::Value &pJson, const std::vector<std::string> &p
         dirtyFlag_[9] = true;
         if(!pJson[pMasqueradingVector[9]].isNull())
         {
-            supplier_=std::make_shared<std::string>(pJson[pMasqueradingVector[9]].asString());
+            status_=std::make_shared<std::string>(pJson[pMasqueradingVector[9]].asString());
         }
     }
     if(!pMasqueradingVector[10].empty() && pJson.isMember(pMasqueradingVector[10]))
@@ -374,7 +362,7 @@ Inventory::Inventory(const Json::Value &pJson, const std::vector<std::string> &p
         dirtyFlag_[10] = true;
         if(!pJson[pMasqueradingVector[10]].isNull())
         {
-            status_=std::make_shared<std::string>(pJson[pMasqueradingVector[10]].asString());
+            location_=std::make_shared<std::string>(pJson[pMasqueradingVector[10]].asString());
         }
     }
     if(!pMasqueradingVector[11].empty() && pJson.isMember(pMasqueradingVector[11]))
@@ -382,7 +370,25 @@ Inventory::Inventory(const Json::Value &pJson, const std::vector<std::string> &p
         dirtyFlag_[11] = true;
         if(!pJson[pMasqueradingVector[11]].isNull())
         {
-            location_=std::make_shared<std::string>(pJson[pMasqueradingVector[11]].asString());
+            auto timeStr = pJson[pMasqueradingVector[11]].asString();
+            struct tm stm;
+            memset(&stm,0,sizeof(stm));
+            auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
+            time_t t = mktime(&stm);
+            size_t decimalNum = 0;
+            if(p)
+            {
+                if(*p=='.')
+                {
+                    std::string decimals(p+1,&timeStr[timeStr.length()]);
+                    while(decimals.length()<6)
+                    {
+                        decimals += "0";
+                    }
+                    decimalNum = (size_t)atol(decimals.c_str());
+                }
+                createdAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
+            }
         }
     }
     if(!pMasqueradingVector[12].empty() && pJson.isMember(pMasqueradingVector[12]))
@@ -407,7 +413,7 @@ Inventory::Inventory(const Json::Value &pJson, const std::vector<std::string> &p
                     }
                     decimalNum = (size_t)atol(decimals.c_str());
                 }
-                createdAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
+                updatedAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
             }
         }
     }
@@ -416,33 +422,7 @@ Inventory::Inventory(const Json::Value &pJson, const std::vector<std::string> &p
         dirtyFlag_[13] = true;
         if(!pJson[pMasqueradingVector[13]].isNull())
         {
-            auto timeStr = pJson[pMasqueradingVector[13]].asString();
-            struct tm stm;
-            memset(&stm,0,sizeof(stm));
-            auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
-            time_t t = mktime(&stm);
-            size_t decimalNum = 0;
-            if(p)
-            {
-                if(*p=='.')
-                {
-                    std::string decimals(p+1,&timeStr[timeStr.length()]);
-                    while(decimals.length()<6)
-                    {
-                        decimals += "0";
-                    }
-                    decimalNum = (size_t)atol(decimals.c_str());
-                }
-                updatedAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
-            }
-        }
-    }
-    if(!pMasqueradingVector[14].empty() && pJson.isMember(pMasqueradingVector[14]))
-    {
-        dirtyFlag_[14] = true;
-        if(!pJson[pMasqueradingVector[14]].isNull())
-        {
-            isDeleted_=std::make_shared<int8_t>((int8_t)pJson[pMasqueradingVector[14]].asInt64());
+            isDeleted_=std::make_shared<int8_t>((int8_t)pJson[pMasqueradingVector[13]].asInt64());
         }
     }
 }
@@ -457,17 +437,9 @@ Inventory::Inventory(const Json::Value &pJson) noexcept(false)
             inventoryId_=std::make_shared<uint32_t>((uint32_t)pJson["inventory_id"].asUInt64());
         }
     }
-    if(pJson.isMember("dish_id"))
-    {
-        dirtyFlag_[1]=true;
-        if(!pJson["dish_id"].isNull())
-        {
-            dishId_=std::make_shared<uint32_t>((uint32_t)pJson["dish_id"].asUInt64());
-        }
-    }
     if(pJson.isMember("tenant_id"))
     {
-        dirtyFlag_[2]=true;
+        dirtyFlag_[1]=true;
         if(!pJson["tenant_id"].isNull())
         {
             tenantId_=std::make_shared<uint32_t>((uint32_t)pJson["tenant_id"].asUInt64());
@@ -475,7 +447,7 @@ Inventory::Inventory(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("quantity"))
     {
-        dirtyFlag_[3]=true;
+        dirtyFlag_[2]=true;
         if(!pJson["quantity"].isNull())
         {
             quantity_=std::make_shared<int32_t>((int32_t)pJson["quantity"].asInt64());
@@ -483,7 +455,7 @@ Inventory::Inventory(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("item_name"))
     {
-        dirtyFlag_[4]=true;
+        dirtyFlag_[3]=true;
         if(!pJson["item_name"].isNull())
         {
             itemName_=std::make_shared<std::string>(pJson["item_name"].asString());
@@ -491,7 +463,7 @@ Inventory::Inventory(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("item_category"))
     {
-        dirtyFlag_[5]=true;
+        dirtyFlag_[4]=true;
         if(!pJson["item_category"].isNull())
         {
             itemCategory_=std::make_shared<std::string>(pJson["item_category"].asString());
@@ -499,7 +471,7 @@ Inventory::Inventory(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("item_cost"))
     {
-        dirtyFlag_[6]=true;
+        dirtyFlag_[5]=true;
         if(!pJson["item_cost"].isNull())
         {
             itemCost_=std::make_shared<std::string>(pJson["item_cost"].asString());
@@ -507,7 +479,7 @@ Inventory::Inventory(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("min_stock"))
     {
-        dirtyFlag_[7]=true;
+        dirtyFlag_[6]=true;
         if(!pJson["min_stock"].isNull())
         {
             minStock_=std::make_shared<int32_t>((int32_t)pJson["min_stock"].asInt64());
@@ -515,7 +487,7 @@ Inventory::Inventory(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("max_stock"))
     {
-        dirtyFlag_[8]=true;
+        dirtyFlag_[7]=true;
         if(!pJson["max_stock"].isNull())
         {
             maxStock_=std::make_shared<int32_t>((int32_t)pJson["max_stock"].asInt64());
@@ -523,7 +495,7 @@ Inventory::Inventory(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("supplier"))
     {
-        dirtyFlag_[9]=true;
+        dirtyFlag_[8]=true;
         if(!pJson["supplier"].isNull())
         {
             supplier_=std::make_shared<std::string>(pJson["supplier"].asString());
@@ -531,7 +503,7 @@ Inventory::Inventory(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("status"))
     {
-        dirtyFlag_[10]=true;
+        dirtyFlag_[9]=true;
         if(!pJson["status"].isNull())
         {
             status_=std::make_shared<std::string>(pJson["status"].asString());
@@ -539,7 +511,7 @@ Inventory::Inventory(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("location"))
     {
-        dirtyFlag_[11]=true;
+        dirtyFlag_[10]=true;
         if(!pJson["location"].isNull())
         {
             location_=std::make_shared<std::string>(pJson["location"].asString());
@@ -547,7 +519,7 @@ Inventory::Inventory(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("created_at"))
     {
-        dirtyFlag_[12]=true;
+        dirtyFlag_[11]=true;
         if(!pJson["created_at"].isNull())
         {
             auto timeStr = pJson["created_at"].asString();
@@ -573,7 +545,7 @@ Inventory::Inventory(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("updated_at"))
     {
-        dirtyFlag_[13]=true;
+        dirtyFlag_[12]=true;
         if(!pJson["updated_at"].isNull())
         {
             auto timeStr = pJson["updated_at"].asString();
@@ -599,7 +571,7 @@ Inventory::Inventory(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("is_deleted"))
     {
-        dirtyFlag_[14]=true;
+        dirtyFlag_[13]=true;
         if(!pJson["is_deleted"].isNull())
         {
             isDeleted_=std::make_shared<int8_t>((int8_t)pJson["is_deleted"].asInt64());
@@ -610,7 +582,7 @@ Inventory::Inventory(const Json::Value &pJson) noexcept(false)
 void Inventory::updateByMasqueradedJson(const Json::Value &pJson,
                                             const std::vector<std::string> &pMasqueradingVector) noexcept(false)
 {
-    if(pMasqueradingVector.size() != 15)
+    if(pMasqueradingVector.size() != 14)
     {
         LOG_ERROR << "Bad masquerading vector";
         return;
@@ -627,7 +599,7 @@ void Inventory::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[1] = true;
         if(!pJson[pMasqueradingVector[1]].isNull())
         {
-            dishId_=std::make_shared<uint32_t>((uint32_t)pJson[pMasqueradingVector[1]].asUInt64());
+            tenantId_=std::make_shared<uint32_t>((uint32_t)pJson[pMasqueradingVector[1]].asUInt64());
         }
     }
     if(!pMasqueradingVector[2].empty() && pJson.isMember(pMasqueradingVector[2]))
@@ -635,7 +607,7 @@ void Inventory::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[2] = true;
         if(!pJson[pMasqueradingVector[2]].isNull())
         {
-            tenantId_=std::make_shared<uint32_t>((uint32_t)pJson[pMasqueradingVector[2]].asUInt64());
+            quantity_=std::make_shared<int32_t>((int32_t)pJson[pMasqueradingVector[2]].asInt64());
         }
     }
     if(!pMasqueradingVector[3].empty() && pJson.isMember(pMasqueradingVector[3]))
@@ -643,7 +615,7 @@ void Inventory::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[3] = true;
         if(!pJson[pMasqueradingVector[3]].isNull())
         {
-            quantity_=std::make_shared<int32_t>((int32_t)pJson[pMasqueradingVector[3]].asInt64());
+            itemName_=std::make_shared<std::string>(pJson[pMasqueradingVector[3]].asString());
         }
     }
     if(!pMasqueradingVector[4].empty() && pJson.isMember(pMasqueradingVector[4]))
@@ -651,7 +623,7 @@ void Inventory::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[4] = true;
         if(!pJson[pMasqueradingVector[4]].isNull())
         {
-            itemName_=std::make_shared<std::string>(pJson[pMasqueradingVector[4]].asString());
+            itemCategory_=std::make_shared<std::string>(pJson[pMasqueradingVector[4]].asString());
         }
     }
     if(!pMasqueradingVector[5].empty() && pJson.isMember(pMasqueradingVector[5]))
@@ -659,7 +631,7 @@ void Inventory::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[5] = true;
         if(!pJson[pMasqueradingVector[5]].isNull())
         {
-            itemCategory_=std::make_shared<std::string>(pJson[pMasqueradingVector[5]].asString());
+            itemCost_=std::make_shared<std::string>(pJson[pMasqueradingVector[5]].asString());
         }
     }
     if(!pMasqueradingVector[6].empty() && pJson.isMember(pMasqueradingVector[6]))
@@ -667,7 +639,7 @@ void Inventory::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[6] = true;
         if(!pJson[pMasqueradingVector[6]].isNull())
         {
-            itemCost_=std::make_shared<std::string>(pJson[pMasqueradingVector[6]].asString());
+            minStock_=std::make_shared<int32_t>((int32_t)pJson[pMasqueradingVector[6]].asInt64());
         }
     }
     if(!pMasqueradingVector[7].empty() && pJson.isMember(pMasqueradingVector[7]))
@@ -675,7 +647,7 @@ void Inventory::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[7] = true;
         if(!pJson[pMasqueradingVector[7]].isNull())
         {
-            minStock_=std::make_shared<int32_t>((int32_t)pJson[pMasqueradingVector[7]].asInt64());
+            maxStock_=std::make_shared<int32_t>((int32_t)pJson[pMasqueradingVector[7]].asInt64());
         }
     }
     if(!pMasqueradingVector[8].empty() && pJson.isMember(pMasqueradingVector[8]))
@@ -683,7 +655,7 @@ void Inventory::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[8] = true;
         if(!pJson[pMasqueradingVector[8]].isNull())
         {
-            maxStock_=std::make_shared<int32_t>((int32_t)pJson[pMasqueradingVector[8]].asInt64());
+            supplier_=std::make_shared<std::string>(pJson[pMasqueradingVector[8]].asString());
         }
     }
     if(!pMasqueradingVector[9].empty() && pJson.isMember(pMasqueradingVector[9]))
@@ -691,7 +663,7 @@ void Inventory::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[9] = true;
         if(!pJson[pMasqueradingVector[9]].isNull())
         {
-            supplier_=std::make_shared<std::string>(pJson[pMasqueradingVector[9]].asString());
+            status_=std::make_shared<std::string>(pJson[pMasqueradingVector[9]].asString());
         }
     }
     if(!pMasqueradingVector[10].empty() && pJson.isMember(pMasqueradingVector[10]))
@@ -699,7 +671,7 @@ void Inventory::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[10] = true;
         if(!pJson[pMasqueradingVector[10]].isNull())
         {
-            status_=std::make_shared<std::string>(pJson[pMasqueradingVector[10]].asString());
+            location_=std::make_shared<std::string>(pJson[pMasqueradingVector[10]].asString());
         }
     }
     if(!pMasqueradingVector[11].empty() && pJson.isMember(pMasqueradingVector[11]))
@@ -707,7 +679,25 @@ void Inventory::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[11] = true;
         if(!pJson[pMasqueradingVector[11]].isNull())
         {
-            location_=std::make_shared<std::string>(pJson[pMasqueradingVector[11]].asString());
+            auto timeStr = pJson[pMasqueradingVector[11]].asString();
+            struct tm stm;
+            memset(&stm,0,sizeof(stm));
+            auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
+            time_t t = mktime(&stm);
+            size_t decimalNum = 0;
+            if(p)
+            {
+                if(*p=='.')
+                {
+                    std::string decimals(p+1,&timeStr[timeStr.length()]);
+                    while(decimals.length()<6)
+                    {
+                        decimals += "0";
+                    }
+                    decimalNum = (size_t)atol(decimals.c_str());
+                }
+                createdAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
+            }
         }
     }
     if(!pMasqueradingVector[12].empty() && pJson.isMember(pMasqueradingVector[12]))
@@ -732,7 +722,7 @@ void Inventory::updateByMasqueradedJson(const Json::Value &pJson,
                     }
                     decimalNum = (size_t)atol(decimals.c_str());
                 }
-                createdAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
+                updatedAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
             }
         }
     }
@@ -741,33 +731,7 @@ void Inventory::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[13] = true;
         if(!pJson[pMasqueradingVector[13]].isNull())
         {
-            auto timeStr = pJson[pMasqueradingVector[13]].asString();
-            struct tm stm;
-            memset(&stm,0,sizeof(stm));
-            auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
-            time_t t = mktime(&stm);
-            size_t decimalNum = 0;
-            if(p)
-            {
-                if(*p=='.')
-                {
-                    std::string decimals(p+1,&timeStr[timeStr.length()]);
-                    while(decimals.length()<6)
-                    {
-                        decimals += "0";
-                    }
-                    decimalNum = (size_t)atol(decimals.c_str());
-                }
-                updatedAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
-            }
-        }
-    }
-    if(!pMasqueradingVector[14].empty() && pJson.isMember(pMasqueradingVector[14]))
-    {
-        dirtyFlag_[14] = true;
-        if(!pJson[pMasqueradingVector[14]].isNull())
-        {
-            isDeleted_=std::make_shared<int8_t>((int8_t)pJson[pMasqueradingVector[14]].asInt64());
+            isDeleted_=std::make_shared<int8_t>((int8_t)pJson[pMasqueradingVector[13]].asInt64());
         }
     }
 }
@@ -781,17 +745,9 @@ void Inventory::updateByJson(const Json::Value &pJson) noexcept(false)
             inventoryId_=std::make_shared<uint32_t>((uint32_t)pJson["inventory_id"].asUInt64());
         }
     }
-    if(pJson.isMember("dish_id"))
-    {
-        dirtyFlag_[1] = true;
-        if(!pJson["dish_id"].isNull())
-        {
-            dishId_=std::make_shared<uint32_t>((uint32_t)pJson["dish_id"].asUInt64());
-        }
-    }
     if(pJson.isMember("tenant_id"))
     {
-        dirtyFlag_[2] = true;
+        dirtyFlag_[1] = true;
         if(!pJson["tenant_id"].isNull())
         {
             tenantId_=std::make_shared<uint32_t>((uint32_t)pJson["tenant_id"].asUInt64());
@@ -799,7 +755,7 @@ void Inventory::updateByJson(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("quantity"))
     {
-        dirtyFlag_[3] = true;
+        dirtyFlag_[2] = true;
         if(!pJson["quantity"].isNull())
         {
             quantity_=std::make_shared<int32_t>((int32_t)pJson["quantity"].asInt64());
@@ -807,7 +763,7 @@ void Inventory::updateByJson(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("item_name"))
     {
-        dirtyFlag_[4] = true;
+        dirtyFlag_[3] = true;
         if(!pJson["item_name"].isNull())
         {
             itemName_=std::make_shared<std::string>(pJson["item_name"].asString());
@@ -815,7 +771,7 @@ void Inventory::updateByJson(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("item_category"))
     {
-        dirtyFlag_[5] = true;
+        dirtyFlag_[4] = true;
         if(!pJson["item_category"].isNull())
         {
             itemCategory_=std::make_shared<std::string>(pJson["item_category"].asString());
@@ -823,7 +779,7 @@ void Inventory::updateByJson(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("item_cost"))
     {
-        dirtyFlag_[6] = true;
+        dirtyFlag_[5] = true;
         if(!pJson["item_cost"].isNull())
         {
             itemCost_=std::make_shared<std::string>(pJson["item_cost"].asString());
@@ -831,7 +787,7 @@ void Inventory::updateByJson(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("min_stock"))
     {
-        dirtyFlag_[7] = true;
+        dirtyFlag_[6] = true;
         if(!pJson["min_stock"].isNull())
         {
             minStock_=std::make_shared<int32_t>((int32_t)pJson["min_stock"].asInt64());
@@ -839,7 +795,7 @@ void Inventory::updateByJson(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("max_stock"))
     {
-        dirtyFlag_[8] = true;
+        dirtyFlag_[7] = true;
         if(!pJson["max_stock"].isNull())
         {
             maxStock_=std::make_shared<int32_t>((int32_t)pJson["max_stock"].asInt64());
@@ -847,7 +803,7 @@ void Inventory::updateByJson(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("supplier"))
     {
-        dirtyFlag_[9] = true;
+        dirtyFlag_[8] = true;
         if(!pJson["supplier"].isNull())
         {
             supplier_=std::make_shared<std::string>(pJson["supplier"].asString());
@@ -855,7 +811,7 @@ void Inventory::updateByJson(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("status"))
     {
-        dirtyFlag_[10] = true;
+        dirtyFlag_[9] = true;
         if(!pJson["status"].isNull())
         {
             status_=std::make_shared<std::string>(pJson["status"].asString());
@@ -863,7 +819,7 @@ void Inventory::updateByJson(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("location"))
     {
-        dirtyFlag_[11] = true;
+        dirtyFlag_[10] = true;
         if(!pJson["location"].isNull())
         {
             location_=std::make_shared<std::string>(pJson["location"].asString());
@@ -871,7 +827,7 @@ void Inventory::updateByJson(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("created_at"))
     {
-        dirtyFlag_[12] = true;
+        dirtyFlag_[11] = true;
         if(!pJson["created_at"].isNull())
         {
             auto timeStr = pJson["created_at"].asString();
@@ -897,7 +853,7 @@ void Inventory::updateByJson(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("updated_at"))
     {
-        dirtyFlag_[13] = true;
+        dirtyFlag_[12] = true;
         if(!pJson["updated_at"].isNull())
         {
             auto timeStr = pJson["updated_at"].asString();
@@ -923,7 +879,7 @@ void Inventory::updateByJson(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("is_deleted"))
     {
-        dirtyFlag_[14] = true;
+        dirtyFlag_[13] = true;
         if(!pJson["is_deleted"].isNull())
         {
             isDeleted_=std::make_shared<int8_t>((int8_t)pJson["is_deleted"].asInt64());
@@ -953,28 +909,6 @@ const typename Inventory::PrimaryKeyType & Inventory::getPrimaryKey() const
     return *inventoryId_;
 }
 
-const uint32_t &Inventory::getValueOfDishId() const noexcept
-{
-    static const uint32_t defaultValue = uint32_t();
-    if(dishId_)
-        return *dishId_;
-    return defaultValue;
-}
-const std::shared_ptr<uint32_t> &Inventory::getDishId() const noexcept
-{
-    return dishId_;
-}
-void Inventory::setDishId(const uint32_t &pDishId) noexcept
-{
-    dishId_ = std::make_shared<uint32_t>(pDishId);
-    dirtyFlag_[1] = true;
-}
-void Inventory::setDishIdToNull() noexcept
-{
-    dishId_.reset();
-    dirtyFlag_[1] = true;
-}
-
 const uint32_t &Inventory::getValueOfTenantId() const noexcept
 {
     static const uint32_t defaultValue = uint32_t();
@@ -989,12 +923,12 @@ const std::shared_ptr<uint32_t> &Inventory::getTenantId() const noexcept
 void Inventory::setTenantId(const uint32_t &pTenantId) noexcept
 {
     tenantId_ = std::make_shared<uint32_t>(pTenantId);
-    dirtyFlag_[2] = true;
+    dirtyFlag_[1] = true;
 }
 void Inventory::setTenantIdToNull() noexcept
 {
     tenantId_.reset();
-    dirtyFlag_[2] = true;
+    dirtyFlag_[1] = true;
 }
 
 const int32_t &Inventory::getValueOfQuantity() const noexcept
@@ -1011,12 +945,12 @@ const std::shared_ptr<int32_t> &Inventory::getQuantity() const noexcept
 void Inventory::setQuantity(const int32_t &pQuantity) noexcept
 {
     quantity_ = std::make_shared<int32_t>(pQuantity);
-    dirtyFlag_[3] = true;
+    dirtyFlag_[2] = true;
 }
 void Inventory::setQuantityToNull() noexcept
 {
     quantity_.reset();
-    dirtyFlag_[3] = true;
+    dirtyFlag_[2] = true;
 }
 
 const std::string &Inventory::getValueOfItemName() const noexcept
@@ -1033,17 +967,17 @@ const std::shared_ptr<std::string> &Inventory::getItemName() const noexcept
 void Inventory::setItemName(const std::string &pItemName) noexcept
 {
     itemName_ = std::make_shared<std::string>(pItemName);
-    dirtyFlag_[4] = true;
+    dirtyFlag_[3] = true;
 }
 void Inventory::setItemName(std::string &&pItemName) noexcept
 {
     itemName_ = std::make_shared<std::string>(std::move(pItemName));
-    dirtyFlag_[4] = true;
+    dirtyFlag_[3] = true;
 }
 void Inventory::setItemNameToNull() noexcept
 {
     itemName_.reset();
-    dirtyFlag_[4] = true;
+    dirtyFlag_[3] = true;
 }
 
 const std::string &Inventory::getValueOfItemCategory() const noexcept
@@ -1060,17 +994,17 @@ const std::shared_ptr<std::string> &Inventory::getItemCategory() const noexcept
 void Inventory::setItemCategory(const std::string &pItemCategory) noexcept
 {
     itemCategory_ = std::make_shared<std::string>(pItemCategory);
-    dirtyFlag_[5] = true;
+    dirtyFlag_[4] = true;
 }
 void Inventory::setItemCategory(std::string &&pItemCategory) noexcept
 {
     itemCategory_ = std::make_shared<std::string>(std::move(pItemCategory));
-    dirtyFlag_[5] = true;
+    dirtyFlag_[4] = true;
 }
 void Inventory::setItemCategoryToNull() noexcept
 {
     itemCategory_.reset();
-    dirtyFlag_[5] = true;
+    dirtyFlag_[4] = true;
 }
 
 const std::string &Inventory::getValueOfItemCost() const noexcept
@@ -1087,17 +1021,17 @@ const std::shared_ptr<std::string> &Inventory::getItemCost() const noexcept
 void Inventory::setItemCost(const std::string &pItemCost) noexcept
 {
     itemCost_ = std::make_shared<std::string>(pItemCost);
-    dirtyFlag_[6] = true;
+    dirtyFlag_[5] = true;
 }
 void Inventory::setItemCost(std::string &&pItemCost) noexcept
 {
     itemCost_ = std::make_shared<std::string>(std::move(pItemCost));
-    dirtyFlag_[6] = true;
+    dirtyFlag_[5] = true;
 }
 void Inventory::setItemCostToNull() noexcept
 {
     itemCost_.reset();
-    dirtyFlag_[6] = true;
+    dirtyFlag_[5] = true;
 }
 
 const int32_t &Inventory::getValueOfMinStock() const noexcept
@@ -1114,12 +1048,12 @@ const std::shared_ptr<int32_t> &Inventory::getMinStock() const noexcept
 void Inventory::setMinStock(const int32_t &pMinStock) noexcept
 {
     minStock_ = std::make_shared<int32_t>(pMinStock);
-    dirtyFlag_[7] = true;
+    dirtyFlag_[6] = true;
 }
 void Inventory::setMinStockToNull() noexcept
 {
     minStock_.reset();
-    dirtyFlag_[7] = true;
+    dirtyFlag_[6] = true;
 }
 
 const int32_t &Inventory::getValueOfMaxStock() const noexcept
@@ -1136,12 +1070,12 @@ const std::shared_ptr<int32_t> &Inventory::getMaxStock() const noexcept
 void Inventory::setMaxStock(const int32_t &pMaxStock) noexcept
 {
     maxStock_ = std::make_shared<int32_t>(pMaxStock);
-    dirtyFlag_[8] = true;
+    dirtyFlag_[7] = true;
 }
 void Inventory::setMaxStockToNull() noexcept
 {
     maxStock_.reset();
-    dirtyFlag_[8] = true;
+    dirtyFlag_[7] = true;
 }
 
 const std::string &Inventory::getValueOfSupplier() const noexcept
@@ -1158,17 +1092,17 @@ const std::shared_ptr<std::string> &Inventory::getSupplier() const noexcept
 void Inventory::setSupplier(const std::string &pSupplier) noexcept
 {
     supplier_ = std::make_shared<std::string>(pSupplier);
-    dirtyFlag_[9] = true;
+    dirtyFlag_[8] = true;
 }
 void Inventory::setSupplier(std::string &&pSupplier) noexcept
 {
     supplier_ = std::make_shared<std::string>(std::move(pSupplier));
-    dirtyFlag_[9] = true;
+    dirtyFlag_[8] = true;
 }
 void Inventory::setSupplierToNull() noexcept
 {
     supplier_.reset();
-    dirtyFlag_[9] = true;
+    dirtyFlag_[8] = true;
 }
 
 const std::string &Inventory::getValueOfStatus() const noexcept
@@ -1185,17 +1119,17 @@ const std::shared_ptr<std::string> &Inventory::getStatus() const noexcept
 void Inventory::setStatus(const std::string &pStatus) noexcept
 {
     status_ = std::make_shared<std::string>(pStatus);
-    dirtyFlag_[10] = true;
+    dirtyFlag_[9] = true;
 }
 void Inventory::setStatus(std::string &&pStatus) noexcept
 {
     status_ = std::make_shared<std::string>(std::move(pStatus));
-    dirtyFlag_[10] = true;
+    dirtyFlag_[9] = true;
 }
 void Inventory::setStatusToNull() noexcept
 {
     status_.reset();
-    dirtyFlag_[10] = true;
+    dirtyFlag_[9] = true;
 }
 
 const std::string &Inventory::getValueOfLocation() const noexcept
@@ -1212,17 +1146,17 @@ const std::shared_ptr<std::string> &Inventory::getLocation() const noexcept
 void Inventory::setLocation(const std::string &pLocation) noexcept
 {
     location_ = std::make_shared<std::string>(pLocation);
-    dirtyFlag_[11] = true;
+    dirtyFlag_[10] = true;
 }
 void Inventory::setLocation(std::string &&pLocation) noexcept
 {
     location_ = std::make_shared<std::string>(std::move(pLocation));
-    dirtyFlag_[11] = true;
+    dirtyFlag_[10] = true;
 }
 void Inventory::setLocationToNull() noexcept
 {
     location_.reset();
-    dirtyFlag_[11] = true;
+    dirtyFlag_[10] = true;
 }
 
 const ::trantor::Date &Inventory::getValueOfCreatedAt() const noexcept
@@ -1239,12 +1173,12 @@ const std::shared_ptr<::trantor::Date> &Inventory::getCreatedAt() const noexcept
 void Inventory::setCreatedAt(const ::trantor::Date &pCreatedAt) noexcept
 {
     createdAt_ = std::make_shared<::trantor::Date>(pCreatedAt);
-    dirtyFlag_[12] = true;
+    dirtyFlag_[11] = true;
 }
 void Inventory::setCreatedAtToNull() noexcept
 {
     createdAt_.reset();
-    dirtyFlag_[12] = true;
+    dirtyFlag_[11] = true;
 }
 
 const ::trantor::Date &Inventory::getValueOfUpdatedAt() const noexcept
@@ -1261,12 +1195,12 @@ const std::shared_ptr<::trantor::Date> &Inventory::getUpdatedAt() const noexcept
 void Inventory::setUpdatedAt(const ::trantor::Date &pUpdatedAt) noexcept
 {
     updatedAt_ = std::make_shared<::trantor::Date>(pUpdatedAt);
-    dirtyFlag_[13] = true;
+    dirtyFlag_[12] = true;
 }
 void Inventory::setUpdatedAtToNull() noexcept
 {
     updatedAt_.reset();
-    dirtyFlag_[13] = true;
+    dirtyFlag_[12] = true;
 }
 
 const int8_t &Inventory::getValueOfIsDeleted() const noexcept
@@ -1283,12 +1217,12 @@ const std::shared_ptr<int8_t> &Inventory::getIsDeleted() const noexcept
 void Inventory::setIsDeleted(const int8_t &pIsDeleted) noexcept
 {
     isDeleted_ = std::make_shared<int8_t>(pIsDeleted);
-    dirtyFlag_[14] = true;
+    dirtyFlag_[13] = true;
 }
 void Inventory::setIsDeletedToNull() noexcept
 {
     isDeleted_.reset();
-    dirtyFlag_[14] = true;
+    dirtyFlag_[13] = true;
 }
 
 void Inventory::updateId(const uint64_t id)
@@ -1299,7 +1233,6 @@ void Inventory::updateId(const uint64_t id)
 const std::vector<std::string> &Inventory::insertColumns() noexcept
 {
     static const std::vector<std::string> inCols={
-        "dish_id",
         "tenant_id",
         "quantity",
         "item_name",
@@ -1321,17 +1254,6 @@ void Inventory::outputArgs(drogon::orm::internal::SqlBinder &binder) const
 {
     if(dirtyFlag_[1])
     {
-        if(getDishId())
-        {
-            binder << getValueOfDishId();
-        }
-        else
-        {
-            binder << nullptr;
-        }
-    }
-    if(dirtyFlag_[2])
-    {
         if(getTenantId())
         {
             binder << getValueOfTenantId();
@@ -1341,7 +1263,7 @@ void Inventory::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[3])
+    if(dirtyFlag_[2])
     {
         if(getQuantity())
         {
@@ -1352,7 +1274,7 @@ void Inventory::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[4])
+    if(dirtyFlag_[3])
     {
         if(getItemName())
         {
@@ -1363,7 +1285,7 @@ void Inventory::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[5])
+    if(dirtyFlag_[4])
     {
         if(getItemCategory())
         {
@@ -1374,7 +1296,7 @@ void Inventory::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[6])
+    if(dirtyFlag_[5])
     {
         if(getItemCost())
         {
@@ -1385,7 +1307,7 @@ void Inventory::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[7])
+    if(dirtyFlag_[6])
     {
         if(getMinStock())
         {
@@ -1396,7 +1318,7 @@ void Inventory::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[8])
+    if(dirtyFlag_[7])
     {
         if(getMaxStock())
         {
@@ -1407,7 +1329,7 @@ void Inventory::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[9])
+    if(dirtyFlag_[8])
     {
         if(getSupplier())
         {
@@ -1418,7 +1340,7 @@ void Inventory::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[10])
+    if(dirtyFlag_[9])
     {
         if(getStatus())
         {
@@ -1429,7 +1351,7 @@ void Inventory::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[11])
+    if(dirtyFlag_[10])
     {
         if(getLocation())
         {
@@ -1440,7 +1362,7 @@ void Inventory::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[12])
+    if(dirtyFlag_[11])
     {
         if(getCreatedAt())
         {
@@ -1451,7 +1373,7 @@ void Inventory::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[13])
+    if(dirtyFlag_[12])
     {
         if(getUpdatedAt())
         {
@@ -1462,7 +1384,7 @@ void Inventory::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[14])
+    if(dirtyFlag_[13])
     {
         if(getIsDeleted())
         {
@@ -1530,27 +1452,12 @@ const std::vector<std::string> Inventory::updateColumns() const
     {
         ret.push_back(getColumnName(13));
     }
-    if(dirtyFlag_[14])
-    {
-        ret.push_back(getColumnName(14));
-    }
     return ret;
 }
 
 void Inventory::updateArgs(drogon::orm::internal::SqlBinder &binder) const
 {
     if(dirtyFlag_[1])
-    {
-        if(getDishId())
-        {
-            binder << getValueOfDishId();
-        }
-        else
-        {
-            binder << nullptr;
-        }
-    }
-    if(dirtyFlag_[2])
     {
         if(getTenantId())
         {
@@ -1561,7 +1468,7 @@ void Inventory::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[3])
+    if(dirtyFlag_[2])
     {
         if(getQuantity())
         {
@@ -1572,7 +1479,7 @@ void Inventory::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[4])
+    if(dirtyFlag_[3])
     {
         if(getItemName())
         {
@@ -1583,7 +1490,7 @@ void Inventory::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[5])
+    if(dirtyFlag_[4])
     {
         if(getItemCategory())
         {
@@ -1594,7 +1501,7 @@ void Inventory::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[6])
+    if(dirtyFlag_[5])
     {
         if(getItemCost())
         {
@@ -1605,7 +1512,7 @@ void Inventory::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[7])
+    if(dirtyFlag_[6])
     {
         if(getMinStock())
         {
@@ -1616,7 +1523,7 @@ void Inventory::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[8])
+    if(dirtyFlag_[7])
     {
         if(getMaxStock())
         {
@@ -1627,7 +1534,7 @@ void Inventory::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[9])
+    if(dirtyFlag_[8])
     {
         if(getSupplier())
         {
@@ -1638,7 +1545,7 @@ void Inventory::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[10])
+    if(dirtyFlag_[9])
     {
         if(getStatus())
         {
@@ -1649,7 +1556,7 @@ void Inventory::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[11])
+    if(dirtyFlag_[10])
     {
         if(getLocation())
         {
@@ -1660,7 +1567,7 @@ void Inventory::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[12])
+    if(dirtyFlag_[11])
     {
         if(getCreatedAt())
         {
@@ -1671,7 +1578,7 @@ void Inventory::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[13])
+    if(dirtyFlag_[12])
     {
         if(getUpdatedAt())
         {
@@ -1682,7 +1589,7 @@ void Inventory::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[14])
+    if(dirtyFlag_[13])
     {
         if(getIsDeleted())
         {
@@ -1704,14 +1611,6 @@ Json::Value Inventory::toJson() const
     else
     {
         ret["inventory_id"]=Json::Value();
-    }
-    if(getDishId())
-    {
-        ret["dish_id"]=getValueOfDishId();
-    }
-    else
-    {
-        ret["dish_id"]=Json::Value();
     }
     if(getTenantId())
     {
@@ -1824,7 +1723,7 @@ Json::Value Inventory::toMasqueradedJson(
     const std::vector<std::string> &pMasqueradingVector) const
 {
     Json::Value ret;
-    if(pMasqueradingVector.size() == 15)
+    if(pMasqueradingVector.size() == 14)
     {
         if(!pMasqueradingVector[0].empty())
         {
@@ -1839,9 +1738,9 @@ Json::Value Inventory::toMasqueradedJson(
         }
         if(!pMasqueradingVector[1].empty())
         {
-            if(getDishId())
+            if(getTenantId())
             {
-                ret[pMasqueradingVector[1]]=getValueOfDishId();
+                ret[pMasqueradingVector[1]]=getValueOfTenantId();
             }
             else
             {
@@ -1850,9 +1749,9 @@ Json::Value Inventory::toMasqueradedJson(
         }
         if(!pMasqueradingVector[2].empty())
         {
-            if(getTenantId())
+            if(getQuantity())
             {
-                ret[pMasqueradingVector[2]]=getValueOfTenantId();
+                ret[pMasqueradingVector[2]]=getValueOfQuantity();
             }
             else
             {
@@ -1861,9 +1760,9 @@ Json::Value Inventory::toMasqueradedJson(
         }
         if(!pMasqueradingVector[3].empty())
         {
-            if(getQuantity())
+            if(getItemName())
             {
-                ret[pMasqueradingVector[3]]=getValueOfQuantity();
+                ret[pMasqueradingVector[3]]=getValueOfItemName();
             }
             else
             {
@@ -1872,9 +1771,9 @@ Json::Value Inventory::toMasqueradedJson(
         }
         if(!pMasqueradingVector[4].empty())
         {
-            if(getItemName())
+            if(getItemCategory())
             {
-                ret[pMasqueradingVector[4]]=getValueOfItemName();
+                ret[pMasqueradingVector[4]]=getValueOfItemCategory();
             }
             else
             {
@@ -1883,9 +1782,9 @@ Json::Value Inventory::toMasqueradedJson(
         }
         if(!pMasqueradingVector[5].empty())
         {
-            if(getItemCategory())
+            if(getItemCost())
             {
-                ret[pMasqueradingVector[5]]=getValueOfItemCategory();
+                ret[pMasqueradingVector[5]]=getValueOfItemCost();
             }
             else
             {
@@ -1894,9 +1793,9 @@ Json::Value Inventory::toMasqueradedJson(
         }
         if(!pMasqueradingVector[6].empty())
         {
-            if(getItemCost())
+            if(getMinStock())
             {
-                ret[pMasqueradingVector[6]]=getValueOfItemCost();
+                ret[pMasqueradingVector[6]]=getValueOfMinStock();
             }
             else
             {
@@ -1905,9 +1804,9 @@ Json::Value Inventory::toMasqueradedJson(
         }
         if(!pMasqueradingVector[7].empty())
         {
-            if(getMinStock())
+            if(getMaxStock())
             {
-                ret[pMasqueradingVector[7]]=getValueOfMinStock();
+                ret[pMasqueradingVector[7]]=getValueOfMaxStock();
             }
             else
             {
@@ -1916,9 +1815,9 @@ Json::Value Inventory::toMasqueradedJson(
         }
         if(!pMasqueradingVector[8].empty())
         {
-            if(getMaxStock())
+            if(getSupplier())
             {
-                ret[pMasqueradingVector[8]]=getValueOfMaxStock();
+                ret[pMasqueradingVector[8]]=getValueOfSupplier();
             }
             else
             {
@@ -1927,9 +1826,9 @@ Json::Value Inventory::toMasqueradedJson(
         }
         if(!pMasqueradingVector[9].empty())
         {
-            if(getSupplier())
+            if(getStatus())
             {
-                ret[pMasqueradingVector[9]]=getValueOfSupplier();
+                ret[pMasqueradingVector[9]]=getValueOfStatus();
             }
             else
             {
@@ -1938,9 +1837,9 @@ Json::Value Inventory::toMasqueradedJson(
         }
         if(!pMasqueradingVector[10].empty())
         {
-            if(getStatus())
+            if(getLocation())
             {
-                ret[pMasqueradingVector[10]]=getValueOfStatus();
+                ret[pMasqueradingVector[10]]=getValueOfLocation();
             }
             else
             {
@@ -1949,9 +1848,9 @@ Json::Value Inventory::toMasqueradedJson(
         }
         if(!pMasqueradingVector[11].empty())
         {
-            if(getLocation())
+            if(getCreatedAt())
             {
-                ret[pMasqueradingVector[11]]=getValueOfLocation();
+                ret[pMasqueradingVector[11]]=getCreatedAt()->toDbStringLocal();
             }
             else
             {
@@ -1960,9 +1859,9 @@ Json::Value Inventory::toMasqueradedJson(
         }
         if(!pMasqueradingVector[12].empty())
         {
-            if(getCreatedAt())
+            if(getUpdatedAt())
             {
-                ret[pMasqueradingVector[12]]=getCreatedAt()->toDbStringLocal();
+                ret[pMasqueradingVector[12]]=getUpdatedAt()->toDbStringLocal();
             }
             else
             {
@@ -1971,24 +1870,13 @@ Json::Value Inventory::toMasqueradedJson(
         }
         if(!pMasqueradingVector[13].empty())
         {
-            if(getUpdatedAt())
+            if(getIsDeleted())
             {
-                ret[pMasqueradingVector[13]]=getUpdatedAt()->toDbStringLocal();
+                ret[pMasqueradingVector[13]]=getValueOfIsDeleted();
             }
             else
             {
                 ret[pMasqueradingVector[13]]=Json::Value();
-            }
-        }
-        if(!pMasqueradingVector[14].empty())
-        {
-            if(getIsDeleted())
-            {
-                ret[pMasqueradingVector[14]]=getValueOfIsDeleted();
-            }
-            else
-            {
-                ret[pMasqueradingVector[14]]=Json::Value();
             }
         }
         return ret;
@@ -2001,14 +1889,6 @@ Json::Value Inventory::toMasqueradedJson(
     else
     {
         ret["inventory_id"]=Json::Value();
-    }
-    if(getDishId())
-    {
-        ret["dish_id"]=getValueOfDishId();
-    }
-    else
-    {
-        ret["dish_id"]=Json::Value();
     }
     if(getTenantId())
     {
@@ -2124,74 +2004,69 @@ bool Inventory::validateJsonForCreation(const Json::Value &pJson, std::string &e
         if(!validJsonOfField(0, "inventory_id", pJson["inventory_id"], err, true))
             return false;
     }
-    if(pJson.isMember("dish_id"))
-    {
-        if(!validJsonOfField(1, "dish_id", pJson["dish_id"], err, true))
-            return false;
-    }
     if(pJson.isMember("tenant_id"))
     {
-        if(!validJsonOfField(2, "tenant_id", pJson["tenant_id"], err, true))
+        if(!validJsonOfField(1, "tenant_id", pJson["tenant_id"], err, true))
             return false;
     }
     if(pJson.isMember("quantity"))
     {
-        if(!validJsonOfField(3, "quantity", pJson["quantity"], err, true))
+        if(!validJsonOfField(2, "quantity", pJson["quantity"], err, true))
             return false;
     }
     if(pJson.isMember("item_name"))
     {
-        if(!validJsonOfField(4, "item_name", pJson["item_name"], err, true))
+        if(!validJsonOfField(3, "item_name", pJson["item_name"], err, true))
             return false;
     }
     if(pJson.isMember("item_category"))
     {
-        if(!validJsonOfField(5, "item_category", pJson["item_category"], err, true))
+        if(!validJsonOfField(4, "item_category", pJson["item_category"], err, true))
             return false;
     }
     if(pJson.isMember("item_cost"))
     {
-        if(!validJsonOfField(6, "item_cost", pJson["item_cost"], err, true))
+        if(!validJsonOfField(5, "item_cost", pJson["item_cost"], err, true))
             return false;
     }
     if(pJson.isMember("min_stock"))
     {
-        if(!validJsonOfField(7, "min_stock", pJson["min_stock"], err, true))
+        if(!validJsonOfField(6, "min_stock", pJson["min_stock"], err, true))
             return false;
     }
     if(pJson.isMember("max_stock"))
     {
-        if(!validJsonOfField(8, "max_stock", pJson["max_stock"], err, true))
+        if(!validJsonOfField(7, "max_stock", pJson["max_stock"], err, true))
             return false;
     }
     if(pJson.isMember("supplier"))
     {
-        if(!validJsonOfField(9, "supplier", pJson["supplier"], err, true))
+        if(!validJsonOfField(8, "supplier", pJson["supplier"], err, true))
             return false;
     }
     if(pJson.isMember("status"))
     {
-        if(!validJsonOfField(10, "status", pJson["status"], err, true))
+        if(!validJsonOfField(9, "status", pJson["status"], err, true))
             return false;
     }
     if(pJson.isMember("location"))
     {
-        if(!validJsonOfField(11, "location", pJson["location"], err, true))
+        if(!validJsonOfField(10, "location", pJson["location"], err, true))
             return false;
     }
     if(pJson.isMember("created_at"))
     {
-        if(!validJsonOfField(12, "created_at", pJson["created_at"], err, true))
+        if(!validJsonOfField(11, "created_at", pJson["created_at"], err, true))
             return false;
     }
     if(pJson.isMember("updated_at"))
     {
-        if(!validJsonOfField(13, "updated_at", pJson["updated_at"], err, true))
+        if(!validJsonOfField(12, "updated_at", pJson["updated_at"], err, true))
             return false;
     }
     if(pJson.isMember("is_deleted"))
     {
-        if(!validJsonOfField(14, "is_deleted", pJson["is_deleted"], err, true))
+        if(!validJsonOfField(13, "is_deleted", pJson["is_deleted"], err, true))
             return false;
     }
     return true;
@@ -2200,7 +2075,7 @@ bool Inventory::validateMasqueradedJsonForCreation(const Json::Value &pJson,
                                                    const std::vector<std::string> &pMasqueradingVector,
                                                    std::string &err)
 {
-    if(pMasqueradingVector.size() != 15)
+    if(pMasqueradingVector.size() != 14)
     {
         err = "Bad masquerading vector";
         return false;
@@ -2318,14 +2193,6 @@ bool Inventory::validateMasqueradedJsonForCreation(const Json::Value &pJson,
                   return false;
           }
       }
-      if(!pMasqueradingVector[14].empty())
-      {
-          if(pJson.isMember(pMasqueradingVector[14]))
-          {
-              if(!validJsonOfField(14, pMasqueradingVector[14], pJson[pMasqueradingVector[14]], err, true))
-                  return false;
-          }
-      }
     }
     catch(const Json::LogicError &e)
     {
@@ -2346,74 +2213,69 @@ bool Inventory::validateJsonForUpdate(const Json::Value &pJson, std::string &err
         err = "The value of primary key must be set in the json object for update";
         return false;
     }
-    if(pJson.isMember("dish_id"))
-    {
-        if(!validJsonOfField(1, "dish_id", pJson["dish_id"], err, false))
-            return false;
-    }
     if(pJson.isMember("tenant_id"))
     {
-        if(!validJsonOfField(2, "tenant_id", pJson["tenant_id"], err, false))
+        if(!validJsonOfField(1, "tenant_id", pJson["tenant_id"], err, false))
             return false;
     }
     if(pJson.isMember("quantity"))
     {
-        if(!validJsonOfField(3, "quantity", pJson["quantity"], err, false))
+        if(!validJsonOfField(2, "quantity", pJson["quantity"], err, false))
             return false;
     }
     if(pJson.isMember("item_name"))
     {
-        if(!validJsonOfField(4, "item_name", pJson["item_name"], err, false))
+        if(!validJsonOfField(3, "item_name", pJson["item_name"], err, false))
             return false;
     }
     if(pJson.isMember("item_category"))
     {
-        if(!validJsonOfField(5, "item_category", pJson["item_category"], err, false))
+        if(!validJsonOfField(4, "item_category", pJson["item_category"], err, false))
             return false;
     }
     if(pJson.isMember("item_cost"))
     {
-        if(!validJsonOfField(6, "item_cost", pJson["item_cost"], err, false))
+        if(!validJsonOfField(5, "item_cost", pJson["item_cost"], err, false))
             return false;
     }
     if(pJson.isMember("min_stock"))
     {
-        if(!validJsonOfField(7, "min_stock", pJson["min_stock"], err, false))
+        if(!validJsonOfField(6, "min_stock", pJson["min_stock"], err, false))
             return false;
     }
     if(pJson.isMember("max_stock"))
     {
-        if(!validJsonOfField(8, "max_stock", pJson["max_stock"], err, false))
+        if(!validJsonOfField(7, "max_stock", pJson["max_stock"], err, false))
             return false;
     }
     if(pJson.isMember("supplier"))
     {
-        if(!validJsonOfField(9, "supplier", pJson["supplier"], err, false))
+        if(!validJsonOfField(8, "supplier", pJson["supplier"], err, false))
             return false;
     }
     if(pJson.isMember("status"))
     {
-        if(!validJsonOfField(10, "status", pJson["status"], err, false))
+        if(!validJsonOfField(9, "status", pJson["status"], err, false))
             return false;
     }
     if(pJson.isMember("location"))
     {
-        if(!validJsonOfField(11, "location", pJson["location"], err, false))
+        if(!validJsonOfField(10, "location", pJson["location"], err, false))
             return false;
     }
     if(pJson.isMember("created_at"))
     {
-        if(!validJsonOfField(12, "created_at", pJson["created_at"], err, false))
+        if(!validJsonOfField(11, "created_at", pJson["created_at"], err, false))
             return false;
     }
     if(pJson.isMember("updated_at"))
     {
-        if(!validJsonOfField(13, "updated_at", pJson["updated_at"], err, false))
+        if(!validJsonOfField(12, "updated_at", pJson["updated_at"], err, false))
             return false;
     }
     if(pJson.isMember("is_deleted"))
     {
-        if(!validJsonOfField(14, "is_deleted", pJson["is_deleted"], err, false))
+        if(!validJsonOfField(13, "is_deleted", pJson["is_deleted"], err, false))
             return false;
     }
     return true;
@@ -2422,7 +2284,7 @@ bool Inventory::validateMasqueradedJsonForUpdate(const Json::Value &pJson,
                                                  const std::vector<std::string> &pMasqueradingVector,
                                                  std::string &err)
 {
-    if(pMasqueradingVector.size() != 15)
+    if(pMasqueradingVector.size() != 14)
     {
         err = "Bad masquerading vector";
         return false;
@@ -2503,11 +2365,6 @@ bool Inventory::validateMasqueradedJsonForUpdate(const Json::Value &pJson,
           if(!validJsonOfField(13, pMasqueradingVector[13], pJson[pMasqueradingVector[13]], err, false))
               return false;
       }
-      if(!pMasqueradingVector[14].empty() && pJson.isMember(pMasqueradingVector[14]))
-      {
-          if(!validJsonOfField(14, pMasqueradingVector[14], pJson[pMasqueradingVector[14]], err, false))
-              return false;
-      }
     }
     catch(const Json::LogicError &e)
     {
@@ -2557,7 +2414,7 @@ bool Inventory::validJsonOfField(size_t index,
             {
                 return true;
             }
-            if(!pJson.isUInt())
+            if(!pJson.isInt())
             {
                 err="Type error in the "+fieldName+" field";
                 return false;
@@ -2568,11 +2425,19 @@ bool Inventory::validJsonOfField(size_t index,
             {
                 return true;
             }
-            if(!pJson.isInt())
+            if(!pJson.isString())
             {
                 err="Type error in the "+fieldName+" field";
                 return false;
             }
+            if(pJson.isString() && std::strlen(pJson.asCString()) > 255)
+            {
+                err="String length exceeds limit for the " +
+                    fieldName +
+                    " field (the maximum value is 255)";
+                return false;
+            }
+
             break;
         case 4:
             if(pJson.isNull())
@@ -2617,19 +2482,11 @@ bool Inventory::validJsonOfField(size_t index,
             {
                 return true;
             }
-            if(!pJson.isString())
+            if(!pJson.isInt())
             {
                 err="Type error in the "+fieldName+" field";
                 return false;
             }
-            if(pJson.isString() && std::strlen(pJson.asCString()) > 255)
-            {
-                err="String length exceeds limit for the " +
-                    fieldName +
-                    " field (the maximum value is 255)";
-                return false;
-            }
-
             break;
         case 7:
             if(pJson.isNull())
@@ -2647,11 +2504,19 @@ bool Inventory::validJsonOfField(size_t index,
             {
                 return true;
             }
-            if(!pJson.isInt())
+            if(!pJson.isString())
             {
                 err="Type error in the "+fieldName+" field";
                 return false;
             }
+            if(pJson.isString() && std::strlen(pJson.asCString()) > 255)
+            {
+                err="String length exceeds limit for the " +
+                    fieldName +
+                    " field (the maximum value is 255)";
+                return false;
+            }
+
             break;
         case 9:
             if(pJson.isNull())
@@ -2701,14 +2566,6 @@ bool Inventory::validJsonOfField(size_t index,
                 err="Type error in the "+fieldName+" field";
                 return false;
             }
-            if(pJson.isString() && std::strlen(pJson.asCString()) > 255)
-            {
-                err="String length exceeds limit for the " +
-                    fieldName +
-                    " field (the maximum value is 255)";
-                return false;
-            }
-
             break;
         case 12:
             if(pJson.isNull())
@@ -2722,17 +2579,6 @@ bool Inventory::validJsonOfField(size_t index,
             }
             break;
         case 13:
-            if(pJson.isNull())
-            {
-                return true;
-            }
-            if(!pJson.isString())
-            {
-                err="Type error in the "+fieldName+" field";
-                return false;
-            }
-            break;
-        case 14:
             if(pJson.isNull())
             {
                 return true;
@@ -2788,49 +2634,6 @@ void Inventory::getTenant(const DbClientPtr &clientPtr,
                     else
                     {
                         rcb(Tenant(r[0]));
-                    }
-               }
-               >> ecb;
-}
-Dish Inventory::getDish(const DbClientPtr &clientPtr) const {
-    static const std::string sql = "select * from dish where dish_id = ?";
-    Result r(nullptr);
-    {
-        auto binder = *clientPtr << sql;
-        binder << *dishId_ << Mode::Blocking >>
-            [&r](const Result &result) { r = result; };
-        binder.exec();
-    }
-    if (r.size() == 0)
-    {
-        throw UnexpectedRows("0 rows found");
-    }
-    else if (r.size() > 1)
-    {
-        throw UnexpectedRows("Found more than one row");
-    }
-    return Dish(r[0]);
-}
-
-void Inventory::getDish(const DbClientPtr &clientPtr,
-                        const std::function<void(Dish)> &rcb,
-                        const ExceptionCallback &ecb) const
-{
-    static const std::string sql = "select * from dish where dish_id = ?";
-    *clientPtr << sql
-               << *dishId_
-               >> [rcb = std::move(rcb), ecb](const Result &r){
-                    if (r.size() == 0)
-                    {
-                        ecb(UnexpectedRows("0 rows found"));
-                    }
-                    else if (r.size() > 1)
-                    {
-                        ecb(UnexpectedRows("Found more than one row"));
-                    }
-                    else
-                    {
-                        rcb(Dish(r[0]));
                     }
                }
                >> ecb;

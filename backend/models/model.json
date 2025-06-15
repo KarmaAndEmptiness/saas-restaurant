@@ -219,18 +219,6 @@
                 "target_key": "dish_category_id",
                 "enable_reverse": true
             },
-
-            {
-                "type": "has many",
-                "original_table_name": "dish",
-                "original_table_alias": "",
-                "original_key": "dish_id",
-                "target_table_name": "inventory",
-                "target_table_alias": "inventories",
-                "target_key": "dish_id",
-                "enable_reverse": true
-            },
-
             {
                 "type": "has many",
                 "original_table_name": "dish_category",

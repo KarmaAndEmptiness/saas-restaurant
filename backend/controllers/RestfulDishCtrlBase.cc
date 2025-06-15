@@ -605,6 +605,8 @@ RestfulDishCtrlBase::RestfulDishCtrlBase()
         "cost_price",       // the alias for the cost_price column.
         "origin_price",     // the alias for the origin_price column.
         "description",      // the alias for the description column.
+        "sales",            // the alias for the sales column.
+        "stock",            // the alias for the stock column.
         "cover_img",        // the alias for the cover_img column.
         "status",           // the alias for the status column.
         "sort_order",       // the alias for the sort_order column.

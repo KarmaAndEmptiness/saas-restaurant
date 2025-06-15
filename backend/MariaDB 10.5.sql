@@ -36,6 +36,8 @@ CREATE TABLE `saas_restaurant`.`dish`  (
   `cost_price` varchar(255) NULL COMMENT '成本价',
   `origin_price` varchar(255) NULL COMMENT '原价',
   `description` text NULL COMMENT '菜品描述',
+  `sales` int UNSIGNED NULL COMMENT '销量',
+  `stock` int UNSIGNED NULL COMMENT '库存数量',
   `cover_img` varchar(255) NULL COMMENT '封面图URL',
   `status` varchar(50) NULL COMMENT '销售状态',
   `sort_order` int NULL COMMENT '排序权重（权重值越大越靠前）',
@@ -58,7 +60,6 @@ CREATE TABLE `saas_restaurant`.`dish_category`  (
 
 CREATE TABLE `saas_restaurant`.`inventory`  (
   `inventory_id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '库存ID',
-  `dish_id` int UNSIGNED NULL COMMENT '关联菜品表ID',
   `tenant_id` int UNSIGNED NULL COMMENT '租户ID',
   `quantity` int NULL COMMENT '当前可用库存数量',
   `item_name` varchar(255) NULL COMMENT '物料名称',
@@ -148,9 +149,8 @@ CREATE TABLE `saas_restaurant`.`menu`  (
   PRIMARY KEY (`menu_id`)
 );
 
-CREATE TABLE `saas_restaurant`.`order`  (
+CREATE TABLE `saas_restaurant`.`order_table`  (
   `order_id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '订单ID',
-  `order_no` varchar(255) NULL COMMENT '订单号',
   `tenant_id` int UNSIGNED NULL COMMENT '租户ID',
   `user_id` int UNSIGNED NULL COMMENT '用户ID',
   `total_amount` varchar(255) NULL COMMENT '订单总金额（不含优惠）',
@@ -161,8 +161,8 @@ CREATE TABLE `saas_restaurant`.`order`  (
   `delivery_address` varchar(255) NULL COMMENT '配送地址',
   `order_detail` json NULL COMMENT '订单详情',
   `remark` text NULL COMMENT '备注',
-  `created_at` timestamp NULL COMMENT '创建时间',
-  `updated_at` timestamp NULL COMMENT '更新时间',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `is_deleted` tinyint(1) NULL COMMENT '软删除标记（0：未删除，1：已删除）',
   PRIMARY KEY (`order_id`)
 );
@@ -263,7 +263,6 @@ ALTER TABLE `saas_restaurant`.`dish` ADD CONSTRAINT `FK_dish_dish_category_id` F
 ALTER TABLE `saas_restaurant`.`dish_category` ADD CONSTRAINT `FK_dish_category_tenant_id` FOREIGN KEY (`tenant_id`) REFERENCES `saas_restaurant`.`tenant` (`tenant_id`);
 ALTER TABLE `saas_restaurant`.`dish_category` ADD CONSTRAINT `FK_dish_category_parent_id` FOREIGN KEY (`parent_id`) REFERENCES `saas_restaurant`.`dish_category` (`category_id`);
 ALTER TABLE `saas_restaurant`.`inventory` ADD CONSTRAINT `FK_inventory_tenant_id` FOREIGN KEY (`tenant_id`) REFERENCES `saas_restaurant`.`tenant` (`tenant_id`);
-ALTER TABLE `saas_restaurant`.`inventory` ADD CONSTRAINT `FK_inventory_dish_id` FOREIGN KEY (`dish_id`) REFERENCES `saas_restaurant`.`dish` (`dish_id`);
 ALTER TABLE `saas_restaurant`.`inventory_record` ADD CONSTRAINT `FK_inventory_record_tenant_id` FOREIGN KEY (`tenant_id`) REFERENCES `saas_restaurant`.`tenant` (`tenant_id`);
 ALTER TABLE `saas_restaurant`.`inventory_record` ADD CONSTRAINT `FK_inventory_record_operator_id` FOREIGN KEY (`operator_id`) REFERENCES `saas_restaurant`.`user` (`user_id`);
 ALTER TABLE `saas_restaurant`.`inventory_record` ADD CONSTRAINT `FK_inventory_record_item_id` FOREIGN KEY (`item_id`) REFERENCES `saas_restaurant`.`inventory` (`inventory_id`);
@@ -275,8 +274,8 @@ ALTER TABLE `saas_restaurant`.`member_level` ADD CONSTRAINT `FK_member_level_ten
 ALTER TABLE `saas_restaurant`.`menu` ADD CONSTRAINT `FK_menu_tenant_id` FOREIGN KEY (`tenant_id`) REFERENCES `saas_restaurant`.`tenant` (`tenant_id`);
 ALTER TABLE `saas_restaurant`.`menu` ADD CONSTRAINT `FK_menu_parent_id` FOREIGN KEY (`parent_id`) REFERENCES `saas_restaurant`.`menu` (`menu_id`);
 ALTER TABLE `saas_restaurant`.`menu` ADD CONSTRAINT `FK_menu_permission_id` FOREIGN KEY (`permission_id`) REFERENCES `saas_restaurant`.`permission` (`permission_id`);
-ALTER TABLE `saas_restaurant`.`order` ADD CONSTRAINT `FK_order_user_id` FOREIGN KEY (`user_id`) REFERENCES `saas_restaurant`.`user` (`user_id`);
-ALTER TABLE `saas_restaurant`.`order` ADD CONSTRAINT `FK_order_tenant_id` FOREIGN KEY (`tenant_id`) REFERENCES `saas_restaurant`.`tenant` (`tenant_id`);
+ALTER TABLE `saas_restaurant`.`order_table` ADD CONSTRAINT `FK_order_user_id` FOREIGN KEY (`user_id`) REFERENCES `saas_restaurant`.`user` (`user_id`);
+ALTER TABLE `saas_restaurant`.`order_table` ADD CONSTRAINT `FK_order_tenant_id` FOREIGN KEY (`tenant_id`) REFERENCES `saas_restaurant`.`tenant` (`tenant_id`);
 ALTER TABLE `saas_restaurant`.`permission` ADD CONSTRAINT `FK_permission_tenant_id` FOREIGN KEY (`tenant_id`) REFERENCES `saas_restaurant`.`tenant` (`tenant_id`);
 ALTER TABLE `saas_restaurant`.`permission` ADD CONSTRAINT `FK_permission_menu_id` FOREIGN KEY (`menu_id`) REFERENCES `saas_restaurant`.`menu` (`menu_id`);
 ALTER TABLE `saas_restaurant`.`permission` ADD CONSTRAINT `FK_permission_permission_category_id` FOREIGN KEY (`permission_category_id`) REFERENCES `saas_restaurant`.`permission_category` (`category_id`);
