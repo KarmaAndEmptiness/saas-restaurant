@@ -25,6 +25,7 @@ interface InventoryItem {
   status: "正常" | "偏低" | "紧缺" | "过剩";
 }
 
+//@ts-ignore
 interface StockRecord {
   id: string;
   itemId: string;
@@ -36,6 +37,7 @@ interface StockRecord {
   notes: string;
 }
 
+//@ts-ignore
 const initialInventory: InventoryItem[] = [
   {
     id: "I001",

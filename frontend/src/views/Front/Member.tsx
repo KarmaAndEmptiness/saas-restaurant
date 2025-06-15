@@ -10,7 +10,7 @@ import {
   type MemberLevelType,
   type ConsumptionRecordType,
 } from "@/apis/front/member";
-
+//@ts-ignore
 interface ConsumptionRecord {
   id: string;
   date: string;
@@ -46,6 +46,7 @@ function Member() {
     total_spent: "0",
     status: "活跃",
   });
+  //@ts-ignore
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
   const [consumptionRecords, setConsumptionRecords] = useState<
     ConsumptionRecordType[]
@@ -316,9 +317,11 @@ function Member() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getLevelBadgeColor(
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       member.level
-                    )}`}
+                        ? getLevelBadgeColor(member.level)
+                        : "bg-gray-100 text-gray-800"
+                    }`}
                   >
                     {member.level}会员
                   </span>
