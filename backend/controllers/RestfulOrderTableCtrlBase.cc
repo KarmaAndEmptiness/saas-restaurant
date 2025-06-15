@@ -130,16 +130,18 @@ void RestfulOrderTableCtrlBase::updateOne(const HttpRequestPtr &req,
         {
             if (count == 1)
             {
-                auto resp = HttpResponse::newHttpResponse();
-                resp->setStatusCode(k202Accepted);
+                Json::Value ret;
+                ret["code"] = k200OK;
+                ret["message"] = "ok";
+                auto resp = HttpResponse::newHttpJsonResponse(ret);
                 (*callbackPtr)(resp);
             }
             else if (count == 0)
             {
                 Json::Value ret;
-                ret["error"] = "No resources are updated";
+                ret["code"] = k200OK;
+                ret["message"] = "No resources are updated";
                 auto resp = HttpResponse::newHttpJsonResponse(ret);
-                resp->setStatusCode(k404NotFound);
                 (*callbackPtr)(resp);
             }
             else

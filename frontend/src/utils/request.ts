@@ -164,11 +164,11 @@ class Request {
   }
 
   public post<T = any>(url: string, data?: object, config?: RequestConfig): Promise<T> {
-    return this.instance.post(url, data, config)
+    return this.instance.post(url, {...data,tenant_id:localStorage.getItem("tenant_id")}, config)
   }
 
   public put<T = any>(url: string, data?: object, config?: RequestConfig): Promise<T> {
-    return this.instance.put(url, data, config)
+    return this.instance.put(url, {...data,tenant_id:localStorage.getItem("tenant_id")}, config)
   }
 
   public delete<T = any>(url: string, params?: object, config?: RequestConfig): Promise<T> {
