@@ -1,5 +1,5 @@
 import http from '@/utils/request'
-export interface Role {
+export interface RoleType {
  created_at: string;
     description:string;
     is_deleted: number;
@@ -17,12 +17,12 @@ export const getRoles = () => {
 }
 
 //添加角色
-export const createRole = (data:Role) => {
+export const createRole = (data:RoleType) => {
   return http.post('/api/role',{...data,is_deleted:0});
 }
 
 //更新角色
-export const updateRole = (roleId:number,data:Role) => {
+export const updateRole = (roleId:number,data:RoleType) => {
   return http.put('/api/role/'+roleId,{...data,role_id:roleId});
 }
 

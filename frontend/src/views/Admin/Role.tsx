@@ -4,14 +4,14 @@ import {
   getRoles,
   updateRole,
   deleteRole,
-  type Role,
+  type RoleType,
 } from "@/apis/admin/role";
 
 function Role() {
-  const [roles, setRoles] = useState<Role[]>([]);
+  const [roles, setRoles] = useState<RoleType[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  const [selectedRole, setSelectedRole] = useState<RoleType | null>(null);
   const [formData, setFormData] = useState({
     role_name: "",
     description: "",
@@ -41,7 +41,7 @@ function Role() {
   const fetchRoles = async () => {
     try {
       const data = await getRoles();
-      setRoles(data.filter((role: Role) => role.is_deleted === 0));
+      setRoles(data.filter((role: RoleType) => role.is_deleted === 0));
     } catch (error) {
       console.error("获取角色列表失败:", error);
     }
@@ -60,7 +60,7 @@ function Role() {
           ...formData,
           tenant_id: 1,
           is_deleted: 0,
-        } as Role);
+        } as RoleType);
       }
       await fetchRoles();
       setShowModal(false);
