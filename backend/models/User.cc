@@ -8,7 +8,6 @@
 #include "User.h"
 #include "Branch.h"
 #include "MarketingCampaign.h"
-#include "Member.h"
 #include "Order.h"
 #include "Role.h"
 #include "Tenant.h"
@@ -3271,49 +3270,6 @@ void User::getBranch(const DbClientPtr &clientPtr,
                     else
                     {
                         rcb(Branch(r[0]));
-                    }
-               }
-               >> ecb;
-}
-Member User::getMember(const DbClientPtr &clientPtr) const {
-    static const std::string sql = "select * from member where user_id = ?";
-    Result r(nullptr);
-    {
-        auto binder = *clientPtr << sql;
-        binder << *userId_ << Mode::Blocking >>
-            [&r](const Result &result) { r = result; };
-        binder.exec();
-    }
-    if (r.size() == 0)
-    {
-        throw UnexpectedRows("0 rows found");
-    }
-    else if (r.size() > 1)
-    {
-        throw UnexpectedRows("Found more than one row");
-    }
-    return Member(r[0]);
-}
-
-void User::getMember(const DbClientPtr &clientPtr,
-                     const std::function<void(Member)> &rcb,
-                     const ExceptionCallback &ecb) const
-{
-    static const std::string sql = "select * from member where user_id = ?";
-    *clientPtr << sql
-               << *userId_
-               >> [rcb = std::move(rcb), ecb](const Result &r){
-                    if (r.size() == 0)
-                    {
-                        ecb(UnexpectedRows("0 rows found"));
-                    }
-                    else if (r.size() > 1)
-                    {
-                        ecb(UnexpectedRows("Found more than one row"));
-                    }
-                    else
-                    {
-                        rcb(Member(r[0]));
                     }
                }
                >> ecb;

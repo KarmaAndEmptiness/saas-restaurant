@@ -41,7 +41,6 @@ namespace saas_restaurant
 class ConsumptionRecord;
 class MemberLevel;
 class Tenant;
-class User;
 
 class Member
 {
@@ -49,10 +48,11 @@ class Member
     struct Cols
     {
         static const std::string _member_id;
-        static const std::string _user_id;
         static const std::string _tenant_id;
         static const std::string _level_id;
-        static const std::string _member_no;
+        static const std::string _username;
+        static const std::string _password;
+        static const std::string _phone;
         static const std::string _points;
         static const std::string _total_points;
         static const std::string _total_spent;
@@ -120,15 +120,6 @@ class Member
     ///Set the value of the column member_id
     void setMemberId(const uint32_t &pMemberId) noexcept;
 
-    /**  For column user_id  */
-    ///Get the value of the column user_id, returns the default value if the column is null
-    const uint32_t &getValueOfUserId() const noexcept;
-    ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-    const std::shared_ptr<uint32_t> &getUserId() const noexcept;
-    ///Set the value of the column user_id
-    void setUserId(const uint32_t &pUserId) noexcept;
-    void setUserIdToNull() noexcept;
-
     /**  For column tenant_id  */
     ///Get the value of the column tenant_id, returns the default value if the column is null
     const uint32_t &getValueOfTenantId() const noexcept;
@@ -147,15 +138,35 @@ class Member
     void setLevelId(const uint32_t &pLevelId) noexcept;
     void setLevelIdToNull() noexcept;
 
-    /**  For column member_no  */
-    ///Get the value of the column member_no, returns the default value if the column is null
-    const std::string &getValueOfMemberNo() const noexcept;
+    /**  For column username  */
+    ///Get the value of the column username, returns the default value if the column is null
+    const std::string &getValueOfUsername() const noexcept;
     ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-    const std::shared_ptr<std::string> &getMemberNo() const noexcept;
-    ///Set the value of the column member_no
-    void setMemberNo(const std::string &pMemberNo) noexcept;
-    void setMemberNo(std::string &&pMemberNo) noexcept;
-    void setMemberNoToNull() noexcept;
+    const std::shared_ptr<std::string> &getUsername() const noexcept;
+    ///Set the value of the column username
+    void setUsername(const std::string &pUsername) noexcept;
+    void setUsername(std::string &&pUsername) noexcept;
+    void setUsernameToNull() noexcept;
+
+    /**  For column password  */
+    ///Get the value of the column password, returns the default value if the column is null
+    const std::string &getValueOfPassword() const noexcept;
+    ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
+    const std::shared_ptr<std::string> &getPassword() const noexcept;
+    ///Set the value of the column password
+    void setPassword(const std::string &pPassword) noexcept;
+    void setPassword(std::string &&pPassword) noexcept;
+    void setPasswordToNull() noexcept;
+
+    /**  For column phone  */
+    ///Get the value of the column phone, returns the default value if the column is null
+    const std::string &getValueOfPhone() const noexcept;
+    ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
+    const std::shared_ptr<std::string> &getPhone() const noexcept;
+    ///Set the value of the column phone
+    void setPhone(const std::string &pPhone) noexcept;
+    void setPhone(std::string &&pPhone) noexcept;
+    void setPhoneToNull() noexcept;
 
     /**  For column points  */
     ///Get the value of the column points, returns the default value if the column is null
@@ -232,16 +243,12 @@ class Member
     void setIsDeletedToNull() noexcept;
 
 
-    static size_t getColumnNumber() noexcept {  return 13;  }
+    static size_t getColumnNumber() noexcept {  return 14;  }
     static const std::string &getColumnName(size_t index) noexcept(false);
 
     Json::Value toJson() const;
     Json::Value toMasqueradedJson(const std::vector<std::string> &pMasqueradingVector) const;
     /// Relationship interfaces
-    User getUser(const drogon::orm::DbClientPtr &clientPtr) const;
-    void getUser(const drogon::orm::DbClientPtr &clientPtr,
-                 const std::function<void(User)> &rcb,
-                 const drogon::orm::ExceptionCallback &ecb) const;
     Tenant getTenant(const drogon::orm::DbClientPtr &clientPtr) const;
     void getTenant(const drogon::orm::DbClientPtr &clientPtr,
                    const std::function<void(Tenant)> &rcb,
@@ -270,10 +277,11 @@ class Member
     ///For mysql or sqlite3
     void updateId(const uint64_t id);
     std::shared_ptr<uint32_t> memberId_;
-    std::shared_ptr<uint32_t> userId_;
     std::shared_ptr<uint32_t> tenantId_;
     std::shared_ptr<uint32_t> levelId_;
-    std::shared_ptr<std::string> memberNo_;
+    std::shared_ptr<std::string> username_;
+    std::shared_ptr<std::string> password_;
+    std::shared_ptr<std::string> phone_;
     std::shared_ptr<uint32_t> points_;
     std::shared_ptr<uint32_t> totalPoints_;
     std::shared_ptr<std::string> totalSpent_;
@@ -293,7 +301,7 @@ class Member
         const bool notNull_;
     };
     static const std::vector<MetaData> metaData_;
-    bool dirtyFlag_[13]={ false };
+    bool dirtyFlag_[14]={ false };
   public:
     static const std::string &sqlForFindingByPrimaryKey()
     {
@@ -315,61 +323,66 @@ class Member
             ++parametersCount;
         if(dirtyFlag_[1])
         {
-            sql += "user_id,";
+            sql += "tenant_id,";
             ++parametersCount;
         }
         if(dirtyFlag_[2])
         {
-            sql += "tenant_id,";
+            sql += "level_id,";
             ++parametersCount;
         }
         if(dirtyFlag_[3])
         {
-            sql += "level_id,";
+            sql += "username,";
             ++parametersCount;
         }
         if(dirtyFlag_[4])
         {
-            sql += "member_no,";
+            sql += "password,";
             ++parametersCount;
         }
         if(dirtyFlag_[5])
         {
-            sql += "points,";
+            sql += "phone,";
             ++parametersCount;
         }
         if(dirtyFlag_[6])
         {
-            sql += "total_points,";
+            sql += "points,";
             ++parametersCount;
         }
         if(dirtyFlag_[7])
         {
-            sql += "total_spent,";
+            sql += "total_points,";
             ++parametersCount;
         }
         if(dirtyFlag_[8])
         {
-            sql += "expire_date,";
+            sql += "total_spent,";
             ++parametersCount;
         }
         if(dirtyFlag_[9])
+        {
+            sql += "expire_date,";
+            ++parametersCount;
+        }
+        if(dirtyFlag_[10])
         {
             sql += "status,";
             ++parametersCount;
         }
         sql += "created_at,";
         ++parametersCount;
-        if(!dirtyFlag_[10])
+        if(!dirtyFlag_[11])
         {
             needSelection=true;
         }
-        if(dirtyFlag_[11])
+        if(dirtyFlag_[12])
         {
             sql += "updated_at,";
             ++parametersCount;
         }
-        if(dirtyFlag_[12])
+        if(dirtyFlag_[13])
         {
             sql += "is_deleted,";
             ++parametersCount;
@@ -434,16 +447,21 @@ class Member
             sql.append("?,");
 
         }
-        else
-        {
-            sql +="default,";
-        }
         if(dirtyFlag_[11])
         {
             sql.append("?,");
 
         }
+        else
+        {
+            sql +="default,";
+        }
         if(dirtyFlag_[12])
+        {
+            sql.append("?,");
+
+        }
+        if(dirtyFlag_[13])
         {
             sql.append("?,");
 

@@ -139,7 +139,7 @@ void RestfulMemberCtrlBase::updateOne(const HttpRequestPtr &req,
             else if (count == 0)
             {
                 Json::Value ret;
-                ret["code"] = k404NotFound;
+                ret["code"] = k200OK;
                 ret["message"] = "No resources are updated";
                 auto resp = HttpResponse::newHttpJsonResponse(ret);
                 (*callbackPtr)(resp);
@@ -398,7 +398,7 @@ void RestfulMemberCtrlBase::create(const HttpRequestPtr &req,
             std::make_shared<std::function<void(const HttpResponsePtr &)>>(
                 std::move(callback));
         drogon::orm::Mapper<Member> mapper(dbClientPtr);
-        auto criteria = drogon::orm::Criteria(Member::Cols::_user_id, drogon::orm::CompareOperator::EQ, object.getValueOfUserId()) && drogon::orm::Criteria(Member::Cols::_is_deleted, drogon::orm::CompareOperator::EQ, 0);
+        auto criteria = drogon::orm::Criteria(Member::Cols::_username, drogon::orm::CompareOperator::EQ, object.getValueOfUsername()) && drogon::orm::Criteria(Member::Cols::_is_deleted, drogon::orm::CompareOperator::EQ, 0);
         if (!mapper.findBy(criteria).empty())
         {
             Json::Value ret;
@@ -449,10 +449,11 @@ void RestfulMemberCtrlBase::update(const HttpRequestPtr &req,
 
 RestfulMemberCtrlBase::RestfulMemberCtrlBase()
     : RestfulController({"member_id",
-                         "user_id",
                          "tenant_id",
                          "level_id",
-                         "member_no",
+                         "username",
+                         "password",
+                         "phone",
                          "points",
                          "total_points",
                          "total_spent",
@@ -469,10 +470,11 @@ RestfulMemberCtrlBase::RestfulMemberCtrlBase()
      */
     enableMasquerading({
         "member_id",    // the alias for the member_id column.
-        "user_id",      // the alias for the user_id column.
         "tenant_id",    // the alias for the tenant_id column.
         "level_id",     // the alias for the level_id column.
-        "member_no",    // the alias for the member_no column.
+        "username",     // the alias for the username column.
+        "password",     // the alias for the password column.
+        "phone",        // the alias for the phone column.
         "points",       // the alias for the points column.
         "total_points", // the alias for the total_points column.
         "total_spent",  // the alias for the total_spent column.

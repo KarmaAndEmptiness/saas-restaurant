@@ -10,7 +10,6 @@ import {
   type MemberLevelType,
   type ConsumptionRecordType,
 } from "@/apis/front/member";
-import { getUserInfo, getUsers, type UserInfo } from "@/apis/profile";
 
 interface ConsumptionRecord {
   id: string;
@@ -31,7 +30,6 @@ const membershipLevels = {
 
 function Member() {
   const [members, setMembers] = useState<MemberType[]>(initialMembers);
-  const [users, setUsers] = useState<UserInfo[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [levelFilter, setLevelFilter] = useState<string>("全部");
   const [statusFilter, setStatusFilter] = useState<string>("全部");
@@ -40,9 +38,9 @@ function Member() {
   const [showConsumptionHistory, setShowConsumptionHistory] = useState(false);
   const [memberLevels, setMemberLevels] = useState<MemberLevelType[]>([]);
   const [formData, setFormData] = useState({
-    user_id: 0,
-    name: "",
+    username: "",
     phone: "",
+    password: "", // 添加密码字段
     level_id: 1, // 默认普通会员
     points: 0,
     total_spent: "0",
@@ -56,9 +54,9 @@ function Member() {
 
   const filteredMembers = members.filter((member) => {
     const matchSearch =
-      member.name?.includes(searchTerm) ||
+      member.username?.includes(searchTerm) ||
       member.phone?.includes(searchTerm) ||
-      member.member_no?.includes(searchTerm);
+      "M00" + member.member_id === searchTerm;
     const matchLevel = levelFilter === "全部" || member.level === levelFilter;
     const matchStatus =
       statusFilter === "全部" || member.status === statusFilter;
@@ -106,30 +104,22 @@ function Member() {
     async function fetchData() {
       try {
         // 1. 首先获取所有必要的数据
-        const [membersData, levelsData, usersData] = await Promise.all([
+        const [membersData, levelsData] = await Promise.all([
           getMembers(),
           getMemberLevels(),
-          getUsers(),
         ]);
 
         // 2. 设置会员等级和用户数据
         setMemberLevels(levelsData);
-        setUsers(usersData);
 
         // 3. 处理会员数据
         const processedMembers = await Promise.all(
           membersData.map(async (member: MemberType) => {
-            const user =
-              usersData.find((u) => u.user_id === member.user_id) ||
-              (await getUserInfo(member.user_id));
             const level =
               levelsData.find((l) => l.level_id === member.level_id) ||
               (await getMemberLevel(member.level_id));
-
             return {
               ...member,
-              name: user.username,
-              phone: user.phone,
               level: level.level_name,
             };
           })
@@ -149,9 +139,9 @@ function Member() {
   useEffect(() => {
     if (selectedMember) {
       setFormData({
-        user_id: selectedMember.user_id,
-        name: selectedMember.name || "",
+        username: selectedMember.username || "",
         phone: selectedMember.phone || "",
+        password: "", // 清空密码输入框，但保留原密码在 selectedMember 中
         level_id: selectedMember.level_id,
         points: selectedMember.points,
         total_spent: selectedMember.total_spent,
@@ -159,9 +149,9 @@ function Member() {
       });
     } else {
       setFormData({
-        user_id: 0,
-        name: "",
+        username: "",
         phone: "",
+        password: "", // 添加密码字段
         level_id: 1,
         points: 0,
         total_spent: "0",
@@ -170,36 +160,21 @@ function Member() {
     }
   }, [selectedMember]);
 
-  const validateForm = () => {
-    const errors: { [key: string]: string } = {};
-    if (!formData.user_id) errors.user_id = "请选择用户";
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
   const handleSubmit = async () => {
-    if (!validateForm()) return;
-
     try {
-      const selectedUser = users.find(
-        (user) => user.user_id === formData.user_id
-      );
-      if (!selectedUser) {
-        setFormErrors({ user_id: "请选择有效用户" });
-        return;
-      }
-
       if (selectedMember) {
-        await updateMember(selectedMember.member_id, {
+        // 如果是编辑模式，且密码为空，则使用原密码
+        const submitData = {
           ...selectedMember,
           ...formData,
-          user_id: selectedUser.user_id,
-        });
+          password: formData.password || selectedMember.password, // 如果没有输入新密码，使用原密码
+        };
+        await updateMember(selectedMember.member_id, submitData);
       } else {
+        // 新建会员的逻辑保持不变
         await createMember({
           ...formData,
           tenant_id: 1,
-          user_id: selectedUser.user_id,
           is_deleted: 0,
         } as MemberType);
       }
@@ -207,12 +182,9 @@ function Member() {
       const updatedMembers = await getMembers();
       const processedMembers = await Promise.all(
         updatedMembers.map(async (member: MemberType) => {
-          const user = await getUserInfo(member.user_id);
           const memberLevel = await getMemberLevel(member.level_id);
           return {
             ...member,
-            name: user.username,
-            phone: user.phone,
             level: memberLevel.level_name,
           };
         })
@@ -222,9 +194,9 @@ function Member() {
       setShowAddModal(false);
       setSelectedMember(null);
       setFormData({
-        user_id: 0,
-        name: "",
+        username: "",
         phone: "",
+        password: "", // 添加密码字段
         level_id: 1,
         points: 0,
         total_spent: "0",
@@ -326,18 +298,18 @@ function Member() {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {filteredMembers.map((member) => (
-              <tr key={member.member_no} className="hover:bg-gray-50">
+              <tr key={member.member_id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <div>
                       <div className="text-sm font-medium text-gray-900">
-                        {member.name}
+                        {member.username}
                       </div>
                       <div className="text-sm text-gray-500">
                         {member.phone}
                       </div>
                       <div className="text-xs text-gray-400">
-                        {member.member_no}
+                        M00{member.member_id}
                       </div>
                     </div>
                   </div>
@@ -396,149 +368,197 @@ function Member() {
 
       {/* Add/Edit Member Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium">
-                {selectedMember ? "编辑会员信息" : "添加新会员"}
-              </h3>
-              <button
-                onClick={() => {
-                  setShowAddModal(false);
-                  setSelectedMember(null);
-                  setFormErrors({});
-                }}
-                className="text-gray-400 hover:text-gray-500"
-              >
-                <svg
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex min-h-screen items-center justify-center p-4 text-center sm:p-0">
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  选择用户
-                </label>
-                <select
-                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 ${
-                    formErrors.user_id ? "border-red-500" : ""
-                  }`}
-                  value={formData.user_id || ""}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      user_id: Number(e.target.value),
-                      name:
-                        users.find((u) => u.user_id === Number(e.target.value))
-                          ?.username || "",
-                      phone:
-                        users.find((u) => u.user_id === Number(e.target.value))
-                          ?.phone || "",
-                    })
-                  }
-                >
-                  <option value="">请选择用户</option>
-                  {users.map((user) => (
-                    <option key={user.user_id} value={user.user_id}>
-                      {user.username} ({user.phone})
-                    </option>
-                  ))}
-                </select>
-                {formErrors.user_id && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {formErrors.user_id}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  手机号
-                </label>
-                <input
-                  type="text"
-                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 ${
-                    formErrors.phone ? "border-red-500" : ""
-                  }`}
-                  value={formData.phone}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value })
-                  }
-                  disabled
-                />
-                {formErrors.phone && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {formErrors.phone}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  会员等级
-                </label>
-                <select
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  value={formData.level_id}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      level_id: Number(e.target.value),
-                    })
-                  }
-                >
-                  {memberLevels.map((level) => (
-                    <option key={level.level_id} value={level.level_id}>
-                      {level.level_name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  状态
-                </label>
-                <select
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  value={formData.status}
-                  onChange={(e) =>
-                    setFormData({ ...formData, status: e.target.value })
-                  }
-                >
-                  <option value="活跃">活跃</option>
-                  <option value="非活跃">非活跃</option>
-                  <option value="已禁用">已禁用</option>
-                </select>
-              </div>
-            </div>
+            <div className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl">
+              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                {/* Modal Header */}
+                <div className="mb-6 flex items-center justify-between border-b border-gray-200 pb-3">
+                  <h3 className="text-xl font-semibold text-gray-900">
+                    {selectedMember ? "编辑会员信息" : "添加新会员"}
+                  </h3>
+                  <button
+                    onClick={() => {
+                      setShowAddModal(false);
+                      setSelectedMember(null);
+                      setFormErrors({});
+                    }}
+                    className="rounded-md p-1 hover:bg-gray-100"
+                  >
+                    <svg
+                      className="h-5 w-5 text-gray-500"
+                      fill="none"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                  </button>
+                </div>
 
-            <div className="mt-6 flex justify-end space-x-3">
-              <button
-                onClick={() => {
-                  setShowAddModal(false);
-                  setSelectedMember(null);
-                  setFormErrors({});
-                }}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-              >
-                取消
-              </button>
-              <button
-                onClick={handleSubmit}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-              >
-                保存
-              </button>
+                {/* Form Content */}
+                <div className="space-y-6">
+                  {/* Username & Phone Section */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-gray-700">
+                        会员名称
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.username}
+                        onChange={(e) =>
+                          setFormData({ ...formData, username: e.target.value })
+                        }
+                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        placeholder="请输入会员名称"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-gray-700">
+                        手机号码
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.phone}
+                        onChange={(e) =>
+                          setFormData({ ...formData, phone: e.target.value })
+                        }
+                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        placeholder="请输入手机号码"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Password Section */}
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">
+                      密码
+                      {!selectedMember && (
+                        <span className="text-red-500">*</span>
+                      )}
+                    </label>
+                    <input
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) =>
+                        setFormData({ ...formData, password: e.target.value })
+                      }
+                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      placeholder={
+                        selectedMember ? "不修改请留空" : "请输入密码"
+                      }
+                      required={!selectedMember}
+                    />
+                  </div>
+
+                  {/* Level & Status Section */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-gray-700">
+                        会员等级
+                      </label>
+                      <select
+                        value={formData.level_id}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            level_id: Number(e.target.value),
+                          })
+                        }
+                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      >
+                        {memberLevels.map((level) => (
+                          <option key={level.level_id} value={level.level_id}>
+                            {level.level_name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-gray-700">
+                        会员状态
+                      </label>
+                      <select
+                        value={formData.status}
+                        onChange={(e) =>
+                          setFormData({ ...formData, status: e.target.value })
+                        }
+                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      >
+                        <option value="活跃">活跃</option>
+                        <option value="非活跃">非活跃</option>
+                        <option value="已禁用">已禁用</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Points & Total Spent Section */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-gray-700">
+                        积分
+                      </label>
+                      <input
+                        type="number"
+                        value={formData.points}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            points: Number(e.target.value),
+                          })
+                        }
+                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        placeholder="0"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-gray-700">
+                        累计消费
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.total_spent}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            total_spent: e.target.value,
+                          })
+                        }
+                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  className="inline-flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
+                >
+                  {selectedMember ? "保存修改" : "添加会员"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddModal(false);
+                    setSelectedMember(null);
+                    setFormErrors({});
+                  }}
+                  className="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:mt-0 sm:w-auto sm:text-sm"
+                >
+                  取消
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -550,7 +570,7 @@ function Member() {
           <div className="bg-white rounded-lg max-w-3xl w-full p-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-medium">
-                {selectedMember.name} 的消费记录
+                {selectedMember.username} 的消费记录
               </h3>
               <button
                 onClick={() => {

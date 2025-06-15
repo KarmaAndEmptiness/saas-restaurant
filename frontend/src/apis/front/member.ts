@@ -1,21 +1,19 @@
 import http from '@/utils/request'
 export interface MemberType {
-   created_at: string,
-    expire_date: string|null,
-    is_deleted: number,
-    level_id: number,
-    member_id: number,
-    points: number,
-    status: string,
-    tenant_id: number,
-    total_points: number,
-    total_spent: string,
-    updated_at: null,
-    user_id: number,
-    name: string,
-    phone: string,
-    level:string,
-    member_no:string|null
+    created_at: string;
+      is_deleted :number;
+      level_id :number;
+      member_id: number;
+      password :string;
+      phone :string;
+      points :number;
+      status :string;
+      tenant_id :number;
+      total_points :number;
+      total_spent: string;
+      updated_at: string;
+      username:string;
+      level?:string;
 }
 export interface MemberLevelType{
 
