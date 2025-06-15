@@ -8,7 +8,6 @@
 #include "RestfulDishCtrl.h"
 #include <string>
 
-
 void RestfulDishCtrl::getOne(const HttpRequestPtr &req,
                              std::function<void(const HttpResponsePtr &)> &&callback,
                              Dish::PrimaryKeyType &&id)
@@ -16,14 +15,12 @@ void RestfulDishCtrl::getOne(const HttpRequestPtr &req,
     RestfulDishCtrlBase::getOne(req, std::move(callback), std::move(id));
 }
 
-
 void RestfulDishCtrl::updateOne(const HttpRequestPtr &req,
                                 std::function<void(const HttpResponsePtr &)> &&callback,
                                 Dish::PrimaryKeyType &&id)
 {
     RestfulDishCtrlBase::updateOne(req, std::move(callback), std::move(id));
 }
-
 
 void RestfulDishCtrl::deleteOne(const HttpRequestPtr &req,
                                 std::function<void(const HttpResponsePtr &)> &&callback,
@@ -36,6 +33,12 @@ void RestfulDishCtrl::get(const HttpRequestPtr &req,
                           std::function<void(const HttpResponsePtr &)> &&callback)
 {
     RestfulDishCtrlBase::get(req, std::move(callback));
+}
+
+void RestfulDishCtrl::getHotDishes(const HttpRequestPtr &req,
+                                   std::function<void(const HttpResponsePtr &)> &&callback)
+{
+    RestfulDishCtrlBase::getHotDishes(req, std::move(callback));
 }
 
 void RestfulDishCtrl::create(const HttpRequestPtr &req,

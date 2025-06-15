@@ -26,6 +26,7 @@ public:
   ADD_METHOD_TO(RestfulDishCtrl::updateOne, "/api/dish/{1}", Put, Options, "AuthFilter");
   ADD_METHOD_TO(RestfulDishCtrl::deleteOne, "/api/dish/{1}", Delete, Options, "AuthFilter");
   ADD_METHOD_TO(RestfulDishCtrl::get, "/api/dish", Get, Options, "AuthFilter");
+  ADD_METHOD_TO(RestfulDishCtrl::getHotDishes, "/api/dish/hot", Get, Options, "AuthFilter");
   ADD_METHOD_TO(RestfulDishCtrl::create, "/api/dish", Post, Options, "AuthFilter");
   // ADD_METHOD_TO(RestfulDishCtrl::update,"/api/dish",Put,Options);
   METHOD_LIST_END
@@ -41,6 +42,8 @@ public:
                  Dish::PrimaryKeyType &&id);
   void get(const HttpRequestPtr &req,
            std::function<void(const HttpResponsePtr &)> &&callback);
+  void getHotDishes(const HttpRequestPtr &req,
+                    std::function<void(const HttpResponsePtr &)> &&callback);
   void create(const HttpRequestPtr &req,
               std::function<void(const HttpResponsePtr &)> &&callback);
 };

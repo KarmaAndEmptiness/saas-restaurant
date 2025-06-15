@@ -21,32 +21,33 @@ using namespace drogon_model::saas_restaurant;
 
 class RestfulDishCtrlBase : public RestfulController
 {
-  public:
-    void getOne(const HttpRequestPtr &req,
-                std::function<void(const HttpResponsePtr &)> &&callback,
-                Dish::PrimaryKeyType &&id);
-    void updateOne(const HttpRequestPtr &req,
-                   std::function<void(const HttpResponsePtr &)> &&callback,
-                   Dish::PrimaryKeyType &&id);
-    void deleteOne(const HttpRequestPtr &req,
-                   std::function<void(const HttpResponsePtr &)> &&callback,
-                   Dish::PrimaryKeyType &&id);
-    void get(const HttpRequestPtr &req,
-             std::function<void(const HttpResponsePtr &)> &&callback);
-    void create(const HttpRequestPtr &req,
-                std::function<void(const HttpResponsePtr &)> &&callback);
+public:
+  void getOne(const HttpRequestPtr &req,
+              std::function<void(const HttpResponsePtr &)> &&callback,
+              Dish::PrimaryKeyType &&id);
+  void updateOne(const HttpRequestPtr &req,
+                 std::function<void(const HttpResponsePtr &)> &&callback,
+                 Dish::PrimaryKeyType &&id);
+  void deleteOne(const HttpRequestPtr &req,
+                 std::function<void(const HttpResponsePtr &)> &&callback,
+                 Dish::PrimaryKeyType &&id);
+  void get(const HttpRequestPtr &req,
+           std::function<void(const HttpResponsePtr &)> &&callback);
+  void getHotDishes(const HttpRequestPtr &req,
+                    std::function<void(const HttpResponsePtr &)> &&callback);
+  void create(const HttpRequestPtr &req,
+              std::function<void(const HttpResponsePtr &)> &&callback);
 
+  //  void update(const HttpRequestPtr &req,
+  //              std::function<void(const HttpResponsePtr &)> &&callback);
 
-//  void update(const HttpRequestPtr &req,
-//              std::function<void(const HttpResponsePtr &)> &&callback);
+  orm::DbClientPtr getDbClient()
+  {
+    return drogon::app().getDbClient(dbClientName_);
+  }
 
-    orm::DbClientPtr getDbClient() 
-    {
-        return drogon::app().getDbClient(dbClientName_);
-    }
-
-  protected:
-    /// Ensure that subclasses inherited from this class are instantiated.
-    RestfulDishCtrlBase();
-    const std::string dbClientName_{"default"};
+protected:
+  /// Ensure that subclasses inherited from this class are instantiated.
+  RestfulDishCtrlBase();
+  const std::string dbClientName_{"default"};
 };
