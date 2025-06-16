@@ -21,19 +21,21 @@ void RestfulMarketingCampaignCtrlBase::getOne(const HttpRequestPtr &req,
     drogon::orm::Mapper<MarketingCampaign> mapper(dbClientPtr);
     mapper.findByPrimaryKey(
         id,
-        [req, callbackPtr, this](MarketingCampaign r) {
+        [req, callbackPtr, this](MarketingCampaign r)
+        {
             (*callbackPtr)(HttpResponse::newHttpJsonResponse(makeJson(req, r)));
         },
-        [callbackPtr](const DrogonDbException &e) {
-            const drogon::orm::UnexpectedRows *s=dynamic_cast<const drogon::orm::UnexpectedRows *>(&e.base());
-            if(s)
+        [callbackPtr](const DrogonDbException &e)
+        {
+            const drogon::orm::UnexpectedRows *s = dynamic_cast<const drogon::orm::UnexpectedRows *>(&e.base());
+            if (s)
             {
                 auto resp = HttpResponse::newHttpResponse();
                 resp->setStatusCode(k404NotFound);
                 (*callbackPtr)(resp);
                 return;
             }
-            LOG_ERROR<<e.base().what();
+            LOG_ERROR << e.base().what();
             Json::Value ret;
             ret["error"] = "database error";
             auto resp = HttpResponse::newHttpJsonResponse(ret);
@@ -42,42 +44,41 @@ void RestfulMarketingCampaignCtrlBase::getOne(const HttpRequestPtr &req,
         });
 }
 
-
 void RestfulMarketingCampaignCtrlBase::updateOne(const HttpRequestPtr &req,
                                                  std::function<void(const HttpResponsePtr &)> &&callback,
                                                  MarketingCampaign::PrimaryKeyType &&id)
 {
-    auto jsonPtr=req->jsonObject();
-    if(!jsonPtr)
+    auto jsonPtr = req->jsonObject();
+    if (!jsonPtr)
     {
         Json::Value ret;
-        ret["error"]="No json object is found in the request";
-        auto resp= HttpResponse::newHttpJsonResponse(ret);
-        resp->setStatusCode(k400BadRequest);
+        ret["code"] = k400BadRequest;
+        ret["message"] = "No json object is found in the request";
+        auto resp = HttpResponse::newHttpJsonResponse(ret);
         callback(resp);
         return;
     }
     MarketingCampaign object;
     std::string err;
-    if(!doCustomValidations(*jsonPtr, err))
+    if (!doCustomValidations(*jsonPtr, err))
     {
         Json::Value ret;
-        ret["error"] = err;
-        auto resp= HttpResponse::newHttpJsonResponse(ret);
-        resp->setStatusCode(k400BadRequest);
+        ret["code"] = k400BadRequest;
+        ret["message"] = err;
+        auto resp = HttpResponse::newHttpJsonResponse(ret);
         callback(resp);
         return;
     }
     try
     {
-        if(isMasquerading())
+        if (isMasquerading())
         {
-            if(!MarketingCampaign::validateMasqueradedJsonForUpdate(*jsonPtr, masqueradingVector(), err))
+            if (!MarketingCampaign::validateMasqueradedJsonForUpdate(*jsonPtr, masqueradingVector(), err))
             {
                 Json::Value ret;
-                ret["error"] = err;
-                auto resp= HttpResponse::newHttpJsonResponse(ret);
-                resp->setStatusCode(k400BadRequest);
+                ret["code"] = k400BadRequest;
+                ret["message"] = err;
+                auto resp = HttpResponse::newHttpJsonResponse(ret);
                 callback(resp);
                 return;
             }
@@ -85,34 +86,34 @@ void RestfulMarketingCampaignCtrlBase::updateOne(const HttpRequestPtr &req,
         }
         else
         {
-            if(!MarketingCampaign::validateJsonForUpdate(*jsonPtr, err))
+            if (!MarketingCampaign::validateJsonForUpdate(*jsonPtr, err))
             {
                 Json::Value ret;
-                ret["error"] = err;
-                auto resp= HttpResponse::newHttpJsonResponse(ret);
-                resp->setStatusCode(k400BadRequest);
+                ret["code"] = k400BadRequest;
+                ret["message"] = err;
+                auto resp = HttpResponse::newHttpJsonResponse(ret);
                 callback(resp);
                 return;
             }
             object.updateByJson(*jsonPtr);
         }
     }
-    catch(const Json::Exception &e)
+    catch (const Json::Exception &e)
     {
         LOG_ERROR << e.what();
         Json::Value ret;
-        ret["error"]="Field type error";
-        auto resp= HttpResponse::newHttpJsonResponse(ret);
-        resp->setStatusCode(k400BadRequest);
+        ret["code"] = k400BadRequest;
+        ret["message"] = "Field type error";
+        auto resp = HttpResponse::newHttpJsonResponse(ret);
         callback(resp);
-        return;        
+        return;
     }
-    if(object.getPrimaryKey() != id)
+    if (object.getPrimaryKey() != id)
     {
         Json::Value ret;
-        ret["error"]="Bad primary key";
-        auto resp= HttpResponse::newHttpJsonResponse(ret);
-        resp->setStatusCode(k400BadRequest);
+        ret["code"] = k400BadRequest;
+        ret["message"] = "Bad primary key";
+        auto resp = HttpResponse::newHttpJsonResponse(ret);
         callback(resp);
         return;
     }
@@ -125,42 +126,44 @@ void RestfulMarketingCampaignCtrlBase::updateOne(const HttpRequestPtr &req,
 
     mapper.update(
         object,
-        [callbackPtr](const size_t count) 
+        [callbackPtr](const size_t count)
         {
-            if(count == 1)
-            {
-                auto resp = HttpResponse::newHttpResponse();
-                resp->setStatusCode(k202Accepted);
-                (*callbackPtr)(resp);
-            }
-            else if(count == 0)
+            if (count == 1)
             {
                 Json::Value ret;
-                ret["error"]="No resources are updated";
+                ret["code"] = k200OK;
+                ret["message"] = "ok";
                 auto resp = HttpResponse::newHttpJsonResponse(ret);
-                resp->setStatusCode(k404NotFound);
+                (*callbackPtr)(resp);
+            }
+            else if (count == 0)
+            {
+                Json::Value ret;
+                ret["code"] = k200OK;
+                ret["message"] = "No resources are updated";
+                auto resp = HttpResponse::newHttpJsonResponse(ret);
                 (*callbackPtr)(resp);
             }
             else
             {
                 LOG_FATAL << "More than one resource is updated: " << count;
                 Json::Value ret;
-                ret["error"] = "database error";
+                ret["code"] = k500InternalServerError;
+                ret["message"] = "database error";
                 auto resp = HttpResponse::newHttpJsonResponse(ret);
-                resp->setStatusCode(k500InternalServerError);
                 (*callbackPtr)(resp);
             }
         },
-        [callbackPtr](const DrogonDbException &e) {
+        [callbackPtr](const DrogonDbException &e)
+        {
             LOG_ERROR << e.base().what();
             Json::Value ret;
-            ret["error"] = "database error";
+            ret["code"] = k500InternalServerError;
+            ret["message"] = "database error";
             auto resp = HttpResponse::newHttpJsonResponse(ret);
-            resp->setStatusCode(k500InternalServerError);
             (*callbackPtr)(resp);
         });
 }
-
 
 void RestfulMarketingCampaignCtrlBase::deleteOne(const HttpRequestPtr &req,
                                                  std::function<void(const HttpResponsePtr &)> &&callback,
@@ -174,14 +177,15 @@ void RestfulMarketingCampaignCtrlBase::deleteOne(const HttpRequestPtr &req,
     drogon::orm::Mapper<MarketingCampaign> mapper(dbClientPtr);
     mapper.deleteByPrimaryKey(
         id,
-        [callbackPtr](const size_t count) {
-            if(count == 1)
+        [callbackPtr](const size_t count)
+        {
+            if (count == 1)
             {
                 auto resp = HttpResponse::newHttpResponse();
                 resp->setStatusCode(k204NoContent);
                 (*callbackPtr)(resp);
             }
-            else if(count == 0)
+            else if (count == 0)
             {
                 Json::Value ret;
                 ret["error"] = "No resources deleted";
@@ -199,7 +203,8 @@ void RestfulMarketingCampaignCtrlBase::deleteOne(const HttpRequestPtr &req,
                 (*callbackPtr)(resp);
             }
         },
-        [callbackPtr](const DrogonDbException &e) {
+        [callbackPtr](const DrogonDbException &e)
+        {
             LOG_ERROR << e.base().what();
             Json::Value ret;
             ret["error"] = "database error";
@@ -216,19 +221,19 @@ void RestfulMarketingCampaignCtrlBase::get(const HttpRequestPtr &req,
     drogon::orm::Mapper<MarketingCampaign> mapper(dbClientPtr);
     auto &parameters = req->parameters();
     auto iter = parameters.find("sort");
-    if(iter != parameters.end())
+    if (iter != parameters.end())
     {
         auto sortFields = drogon::utils::splitString(iter->second, ",");
-        for(auto &field : sortFields)
+        for (auto &field : sortFields)
         {
-            if(field.empty())
+            if (field.empty())
                 continue;
-            if(field[0] == '+')
+            if (field[0] == '+')
             {
                 field = field.substr(1);
                 mapper.orderBy(field, SortOrder::ASC);
             }
-            else if(field[0] == '-')
+            else if (field[0] == '-')
             {
                 field = field.substr(1);
                 mapper.orderBy(field, SortOrder::DESC);
@@ -240,13 +245,14 @@ void RestfulMarketingCampaignCtrlBase::get(const HttpRequestPtr &req,
         }
     }
     iter = parameters.find("offset");
-    if(iter != parameters.end())
+    if (iter != parameters.end())
     {
-        try{
+        try
+        {
             auto offset = std::stoll(iter->second);
             mapper.offset(offset);
         }
-        catch(...)
+        catch (...)
         {
             auto resp = HttpResponse::newHttpResponse();
             resp->setStatusCode(k400BadRequest);
@@ -255,48 +261,48 @@ void RestfulMarketingCampaignCtrlBase::get(const HttpRequestPtr &req,
         }
     }
     iter = parameters.find("limit");
-    if(iter != parameters.end())
+    if (iter != parameters.end())
     {
-        try{
+        try
+        {
             auto limit = std::stoll(iter->second);
             mapper.limit(limit);
         }
-        catch(...)
+        catch (...)
         {
             auto resp = HttpResponse::newHttpResponse();
             resp->setStatusCode(k400BadRequest);
             callback(resp);
             return;
         }
-    }    
+    }
     auto callbackPtr =
         std::make_shared<std::function<void(const HttpResponsePtr &)>>(
             std::move(callback));
     auto jsonPtr = req->jsonObject();
-    if(jsonPtr && jsonPtr->isMember("filter"))
+    if (jsonPtr && jsonPtr->isMember("filter"))
     {
-        try{
+        try
+        {
             auto criteria = makeCriteria((*jsonPtr)["filter"]);
-            mapper.findBy(criteria,
-                [req, callbackPtr, this](const std::vector<MarketingCampaign> &v) {
+            mapper.findBy(criteria, [req, callbackPtr, this](const std::vector<MarketingCampaign> &v)
+                          {
                     Json::Value ret;
                     ret.resize(0);
                     for (auto &obj : v)
                     {
                         ret.append(makeJson(req, obj));
                     }
-                    (*callbackPtr)(HttpResponse::newHttpJsonResponse(ret));
-                },
-                [callbackPtr](const DrogonDbException &e) { 
+                    (*callbackPtr)(HttpResponse::newHttpJsonResponse(ret)); }, [callbackPtr](const DrogonDbException &e)
+                          { 
                     LOG_ERROR << e.base().what();
                     Json::Value ret;
                     ret["error"] = "database error";
                     auto resp = HttpResponse::newHttpJsonResponse(ret);
                     resp->setStatusCode(k500InternalServerError);
-                    (*callbackPtr)(resp);    
-                });
+                    (*callbackPtr)(resp); });
         }
-        catch(const std::exception &e)
+        catch (const std::exception &e)
         {
             LOG_ERROR << e.what();
             Json::Value ret;
@@ -304,84 +310,89 @@ void RestfulMarketingCampaignCtrlBase::get(const HttpRequestPtr &req,
             auto resp = HttpResponse::newHttpJsonResponse(ret);
             resp->setStatusCode(k400BadRequest);
             (*callbackPtr)(resp);
-            return;    
+            return;
         }
     }
     else
     {
-        mapper.findAll([req, callbackPtr, this](const std::vector<MarketingCampaign> &v) {
+        mapper.findAll([req, callbackPtr, this](const std::vector<MarketingCampaign> &v)
+                       {
+                Json::Value list;
                 Json::Value ret;
-                ret.resize(0);
+                list.resize(0);
                 for (auto &obj : v)
                 {
-                    ret.append(makeJson(req, obj));
+                    if(obj.getValueOfIsDeleted())
+                    continue;
+                    list.append(makeJson(req, obj));
                 }
-                (*callbackPtr)(HttpResponse::newHttpJsonResponse(ret));
-            },
-            [callbackPtr](const DrogonDbException &e) { 
-                LOG_ERROR << e.base().what();
-                Json::Value ret;
-                ret["error"] = "database error";
-                auto resp = HttpResponse::newHttpJsonResponse(ret);
-                resp->setStatusCode(k500InternalServerError);
-                (*callbackPtr)(resp);    
-            });
+                ret["code"]=k200OK;
+                ret["message"]="ok";
+                ret["data"]=list;
+                (*callbackPtr)(HttpResponse::newHttpJsonResponse(ret)); },
+                       [callbackPtr](const DrogonDbException &e)
+                       {
+                           LOG_ERROR << e.base().what();
+                           Json::Value ret;
+                           ret["code"] = k500InternalServerError;
+                           ret["message"] = "database error";
+                           auto resp = HttpResponse::newHttpJsonResponse(ret);
+                           (*callbackPtr)(resp);
+                       });
     }
 }
 
 void RestfulMarketingCampaignCtrlBase::create(const HttpRequestPtr &req,
                                               std::function<void(const HttpResponsePtr &)> &&callback)
 {
-    auto jsonPtr=req->jsonObject();
-    if(!jsonPtr)
+    auto jsonPtr = req->jsonObject();
+    if (!jsonPtr)
     {
         Json::Value ret;
-        ret["error"]="No json object is found in the request";
-        auto resp= HttpResponse::newHttpJsonResponse(ret);
-        resp->setStatusCode(k400BadRequest);
+        ret["code"] = k400BadRequest;
+        ret["message"] = "No json object is found in the request";
+        auto resp = HttpResponse::newHttpJsonResponse(ret);
         callback(resp);
         return;
     }
     std::string err;
-    if(!doCustomValidations(*jsonPtr, err))
+    if (!doCustomValidations(*jsonPtr, err))
     {
         Json::Value ret;
-        ret["error"] = err;
-        auto resp= HttpResponse::newHttpJsonResponse(ret);
-        resp->setStatusCode(k400BadRequest);
+        ret["code"] = k400BadRequest;
+        ret["message"] = err;
+        auto resp = HttpResponse::newHttpJsonResponse(ret);
         callback(resp);
         return;
     }
-    if(isMasquerading())
+    if (isMasquerading())
     {
-        if(!MarketingCampaign::validateMasqueradedJsonForCreation(*jsonPtr, masqueradingVector(), err))
+        if (!MarketingCampaign::validateMasqueradedJsonForCreation(*jsonPtr, masqueradingVector(), err))
         {
             Json::Value ret;
-            ret["error"] = err;
-            auto resp= HttpResponse::newHttpJsonResponse(ret);
-            resp->setStatusCode(k400BadRequest);
+            ret["code"] = k400BadRequest;
+            ret["message"] = err;
+            auto resp = HttpResponse::newHttpJsonResponse(ret);
             callback(resp);
             return;
         }
     }
     else
     {
-        if(!MarketingCampaign::validateJsonForCreation(*jsonPtr, err))
+        if (!MarketingCampaign::validateJsonForCreation(*jsonPtr, err))
         {
             Json::Value ret;
-            ret["error"] = err;
-            auto resp= HttpResponse::newHttpJsonResponse(ret);
-            resp->setStatusCode(k400BadRequest);
+            ret["code"] = k400BadRequest;
+            ret["message"] = err;
+            auto resp = HttpResponse::newHttpJsonResponse(ret);
             callback(resp);
             return;
         }
-    }   
-    try 
+    }
+    try
     {
-        MarketingCampaign object = 
-            (isMasquerading()? 
-             MarketingCampaign(*jsonPtr, masqueradingVector()) : 
-             MarketingCampaign(*jsonPtr));
+        MarketingCampaign object =
+            (isMasquerading() ? MarketingCampaign(*jsonPtr, masqueradingVector()) : MarketingCampaign(*jsonPtr));
         auto dbClientPtr = getDbClient();
         auto callbackPtr =
             std::make_shared<std::function<void(const HttpResponsePtr &)>>(
@@ -389,29 +400,35 @@ void RestfulMarketingCampaignCtrlBase::create(const HttpRequestPtr &req,
         drogon::orm::Mapper<MarketingCampaign> mapper(dbClientPtr);
         mapper.insert(
             object,
-            [req, callbackPtr, this](MarketingCampaign newObject){
-                (*callbackPtr)(HttpResponse::newHttpJsonResponse(
-                    makeJson(req, newObject)));
+            [req, callbackPtr, this](MarketingCampaign newObject)
+            {
+                Json::Value ret;
+                ret["code"] = k200OK;
+                ret["message"] = "ok";
+                ret["data"][MarketingCampaign::primaryKeyName] =
+                    newObject.getPrimaryKey();
+                (*callbackPtr)(HttpResponse::newHttpJsonResponse(ret));
             },
-            [callbackPtr](const DrogonDbException &e){
+            [callbackPtr](const DrogonDbException &e)
+            {
                 LOG_ERROR << e.base().what();
                 Json::Value ret;
-                ret["error"] = "database error";
+                ret["code"] = k500InternalServerError;
+                ret["message"] = "database error";
                 auto resp = HttpResponse::newHttpJsonResponse(ret);
-                resp->setStatusCode(k500InternalServerError);
-                (*callbackPtr)(resp);   
+                (*callbackPtr)(resp);
             });
     }
-    catch(const Json::Exception &e)
+    catch (const Json::Exception &e)
     {
         LOG_ERROR << e.what();
         Json::Value ret;
-        ret["error"]="Field type error";
-        auto resp= HttpResponse::newHttpJsonResponse(ret);
-        resp->setStatusCode(k400BadRequest);
+        ret["code"] = k400BadRequest;
+        ret["message"] = "Field type error";
+        auto resp = HttpResponse::newHttpJsonResponse(ret);
         callback(resp);
-        return;        
-    }   
+        return;
+    }
 }
 
 /*
@@ -422,36 +439,36 @@ void RestfulMarketingCampaignCtrlBase::update(const HttpRequestPtr &req,
 }*/
 
 RestfulMarketingCampaignCtrlBase::RestfulMarketingCampaignCtrlBase()
-    : RestfulController({
-          "campaign_id",
-          "tenant_id",
-          "campaign_name",
-          "status",
-          "level_id",
-          "campaign_content",
-          "campaign_start",
-          "campaign_end",
-          "created_by",
-          "created_at",
-          "updated_at"
-      })
+    : RestfulController({"campaign_id",
+                         "tenant_id",
+                         "campaign_name",
+                         "status",
+                         "level_id",
+                         "campaign_content",
+                         "campaign_start",
+                         "campaign_end",
+                         "created_by",
+                         "created_at",
+                         "updated_at",
+                         "is_deleted"})
 {
-   /**
-    * The items in the vector are aliases of column names in the table.
-    * if one item is set to an empty string, the related column is not sent
-    * to clients.
-    */
+    /**
+     * The items in the vector are aliases of column names in the table.
+     * if one item is set to an empty string, the related column is not sent
+     * to clients.
+     */
     enableMasquerading({
-        "campaign_id", // the alias for the campaign_id column.
-        "tenant_id", // the alias for the tenant_id column.
-        "campaign_name", // the alias for the campaign_name column.
-        "status", // the alias for the status column.
-        "level_id", // the alias for the level_id column.
+        "campaign_id",      // the alias for the campaign_id column.
+        "tenant_id",        // the alias for the tenant_id column.
+        "campaign_name",    // the alias for the campaign_name column.
+        "status",           // the alias for the status column.
+        "level_id",         // the alias for the level_id column.
         "campaign_content", // the alias for the campaign_content column.
-        "campaign_start", // the alias for the campaign_start column.
-        "campaign_end", // the alias for the campaign_end column.
-        "created_by", // the alias for the created_by column.
-        "created_at", // the alias for the created_at column.
-        "updated_at"  // the alias for the updated_at column.
+        "campaign_start",   // the alias for the campaign_start column.
+        "campaign_end",     // the alias for the campaign_end column.
+        "created_by",       // the alias for the created_by column.
+        "created_at",       // the alias for the created_at column.
+        "updated_at",       // the alias for the updated_at column.
+        "is_deleted"        // the alias for the is_deleted column.
     });
 }

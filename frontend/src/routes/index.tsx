@@ -22,6 +22,7 @@ import Notification from "@/views/Notification";
 import Branch from "@/views/Admin/Branch";
 import OrderList from "@/views/Front/OrderList";
 import Role from "@/views/Admin/Role";
+import Campaign from "../views/Member/Campaign";
 
 const routes: RouteObject[] = [
   {
@@ -113,6 +114,14 @@ const routes: RouteObject[] = [
         element: (
           <AuthGuard>
             <Inventory />
+          </AuthGuard>
+        ),
+      },
+      {
+        path: "campaign",
+        element: (
+          <AuthGuard>
+            <Campaign />
           </AuthGuard>
         ),
       },
