@@ -19,6 +19,7 @@ function Login() {
       if (data.token) {
         localStorage.setItem("token", data.token);
         localStorage.setItem("user_id", data.user_id);
+        localStorage.setItem("tenant_id", data.tenant_id);
         navigate("/home");
       } else {
         setError("无效的响应");

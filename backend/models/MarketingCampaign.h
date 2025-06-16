@@ -58,6 +58,7 @@ class MarketingCampaign
         static const std::string _created_by;
         static const std::string _created_at;
         static const std::string _updated_at;
+        static const std::string _is_deleted;
     };
 
     static const int primaryKeyNumber;
@@ -210,8 +211,17 @@ class MarketingCampaign
     void setUpdatedAt(const ::trantor::Date &pUpdatedAt) noexcept;
     void setUpdatedAtToNull() noexcept;
 
+    /**  For column is_deleted  */
+    ///Get the value of the column is_deleted, returns the default value if the column is null
+    const int8_t &getValueOfIsDeleted() const noexcept;
+    ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
+    const std::shared_ptr<int8_t> &getIsDeleted() const noexcept;
+    ///Set the value of the column is_deleted
+    void setIsDeleted(const int8_t &pIsDeleted) noexcept;
+    void setIsDeletedToNull() noexcept;
 
-    static size_t getColumnNumber() noexcept {  return 11;  }
+
+    static size_t getColumnNumber() noexcept {  return 12;  }
     static const std::string &getColumnName(size_t index) noexcept(false);
 
     Json::Value toJson() const;
@@ -255,6 +265,7 @@ class MarketingCampaign
     std::shared_ptr<uint32_t> createdBy_;
     std::shared_ptr<::trantor::Date> createdAt_;
     std::shared_ptr<::trantor::Date> updatedAt_;
+    std::shared_ptr<int8_t> isDeleted_;
     struct MetaData
     {
         const std::string colName_;
@@ -266,7 +277,7 @@ class MarketingCampaign
         const bool notNull_;
     };
     static const std::vector<MetaData> metaData_;
-    bool dirtyFlag_[11]={ false };
+    bool dirtyFlag_[12]={ false };
   public:
     static const std::string &sqlForFindingByPrimaryKey()
     {
@@ -338,6 +349,11 @@ class MarketingCampaign
         {
             needSelection=true;
         }
+        if(dirtyFlag_[11])
+        {
+            sql += "is_deleted,";
+            ++parametersCount;
+        }
         needSelection=true;
         if(parametersCount > 0)
         {
@@ -405,6 +421,11 @@ class MarketingCampaign
         else
         {
             sql +="default,";
+        }
+        if(dirtyFlag_[11])
+        {
+            sql.append("?,");
+
         }
         if(parametersCount > 0)
         {

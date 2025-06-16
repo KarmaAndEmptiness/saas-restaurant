@@ -23,6 +23,7 @@ const navs: Navigation[] = [
   { name: "会员管理", path: "/home/member" },
   { name: "库存管理", path: "/home/inventory" },
   { name: "报表中心", path: "/home/report" },
+  { name: "会员营销", path: "/home/campaign" },
 ];
 
 const userNavs: Navigation[] = [
