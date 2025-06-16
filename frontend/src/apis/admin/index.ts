@@ -20,10 +20,11 @@ export interface User {
     username: string
 
 }
-export interface UserRole
-{
-    user_id: number,
-    role_id: number,
+export interface UserRole {
+    user_role_id?: number;  // 添加这个字段
+    user_id: number;
+    role_id: number;
+    is_deleted?: number;
 }
 
 export interface Role
@@ -51,17 +52,34 @@ export const updateUser = (userId:number,data:User) => {
 export const deleteUser = (userId:number) => {
   return http.put('/api/user/'+userId, {user_id:userId, is_deleted: 1 });
 }
-
 //获取用户角色关联
 export const getUserRole = (userId:number) => {
   return http.get<UserRole[]>('/api/userrole/user/'+userId);
 }
-//根据角色ID获取角色
-export const getRole = (roleId:number) => {
-  return http.get<Role>('/api/role/'+roleId);
+
+//批量添加用户角色关联
+export const createUserRoles = (userId: number, roleIds: number[]) => {
+  return http.post('/api/userrole/batch', {
+    user_id: userId,
+    role_ids: roleIds
+  });
 }
 
-//获取角色列表
-export const getRoles = () => {
-  return http.get<Role[]>('/api/role');
+//删除用户所有角色关联
+export const deleteUserRoles = (userId: number) => {
+  return http.delete('/api/userrole/user/'+userId);
+}
+
+//添加用户角色关联
+export const createUserRole = (data:UserRole) => {
+  return http.post('/api/userrole',{...data,is_deleted:0});
+}
+//更新用户角色关联
+export const updateUserRole = (userRoleId:number,data:UserRole) => {
+  return http.put('/api/userrole/'+userRoleId, {user_role_id:userRoleId, ...data});
+}
+
+//删除用户角色关联
+export const deleteUserRole = (userRoleId:number|undefined) => {
+  return http.put('/api/userrole/'+userRoleId, {user_role_id:userRoleId, is_deleted: 1 });
 }

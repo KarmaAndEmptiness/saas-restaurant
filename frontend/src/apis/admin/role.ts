@@ -13,7 +13,7 @@ export interface RoleType {
 
 //获取角色列表
 export const getRoles = () => {
-  return http.get('/api/role');
+  return http.get<RoleType[]>('/api/role');
 }
 
 //添加角色
@@ -31,4 +31,7 @@ export const deleteRole = (roleId:number) => {
   return http.put('/api/role/'+roleId, {role_id:roleId, is_deleted: 1 });
 }
 
-
+//根据角色ID获取角色
+export const getRole = (roleId:number) => {
+  return http.get<RoleType>('/api/role/'+roleId);
+}
