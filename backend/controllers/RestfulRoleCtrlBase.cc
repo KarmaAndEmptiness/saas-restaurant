@@ -326,6 +326,8 @@ void RestfulRoleCtrlBase::get(const HttpRequestPtr &req,
                 list.resize(0);
                 for (auto &obj : v)
                 {
+                    if(obj.getValueOfIsDeleted())
+                    continue;
                     list.append(makeJson(req, obj));
                 }
                 ret["code"] = k200OK;

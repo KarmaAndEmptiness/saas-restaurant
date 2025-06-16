@@ -11,6 +11,7 @@
 #include <drogon/orm/RestfulController.h>
 
 #include "UserRole.h"
+#include "Role.h"
 using namespace drogon;
 using namespace drogon::orm;
 using namespace drogon_model::saas_restaurant;

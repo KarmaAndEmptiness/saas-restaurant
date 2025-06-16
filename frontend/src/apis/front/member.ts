@@ -19,8 +19,7 @@ export interface MemberLevelType{
 
 benefits:string| null,
     discount_rate: string,
-    icon_url: string|null,
-    level_id: number,
+    level_id?: number,
     level_name: "普通" | "白银" | "黄金" | "钻石",
     required_points: number,
     required_spent: string,
@@ -64,6 +63,21 @@ export const getMemberLevel=(levelId:number)=>{
 //获取会员等级列表
 export const getMemberLevels=()=>{
   return http.get<MemberLevelType[]>('/api/memberlevel');
+}
+
+//创建会员等级
+export const createLevel = (data:MemberLevelType) => {
+  return http.post('/api/memberlevel',{...data,is_deleted:0});
+}
+
+//更新会员等级
+export const updateLevel=(id:number | null,data:MemberLevelType)=>{
+  return http.put('/api/memberlevel/'+id,{...data,level_id:id});
+}
+
+//删除会员等级
+export const deleteLevel = (levelId:number) => {
+  return http.put('/api/memberlevel/'+levelId, {level_id:levelId, is_deleted: 1 });
 }
 //获取会员消费记录
 export const getConsumptionRecords=(memberId:number)=>{

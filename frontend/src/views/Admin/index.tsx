@@ -3,19 +3,21 @@ import {
   getUsers,
   type User,
   getUserRole,
-  getRole,
-  // @ts-ignore
-  getRoles,
   createUser,
   updateUser,
   deleteUser,
+  type UserRole,
+  createUserRole,
+  deleteUserRole,
 } from "@/apis/admin";
 
+import { getRole, getRoles, type RoleType } from "@/apis/admin/role";
 const baseurl = import.meta.env.VITE_API_BASE_URL;
 
 const initialEmployees: User[] = [];
 function Staff() {
   const [employees, setEmployees] = useState<User[]>(initialEmployees);
+  const [roles, setRoles] = useState<RoleType[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<
     "全部" | "在职" | "休假" | "离职"
@@ -34,13 +36,17 @@ function Staff() {
     roles: [] as string[],
   });
 
-  const roles = [
-    "全部",
-    "租户管理员",
-    "后台管理员",
-    "财务管理员",
-    "库存管理员",
-  ];
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const rolesData = await getRoles();
+        setRoles(rolesData);
+      } catch (error) {
+        console.error("Error fetching roles:", error);
+      }
+    };
+    fetchRoles();
+  }, []);
 
   const filteredEmployees = employees.filter((employee) => {
     const matchSearch =
@@ -75,13 +81,13 @@ function Staff() {
           users.map(async (user: User) => {
             const userRoles = await getUserRole(user.user_id);
             const rolesInfo = await Promise.all(
-              userRoles.map(async (role: any) => {
+              userRoles?.map(async (role: any) => {
                 return await getRole(role.role_id);
-              })
+              }) || []
             );
             return {
               ...user,
-              roles: rolesInfo.map((item) => item.description) || [],
+              roles: rolesInfo?.map((item) => item?.description || "") || [],
             };
           })
         );
@@ -102,26 +108,62 @@ function Staff() {
           ...formData,
           user_id: selectedEmployee.user_id,
         } as User);
+
+        // 获取当前用户的角色
+        const currentUserRoles = await getUserRole(selectedEmployee.user_id);
+
+        // 删除所有现有角色
+        for (const userRole of currentUserRoles || []) {
+          await deleteUserRole(userRole.user_role_id);
+        }
+
+        // 添加新选择的角色
+        const selectedRoleIds = roles
+          .filter((role) => formData.roles.includes(role.description))
+          .map((role) => role.role_id);
+
+        for (const roleId of selectedRoleIds) {
+          await createUserRole({
+            user_id: selectedEmployee.user_id,
+            role_id: roleId,
+          });
+        }
+        setSelectedEmployee(null);
       } else {
         // 创建新用户
-        await createUser(formData as User);
+        const newUser = await createUser(formData as User);
+
+        // 为新用户添加角色
+        const selectedRoleIds = roles
+          .filter((role) => formData.roles.includes(role.description))
+          .map((role) => role.role_id);
+
+        for (const roleId of selectedRoleIds) {
+          await createUserRole({
+            user_id: newUser.user_id,
+            role_id: roleId,
+          });
+        }
       }
+
       // 刷新用户列表
       const users = await getUsers();
       const usersWithRoles = await Promise.all(
-        users.map(async (user: any) => {
+        users.map(async (user: User) => {
           const userRoles = await getUserRole(user.user_id);
           const rolesInfo = await Promise.all(
-            userRoles.map(async (role: any) => {
-              return await getRole(role.role_id);
-            })
+            userRoles?.map(async (role: UserRole) => {
+              const roleInfo = await getRole(role.role_id);
+              return roleInfo.description;
+            }) || []
           );
           return {
             ...user,
-            roles: rolesInfo.map((item) => item.description) || [],
+            roles: rolesInfo,
           };
         })
       );
+
       setEmployees(usersWithRoles);
       setShowAddModal(false);
       setShowEditModal(false);
@@ -211,9 +253,10 @@ function Staff() {
           value={rolesFilter}
           onChange={(e) => setRolesFilter(e.target.value)}
         >
+          <option value="全部">全部</option>
           {roles.map((role) => (
-            <option key={role} value={role}>
-              {role}
+            <option key={role.role_id} value={role.description}>
+              {role.description}
             </option>
           ))}
         </select>
@@ -437,27 +480,27 @@ function Staff() {
                     角色
                   </label>
                   <div className="mt-2 space-y-2">
-                    {roles
-                      .filter((role) => role !== "全部")
-                      .map((role) => (
-                        <label
-                          key={role}
-                          className="inline-flex items-center mr-4"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={formData.roles.includes(role)}
-                            onChange={(e) => {
-                              const newRoles = e.target.checked
-                                ? [...formData.roles, role]
-                                : formData.roles.filter((r) => r !== role);
-                              setFormData({ ...formData, roles: newRoles });
-                            }}
-                            className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                          />
-                          <span className="ml-2">{role}</span>
-                        </label>
-                      ))}
+                    {roles.map((role) => (
+                      <label
+                        key={role.role_id}
+                        className="inline-flex items-center mr-4"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={formData.roles.includes(role.description)}
+                          onChange={(e) => {
+                            const newRoles = e.target.checked
+                              ? [...formData.roles, role.description]
+                              : formData.roles.filter(
+                                  (r) => r !== role.description
+                                );
+                            setFormData({ ...formData, roles: newRoles });
+                          }}
+                          className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                        />
+                        <span className="ml-2">{role.description}</span>
+                      </label>
+                    ))}
                   </div>
                 </div>
               </div>

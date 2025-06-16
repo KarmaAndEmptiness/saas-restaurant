@@ -65,6 +65,12 @@ function Role() {
       await fetchRoles();
       setShowModal(false);
       setSelectedRole(null);
+      setFormData({
+        // 添加这几行来重置表单
+        role_name: "",
+        description: "",
+        status: "启用",
+      });
     } catch (error) {
       console.error("保存角色失败:", error);
     }
