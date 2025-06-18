@@ -7,20 +7,22 @@ export interface TenantLoginParam extends TenantAdminLoginParam
 {
 tenantToken:string
 }
-export interface loginResponse
+export interface tenantAdminLoginResponse
 {
- roles: string[]|null;
-    tenant_id: number;
     token: string;
-    user_id: number;
     username: string;
+}
+export interface tenantLoginResponse extends tenantAdminLoginResponse
+{
+    user_id: string;
+    tenant_id: string;
 }
 //租户管理员登录
 export const tenantAdminLogin = (data:TenantAdminLoginParam) => {
-  return http.post('/api/tenant/admin/login', data);
+  return http.post<tenantAdminLoginResponse>('/api/tenant/admin/login', data);
 }
 
 //租户登录
 export const tenantLogin = (data: TenantLoginParam) => {
-  return http.post<loginResponse>('/api/tenant/login', data);
+  return http.post<tenantLoginResponse>('/api/tenant/login', data);
 }
