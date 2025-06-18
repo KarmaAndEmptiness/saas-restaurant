@@ -2,6 +2,9 @@
 #include <jwt-cpp/jwt.h>
 
 #include <drogon/HttpController.h>
+#include "UserRole.h"
+#include "Role.h"
+#include "Tenant.h"
 
 using namespace drogon;
 
