@@ -92,47 +92,62 @@ function Role() {
     if (!selectedRole) return;
 
     try {
-      // 获取需要移除的权限
-      const removedPermissions = rolePermissions.filter(
-        (rp) => !selectedPermissions.includes(rp.permission_id)
-      );
+      // 获取当前所有角色权限
+      const allRolePermissions =
+        (await getRolePermissionsByRoleId(selectedRole.role_id)) || [];
 
-      // 标记删除旧的权限
-      for (const rp of removedPermissions) {
-        await updateRolePermission(rp.role_permission_id, {
-          ...rp,
-          is_deleted: 1,
-        });
-      }
-
-      // 获取当前所有角色权限（包括已删除的）
-      const allRolePermissions = await getRolePermissionsByRoleId(
-        selectedRole.role_id
-      );
-
-      // 添加新的权限
-      for (const permissionId of selectedPermissions) {
-        // 检查权限是否已存在（包括已删除的记录）
-        const existingPermission = allRolePermissions.find(
-          (rp) => rp.permission_id === permissionId
-        );
-
-        if (existingPermission) {
-          // 如果存在但被标记删除，则重新启用
-          if (existingPermission.is_deleted === 1) {
-            await updateRolePermission(existingPermission.role_permission_id, {
-              ...existingPermission,
-              is_deleted: 0,
+      // 如果当前没有选择任何权限，并且已有权限不为空，则删除所有现有权限
+      if (selectedPermissions.length === 0 && allRolePermissions.length > 0) {
+        for (const rp of allRolePermissions) {
+          if (rp.is_deleted === 0) {
+            await updateRolePermission(rp.role_permission_id, {
+              ...rp,
+              is_deleted: 1,
             });
           }
-        } else {
-          // 如果不存在，则创建新的权限关联
-          await createRolePermission({
-            role_id: selectedRole.role_id,
-            permission_id: permissionId,
-            tenant_id: selectedRole.tenant_id,
-            is_deleted: 0,
-          } as RolePermissionType);
+        }
+      } else if (selectedPermissions.length > 0) {
+        // 如果选择了新的权限
+        // 获取需要移除的权限
+        const removedPermissions = (rolePermissions || []).filter(
+          (rp) => !selectedPermissions.includes(rp.permission_id)
+        );
+
+        // 标记删除旧的权限
+        for (const rp of removedPermissions) {
+          await updateRolePermission(rp.role_permission_id, {
+            ...rp,
+            is_deleted: 1,
+          });
+        }
+
+        // 添加新的权限
+        for (const permissionId of selectedPermissions) {
+          // 检查权限是否已存在（包括已删除的记录）
+          const existingPermission = allRolePermissions.find(
+            (rp) => rp.permission_id === permissionId
+          );
+
+          if (existingPermission) {
+            // 如果存在但被标记删除，则重新启用
+            if (existingPermission.is_deleted === 1) {
+              await updateRolePermission(
+                existingPermission.role_permission_id,
+                {
+                  ...existingPermission,
+                  is_deleted: 0,
+                }
+              );
+            }
+          } else {
+            // 如果不存在，则创建新的权限关联
+            await createRolePermission({
+              role_id: selectedRole.role_id,
+              permission_id: permissionId,
+              tenant_id: selectedRole.tenant_id,
+              is_deleted: 0,
+            } as RolePermissionType);
+          }
         }
       }
 

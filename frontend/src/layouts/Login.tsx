@@ -34,6 +34,7 @@ function Login() {
           localStorage.setItem("user_id", data.user_id);
           localStorage.setItem("tenant_id", data.tenant_id);
           localStorage.setItem("roles", JSON.stringify(data.roles));
+          localStorage.setItem("roles_id", JSON.stringify(data.roles_id));
           navigate("/home");
         } else {
           setError("无效的响应");

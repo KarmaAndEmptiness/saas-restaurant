@@ -56,7 +56,7 @@ void RestfulRolePermissionCtrlBase::getOneByRoleId(const HttpRequestPtr &req,
     Json::Value ret;
     if (rolePermissions.empty())
     {
-        ret["code"] = k404NotFound;
+        ret["code"] = k200OK;
         ret["message"] = "No resources are found";
         auto resp = HttpResponse::newHttpJsonResponse(ret);
         callback(resp);

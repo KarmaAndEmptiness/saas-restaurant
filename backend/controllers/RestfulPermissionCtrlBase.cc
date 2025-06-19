@@ -442,6 +442,7 @@ RestfulPermissionCtrlBase::RestfulPermissionCtrlBase()
     : RestfulController({"permission_id",
                          "tenant_id",
                          "menu_path",
+                         "permission_code",
                          "permission_name",
                          "created_at",
                          "updated_at",
@@ -456,6 +457,7 @@ RestfulPermissionCtrlBase::RestfulPermissionCtrlBase()
         "permission_id",   // the alias for the permission_id column.
         "tenant_id",       // the alias for the tenant_id column.
         "menu_path",       // the alias for the menu_path column.
+        "permission_code", // the alias for the permission_code column.
         "permission_name", // the alias for the permission_name column.
         "created_at",      // the alias for the created_at column.
         "updated_at",      // the alias for the updated_at column.
