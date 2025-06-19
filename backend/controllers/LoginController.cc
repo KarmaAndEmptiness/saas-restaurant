@@ -129,15 +129,18 @@ void LoginController::tenantLogin(const HttpRequestPtr &req, std::function<void(
     return;
   }
   // 获取用户角色
-  Json::Value list;
-  list.resize(0);
+  Json::Value rolesList;
+  Json::Value rolesIDList;
+  rolesIDList.resize(0);
+  rolesList.resize(0);
   std::vector<std::string> roles;
   for (const auto &userRole : userRoles)
   {
     drogon::orm::Mapper<drogon_model::saas_restaurant::Role> roleMapper(dbClient_);
     drogon_model::saas_restaurant::Role role = roleMapper.findByPrimaryKey(userRole.getValueOfRoleId());
     std::string roleName = role.getValueOfRoleName();
-    list.append(roleName);
+    rolesList.append(roleName);
+    rolesIDList.append(role.getValueOfRoleId());
   }
   response["code"] = k200OK;
   response["message"] = "ok";
@@ -145,7 +148,8 @@ void LoginController::tenantLogin(const HttpRequestPtr &req, std::function<void(
   response["data"]["tenant_id"] = user.getValueOfTenantId();
   response["data"]["user_id"] = user.getValueOfUserId();
   response["data"]["username"] = user.getValueOfUsername();
-  response["data"]["roles"] = list;
+  response["data"]["roles"] = rolesList;
+  response["data"]["roles_id"] = rolesIDList;
 
   auto resp = HttpResponse::newHttpJsonResponse(response);
   callback(resp);

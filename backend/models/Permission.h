@@ -50,6 +50,7 @@ class Permission
         static const std::string _permission_id;
         static const std::string _tenant_id;
         static const std::string _menu_path;
+        static const std::string _permission_code;
         static const std::string _permission_name;
         static const std::string _created_at;
         static const std::string _updated_at;
@@ -132,6 +133,16 @@ class Permission
     void setMenuPath(std::string &&pMenuPath) noexcept;
     void setMenuPathToNull() noexcept;
 
+    /**  For column permission_code  */
+    ///Get the value of the column permission_code, returns the default value if the column is null
+    const std::string &getValueOfPermissionCode() const noexcept;
+    ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
+    const std::shared_ptr<std::string> &getPermissionCode() const noexcept;
+    ///Set the value of the column permission_code
+    void setPermissionCode(const std::string &pPermissionCode) noexcept;
+    void setPermissionCode(std::string &&pPermissionCode) noexcept;
+    void setPermissionCodeToNull() noexcept;
+
     /**  For column permission_name  */
     ///Get the value of the column permission_name, returns the default value if the column is null
     const std::string &getValueOfPermissionName() const noexcept;
@@ -170,7 +181,7 @@ class Permission
     void setIsDeletedToNull() noexcept;
 
 
-    static size_t getColumnNumber() noexcept {  return 7;  }
+    static size_t getColumnNumber() noexcept {  return 8;  }
     static const std::string &getColumnName(size_t index) noexcept(false);
 
     Json::Value toJson() const;
@@ -202,6 +213,7 @@ class Permission
     std::shared_ptr<uint32_t> permissionId_;
     std::shared_ptr<uint32_t> tenantId_;
     std::shared_ptr<std::string> menuPath_;
+    std::shared_ptr<std::string> permissionCode_;
     std::shared_ptr<std::string> permissionName_;
     std::shared_ptr<::trantor::Date> createdAt_;
     std::shared_ptr<::trantor::Date> updatedAt_;
@@ -217,7 +229,7 @@ class Permission
         const bool notNull_;
     };
     static const std::vector<MetaData> metaData_;
-    bool dirtyFlag_[7]={ false };
+    bool dirtyFlag_[8]={ false };
   public:
     static const std::string &sqlForFindingByPrimaryKey()
     {
@@ -249,22 +261,27 @@ class Permission
         }
         if(dirtyFlag_[3])
         {
+            sql += "permission_code,";
+            ++parametersCount;
+        }
+        if(dirtyFlag_[4])
+        {
             sql += "permission_name,";
             ++parametersCount;
         }
         sql += "created_at,";
         ++parametersCount;
-        if(!dirtyFlag_[4])
+        if(!dirtyFlag_[5])
         {
             needSelection=true;
         }
         sql += "updated_at,";
         ++parametersCount;
-        if(!dirtyFlag_[5])
+        if(!dirtyFlag_[6])
         {
             needSelection=true;
         }
-        if(dirtyFlag_[6])
+        if(dirtyFlag_[7])
         {
             sql += "is_deleted,";
             ++parametersCount;
@@ -299,10 +316,6 @@ class Permission
             sql.append("?,");
 
         }
-        else
-        {
-            sql +="default,";
-        }
         if(dirtyFlag_[5])
         {
             sql.append("?,");
@@ -313,6 +326,15 @@ class Permission
             sql +="default,";
         }
         if(dirtyFlag_[6])
+        {
+            sql.append("?,");
+
+        }
+        else
+        {
+            sql +="default,";
+        }
+        if(dirtyFlag_[7])
         {
             sql.append("?,");
 

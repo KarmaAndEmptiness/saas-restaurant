@@ -17,6 +17,7 @@ export interface tenantLoginResponse extends tenantAdminLoginResponse
 {
     user_id: string;
     tenant_id: string;
+    roles_id: number[];
 }
 //租户管理员登录
 export const tenantAdminLogin = (data:TenantAdminLoginParam) => {

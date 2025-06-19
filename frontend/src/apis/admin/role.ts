@@ -26,6 +26,7 @@ export interface PermissionType{
     menu_path: string;
     permission_id: number;
     permission_name: string;
+    permission_code: "user_admin"|"front_admin"|"inventory_admin"|"marketing_admin"|"accounts_admin"|"kitchen_admin";
     tenant_id: number;
     updated_at: string;
 }
