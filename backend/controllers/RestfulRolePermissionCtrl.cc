@@ -8,7 +8,6 @@
 #include "RestfulRolePermissionCtrl.h"
 #include <string>
 
-
 void RestfulRolePermissionCtrl::getOne(const HttpRequestPtr &req,
                                        std::function<void(const HttpResponsePtr &)> &&callback,
                                        RolePermission::PrimaryKeyType &&id)
@@ -16,6 +15,12 @@ void RestfulRolePermissionCtrl::getOne(const HttpRequestPtr &req,
     RestfulRolePermissionCtrlBase::getOne(req, std::move(callback), std::move(id));
 }
 
+void RestfulRolePermissionCtrl::getOneByRoleId(const HttpRequestPtr &req,
+                                               std::function<void(const HttpResponsePtr &)> &&callback,
+                                               std::string &&roleId)
+{
+    RestfulRolePermissionCtrlBase::getOneByRoleId(req, std::move(callback), std::move(roleId));
+}
 
 void RestfulRolePermissionCtrl::updateOne(const HttpRequestPtr &req,
                                           std::function<void(const HttpResponsePtr &)> &&callback,
@@ -23,7 +28,6 @@ void RestfulRolePermissionCtrl::updateOne(const HttpRequestPtr &req,
 {
     RestfulRolePermissionCtrlBase::updateOne(req, std::move(callback), std::move(id));
 }
-
 
 void RestfulRolePermissionCtrl::deleteOne(const HttpRequestPtr &req,
                                           std::function<void(const HttpResponsePtr &)> &&callback,

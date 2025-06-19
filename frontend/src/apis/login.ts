@@ -11,6 +11,7 @@ export interface tenantAdminLoginResponse
 {
     token: string;
     username: string;
+    roles:string[];
 }
 export interface tenantLoginResponse extends tenantAdminLoginResponse
 {
