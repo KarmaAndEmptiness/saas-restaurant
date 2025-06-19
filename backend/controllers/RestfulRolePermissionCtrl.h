@@ -23,6 +23,7 @@ class RestfulRolePermissionCtrl : public drogon::HttpController<RestfulRolePermi
 public:
   METHOD_LIST_BEGIN
   ADD_METHOD_TO(RestfulRolePermissionCtrl::getOne, "/api/rolepermission/{1}", Get, Options, "AuthFilter");
+  ADD_METHOD_TO(RestfulRolePermissionCtrl::getOneByRoleId, "/api/rolepermission/role/{1}", Get, Options, "AuthFilter");
   ADD_METHOD_TO(RestfulRolePermissionCtrl::updateOne, "/api/rolepermission/{1}", Put, Options, "AuthFilter");
   ADD_METHOD_TO(RestfulRolePermissionCtrl::deleteOne, "/api/rolepermission/{1}", Delete, Options, "AuthFilter");
   ADD_METHOD_TO(RestfulRolePermissionCtrl::get, "/api/rolepermission", Get, Options, "AuthFilter");
@@ -33,6 +34,8 @@ public:
   void getOne(const HttpRequestPtr &req,
               std::function<void(const HttpResponsePtr &)> &&callback,
               RolePermission::PrimaryKeyType &&id);
+  void getOneByRoleId(const HttpRequestPtr &req,
+                      std::function<void(const HttpResponsePtr &)> &&callback, std::string &&roleId);
   void updateOne(const HttpRequestPtr &req,
                  std::function<void(const HttpResponsePtr &)> &&callback,
                  RolePermission::PrimaryKeyType &&id);

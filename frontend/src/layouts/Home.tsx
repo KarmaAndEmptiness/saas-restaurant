@@ -12,18 +12,21 @@ interface Navigation {
 }
 
 const navs: Navigation[] = [
-  { name: "租户管理", path: "/home/tenant" },
   { name: "员工管理", path: "/home/staff" },
   { name: "角色管理", path: "/home/role" },
   { name: "菜品管理", path: "/home/goods" },
   { name: "分店管理", path: "/home/branch" },
   { name: "客户下单", path: "/home/place-order" },
   { name: "订单列表", path: "/home/order-list" },
-  // { name: "客户管理", path: "/home/client" },
   { name: "会员管理", path: "/home/member" },
   { name: "库存管理", path: "/home/inventory" },
   { name: "报表中心", path: "/home/report" },
   { name: "会员营销", path: "/home/campaign" },
+];
+
+const adminNavs: Navigation[] = [
+  { name: "租户管理", path: "/home/tenant" },
+  ...navs,
 ];
 
 const userNavs: Navigation[] = [
@@ -41,8 +44,8 @@ function classNames(...classes: string[]) {
 function Home() {
   const [currentNav, setCurrentNav] = useState(navs[0]);
   const [userInfo, setUserInfo] = useState<UserInfo>();
+  const [displayNavs, setDisplayNavs] = useState<Navigation[]>([]);
 
-  // 修改 handleNavClick 的定义方式
   const handleNavClick = useCallback((item: Navigation) => {
     if (item.path === "/") {
       localStorage.removeItem("token");
@@ -61,7 +64,16 @@ function Home() {
       }
     };
     fetchUserInfo();
+
+    // 获取角色信息并设置导航菜单
+    const roles = JSON.parse(localStorage.getItem("roles") || "[]");
+    if (roles.includes("system_admin")) {
+      setDisplayNavs(adminNavs);
+    } else {
+      setDisplayNavs(navs);
+    }
   }, []);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Disclosure as="nav" className="bg-white shadow-sm">
@@ -75,7 +87,7 @@ function Home() {
                     <img className="h-8 w-auto" src={logo} alt="餐饮管理" />
                   </div>
                   <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                    {navs.map((item) => (
+                    {displayNavs.map((item) => (
                       <NavLink
                         key={item.name}
                         to={item.path}
@@ -161,7 +173,7 @@ function Home() {
             {/* Mobile menu */}
             <Disclosure.Panel className="sm:hidden">
               <div className="space-y-1 pb-3 pt-2">
-                {navs.map((item) => (
+                {displayNavs.map((item) => (
                   <Disclosure.Button
                     key={item.name}
                     as={NavLink}

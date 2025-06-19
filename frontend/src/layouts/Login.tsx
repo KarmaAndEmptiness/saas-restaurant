@@ -22,8 +22,7 @@ function Login() {
         const data = await tenantAdminLogin({ username, password });
         if (data.token) {
           localStorage.setItem("token", data.token);
-          localStorage.setItem("user_id", data.user_id);
-          localStorage.setItem("tenant_id", data.tenant_id);
+          localStorage.setItem("roles", JSON.stringify(data.roles));
           navigate("/home");
         } else {
           setError("无效的响应");
@@ -34,6 +33,7 @@ function Login() {
           localStorage.setItem("token", data.token);
           localStorage.setItem("user_id", data.user_id);
           localStorage.setItem("tenant_id", data.tenant_id);
+          localStorage.setItem("roles", JSON.stringify(data.roles));
           navigate("/home");
         } else {
           setError("无效的响应");
