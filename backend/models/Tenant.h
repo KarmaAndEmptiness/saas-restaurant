@@ -45,10 +45,8 @@ class Inventory;
 class MarketingCampaign;
 class Member;
 class MemberLevel;
-class Menu;
 class OrderTable;
 class Permission;
-class PermissionCategory;
 class Role;
 class RolePermission;
 class User;
@@ -255,10 +253,6 @@ class Tenant
     void getMembers(const drogon::orm::DbClientPtr &clientPtr,
                     const std::function<void(std::vector<Member>)> &rcb,
                     const drogon::orm::ExceptionCallback &ecb) const;
-    std::vector<Menu> getMenus(const drogon::orm::DbClientPtr &clientPtr) const;
-    void getMenus(const drogon::orm::DbClientPtr &clientPtr,
-                  const std::function<void(std::vector<Menu>)> &rcb,
-                  const drogon::orm::ExceptionCallback &ecb) const;
     std::vector<OrderTable> getOrders(const drogon::orm::DbClientPtr &clientPtr) const;
     void getOrders(const drogon::orm::DbClientPtr &clientPtr,
                    const std::function<void(std::vector<OrderTable>)> &rcb,
@@ -267,10 +261,6 @@ class Tenant
     void getPermissions(const drogon::orm::DbClientPtr &clientPtr,
                         const std::function<void(std::vector<Permission>)> &rcb,
                         const drogon::orm::ExceptionCallback &ecb) const;
-    std::vector<PermissionCategory> getPermission_categories(const drogon::orm::DbClientPtr &clientPtr) const;
-    void getPermission_categories(const drogon::orm::DbClientPtr &clientPtr,
-                                  const std::function<void(std::vector<PermissionCategory>)> &rcb,
-                                  const drogon::orm::ExceptionCallback &ecb) const;
   private:
     friend drogon::orm::Mapper<Tenant>;
     friend drogon::orm::BaseBuilder<Tenant, true, true>;

@@ -13,10 +13,8 @@
 #include "MarketingCampaign.h"
 #include "Member.h"
 #include "MemberLevel.h"
-#include "Menu.h"
 #include "OrderTable.h"
 #include "Permission.h"
-#include "PermissionCategory.h"
 #include "Role.h"
 #include "RolePermission.h"
 #include "User.h"
@@ -2226,42 +2224,6 @@ void Tenant::getMembers(const DbClientPtr &clientPtr,
                }
                >> ecb;
 }
-std::vector<Menu> Tenant::getMenus(const DbClientPtr &clientPtr) const {
-    static const std::string sql = "select * from menu where tenant_id = ?";
-    Result r(nullptr);
-    {
-        auto binder = *clientPtr << sql;
-        binder << *tenantId_ << Mode::Blocking >>
-            [&r](const Result &result) { r = result; };
-        binder.exec();
-    }
-    std::vector<Menu> ret;
-    ret.reserve(r.size());
-    for (auto const &row : r)
-    {
-        ret.emplace_back(Menu(row));
-    }
-    return ret;
-}
-
-void Tenant::getMenus(const DbClientPtr &clientPtr,
-                      const std::function<void(std::vector<Menu>)> &rcb,
-                      const ExceptionCallback &ecb) const
-{
-    static const std::string sql = "select * from menu where tenant_id = ?";
-    *clientPtr << sql
-               << *tenantId_
-               >> [rcb = std::move(rcb)](const Result &r){
-                   std::vector<Menu> ret;
-                   ret.reserve(r.size());
-                   for (auto const &row : r)
-                   {
-                       ret.emplace_back(Menu(row));
-                   }
-                   rcb(ret);
-               }
-               >> ecb;
-}
 std::vector<OrderTable> Tenant::getOrders(const DbClientPtr &clientPtr) const {
     static const std::string sql = "select * from order_table where tenant_id = ?";
     Result r(nullptr);
@@ -2329,42 +2291,6 @@ void Tenant::getPermissions(const DbClientPtr &clientPtr,
                    for (auto const &row : r)
                    {
                        ret.emplace_back(Permission(row));
-                   }
-                   rcb(ret);
-               }
-               >> ecb;
-}
-std::vector<PermissionCategory> Tenant::getPermission_categories(const DbClientPtr &clientPtr) const {
-    static const std::string sql = "select * from permission_category where tenant_id = ?";
-    Result r(nullptr);
-    {
-        auto binder = *clientPtr << sql;
-        binder << *tenantId_ << Mode::Blocking >>
-            [&r](const Result &result) { r = result; };
-        binder.exec();
-    }
-    std::vector<PermissionCategory> ret;
-    ret.reserve(r.size());
-    for (auto const &row : r)
-    {
-        ret.emplace_back(PermissionCategory(row));
-    }
-    return ret;
-}
-
-void Tenant::getPermission_categories(const DbClientPtr &clientPtr,
-                                      const std::function<void(std::vector<PermissionCategory>)> &rcb,
-                                      const ExceptionCallback &ecb) const
-{
-    static const std::string sql = "select * from permission_category where tenant_id = ?";
-    *clientPtr << sql
-               << *tenantId_
-               >> [rcb = std::move(rcb)](const Result &r){
-                   std::vector<PermissionCategory> ret;
-                   ret.reserve(r.size());
-                   for (auto const &row : r)
-                   {
-                       ret.emplace_back(PermissionCategory(row));
                    }
                    rcb(ret);
                }

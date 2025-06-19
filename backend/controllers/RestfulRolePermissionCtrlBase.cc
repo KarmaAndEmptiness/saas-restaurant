@@ -58,7 +58,7 @@ void RestfulRolePermissionCtrlBase::getOneByRoleId(const HttpRequestPtr &req,
     {
         ret["code"] = k404NotFound;
         ret["message"] = "No resources are found";
-        auto resp = HttpResponse::newHttpResponse();
+        auto resp = HttpResponse::newHttpJsonResponse(ret);
         callback(resp);
         return;
     }
@@ -163,7 +163,7 @@ void RestfulRolePermissionCtrlBase::updateOne(const HttpRequestPtr &req,
             if (count == 1)
             {
                 Json::Value ret;
-                ret["code"] = k500InternalServerError;
+                ret["code"] = k200OK;
                 ret["message"] = "ok";
                 auto resp = HttpResponse::newHttpJsonResponse(ret);
                 (*callbackPtr)(resp);
@@ -439,8 +439,7 @@ void RestfulRolePermissionCtrlBase::create(const HttpRequestPtr &req,
                 ret["message"] = "ok";
                 ret["data"][RolePermission::primaryKeyName] =
                     newObject.getPrimaryKey();
-                (*callbackPtr)(HttpResponse::newHttpJsonResponse(
-                    makeJson(req, newObject)));
+                (*callbackPtr)(HttpResponse::newHttpJsonResponse(ret));
             },
             [callbackPtr](const DrogonDbException &e)
             {

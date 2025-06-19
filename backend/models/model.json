@@ -172,16 +172,6 @@
                 "original_table_name": "tenant",
                 "original_table_alias": "",
                 "original_key": "tenant_id",
-                "target_table_name": "menu",
-                "target_table_alias": "menus",
-                "target_key": "tenant_id",
-                "enable_reverse": true
-            },
-            {
-                "type": "has many",
-                "original_table_name": "tenant",
-                "original_table_alias": "",
-                "original_key": "tenant_id",
                 "target_table_name": "order_table",
                 "target_table_alias": "orders",
                 "target_key": "tenant_id",
@@ -197,17 +187,7 @@
                 "target_key": "tenant_id",
                 "enable_reverse": true
             },
-            {
-                "type": "has many",
-                "original_table_name": "tenant",
-                "original_table_alias": "",
-                "original_key": "tenant_id",
-                "target_table_name": "permission_category",
-                "target_table_alias": "permission_categories",
-                "target_key": "tenant_id",
-                "enable_reverse": true
-            },
-
+            
 
             {
                 "type": "has many",
@@ -265,28 +245,6 @@
 
             {
                 "type": "has many",
-                "original_table_name": "menu",
-                "original_table_alias": "parent",
-                "original_key": "menu_id",
-                "target_table_name": "menu",
-                "target_table_alias": "menus",
-                "target_key": "parent_id",
-                "enable_reverse": true
-            },
-
-            {
-                "type": "has many",
-                "original_table_name": "menu",
-                "original_table_alias": "",
-                "original_key": "menu_id",
-                "target_table_name": "permission",
-                "target_table_alias": "permissions",
-                "target_key": "menu_id",
-                "enable_reverse": true
-            },
-
-            {
-                "type": "has many",
                 "original_table_name": "user",
                 "original_table_alias": "",
                 "original_key": "user_id",
@@ -296,16 +254,6 @@
                 "enable_reverse": true
             },
 
-            {
-                "type": "has many",
-                "original_table_name": "permission_category",
-                "original_table_alias": "",
-                "original_key": "category_id",
-                "target_table_name": "permission",
-                "target_table_alias": "permissions",
-                "target_key": "permission_category_id",
-                "enable_reverse": true
-            },
             {
                 "type": "has many",
                 "original_table_name": "inventory",

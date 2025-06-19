@@ -5,13 +5,25 @@ import {
   updateRole,
   deleteRole,
   type RoleType,
+  getPermissions,
+  createRolePermission,
+  updateRolePermission,
+  getRolePermissionsByRoleId,
+  type RolePermissionType,
+  type PermissionType,
 } from "@/apis/admin/role";
 
 function Role() {
   const [roles, setRoles] = useState<RoleType[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showPermissionModal, setShowPermissionModal] = useState(false);
   const [selectedRole, setSelectedRole] = useState<RoleType | null>(null);
+  const [permissions, setPermissions] = useState<PermissionType[]>([]);
+  const [rolePermissions, setRolePermissions] = useState<RolePermissionType[]>(
+    []
+  );
+  const [selectedPermissions, setSelectedPermissions] = useState<number[]>([]);
   const [formData, setFormData] = useState({
     role_name: "",
     description: "",
@@ -20,6 +32,7 @@ function Role() {
 
   useEffect(() => {
     fetchRoles();
+    fetchPermissions();
   }, []);
 
   useEffect(() => {
@@ -47,6 +60,91 @@ function Role() {
     }
   };
 
+  const fetchPermissions = async () => {
+    try {
+      const data = await getPermissions();
+      setPermissions(data);
+    } catch (error) {
+      console.error("获取权限列表失败:", error);
+    }
+  };
+
+  const fetchRolePermissions = async (roleId: number) => {
+    try {
+      const data = await getRolePermissionsByRoleId(roleId);
+      const activePermissions = data.filter((rp) => rp.is_deleted === 0);
+      setRolePermissions(activePermissions);
+      setSelectedPermissions(activePermissions.map((rp) => rp.permission_id));
+    } catch (error) {
+      console.error("获取角色权限失败:", error);
+    }
+  };
+
+  const handlePermissionChange = (permissionId: number) => {
+    setSelectedPermissions((prev) =>
+      prev.includes(permissionId)
+        ? prev.filter((id) => id !== permissionId)
+        : [...prev, permissionId]
+    );
+  };
+
+  const handleSavePermissions = async () => {
+    if (!selectedRole) return;
+
+    try {
+      // 获取需要移除的权限
+      const removedPermissions = rolePermissions.filter(
+        (rp) => !selectedPermissions.includes(rp.permission_id)
+      );
+
+      // 标记删除旧的权限
+      for (const rp of removedPermissions) {
+        await updateRolePermission(rp.role_permission_id, {
+          ...rp,
+          is_deleted: 1,
+        });
+      }
+
+      // 获取当前所有角色权限（包括已删除的）
+      const allRolePermissions = await getRolePermissionsByRoleId(
+        selectedRole.role_id
+      );
+
+      // 添加新的权限
+      for (const permissionId of selectedPermissions) {
+        // 检查权限是否已存在（包括已删除的记录）
+        const existingPermission = allRolePermissions.find(
+          (rp) => rp.permission_id === permissionId
+        );
+
+        if (existingPermission) {
+          // 如果存在但被标记删除，则重新启用
+          if (existingPermission.is_deleted === 1) {
+            await updateRolePermission(existingPermission.role_permission_id, {
+              ...existingPermission,
+              is_deleted: 0,
+            });
+          }
+        } else {
+          // 如果不存在，则创建新的权限关联
+          await createRolePermission({
+            role_id: selectedRole.role_id,
+            permission_id: permissionId,
+            tenant_id: selectedRole.tenant_id,
+            is_deleted: 0,
+          } as RolePermissionType);
+        }
+      }
+
+      setShowPermissionModal(false);
+      setSelectedRole(null);
+      setSelectedPermissions([]);
+      setRolePermissions([]);
+    } catch (error) {
+      console.error("保存权限失败:", error);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -66,7 +164,6 @@ function Role() {
       setShowModal(false);
       setSelectedRole(null);
       setFormData({
-        // 添加这几行来重置表单
         role_name: "",
         description: "",
         status: "启用",
@@ -87,6 +184,21 @@ function Role() {
         console.error("删除角色失败:", error);
       }
     }
+  };
+
+  const handleOpenPermissionModal = async (role: RoleType) => {
+    setSelectedRole(role);
+    setSelectedPermissions([]); // 重置选中的权限
+    setRolePermissions([]); // 重置角色权限
+    setShowPermissionModal(true);
+    await fetchRolePermissions(role.role_id);
+  };
+
+  const handleClosePermissionModal = () => {
+    setShowPermissionModal(false);
+    setSelectedRole(null);
+    setSelectedPermissions([]);
+    setRolePermissions([]);
   };
 
   return (
@@ -182,9 +294,15 @@ function Role() {
                       setSelectedRole(role);
                       setShowDeleteModal(true);
                     }}
-                    className="text-red-600 hover:text-red-900"
+                    className="text-red-600 hover:text-red-900 mr-4"
                   >
                     删除
+                  </button>
+                  <button
+                    onClick={() => handleOpenPermissionModal(role)}
+                    className="text-green-600 hover:text-green-900"
+                  >
+                    权限设置
                   </button>
                 </td>
               </tr>
@@ -316,6 +434,79 @@ function Role() {
                 className="px-4 py-2 border border-transparent rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700"
               >
                 删除
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Permission Management Modal */}
+      {showPermissionModal && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium">
+                权限管理 - {selectedRole?.role_name}
+              </h3>
+              <button
+                onClick={handleClosePermissionModal}
+                className="text-gray-400 hover:text-gray-500"
+              >
+                <svg
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <div className="max-h-96 overflow-y-auto">
+              {permissions.map((permission) => (
+                <div
+                  key={permission.permission_id}
+                  className="flex items-center mb-2"
+                >
+                  <input
+                    type="checkbox"
+                    id={`permission-${permission.permission_id}`}
+                    checked={selectedPermissions.includes(
+                      permission.permission_id
+                    )}
+                    onChange={() =>
+                      handlePermissionChange(permission.permission_id)
+                    }
+                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  />
+                  <label
+                    htmlFor={`permission-${permission.permission_id}`}
+                    className="ml-2 block text-sm text-gray-900"
+                  >
+                    {permission.permission_name}
+                  </label>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                onClick={handleClosePermissionModal}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleSavePermissions}
+                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
+              >
+                保存权限
               </button>
             </div>
           </div>
