@@ -6,8 +6,6 @@
  */
 
 #include "Permission.h"
-#include "Menu.h"
-#include "PermissionCategory.h"
 #include "Role.h"
 #include "RolePermission.h"
 #include "Tenant.h"
@@ -20,12 +18,11 @@ using namespace drogon_model::saas_restaurant;
 
 const std::string Permission::Cols::_permission_id = "permission_id";
 const std::string Permission::Cols::_tenant_id = "tenant_id";
-const std::string Permission::Cols::_menu_id = "menu_id";
+const std::string Permission::Cols::_menu_path = "menu_path";
 const std::string Permission::Cols::_permission_name = "permission_name";
-const std::string Permission::Cols::_permission_category_id = "permission_category_id";
 const std::string Permission::Cols::_created_at = "created_at";
 const std::string Permission::Cols::_updated_at = "updated_at";
-const std::string Permission::Cols::_status = "status";
+const std::string Permission::Cols::_is_deleted = "is_deleted";
 const std::string Permission::primaryKeyName = "permission_id";
 const bool Permission::hasPrimaryKey = true;
 const std::string Permission::tableName = "permission";
@@ -33,12 +30,11 @@ const std::string Permission::tableName = "permission";
 const std::vector<typename Permission::MetaData> Permission::metaData_={
 {"permission_id","uint32_t","int(10) unsigned",4,1,1,1},
 {"tenant_id","uint32_t","int(10) unsigned",4,0,0,0},
-{"menu_id","uint32_t","int(10) unsigned",4,0,0,0},
+{"menu_path","std::string","varchar(255)",255,0,0,0},
 {"permission_name","std::string","varchar(255)",255,0,0,0},
-{"permission_category_id","uint32_t","int(10) unsigned",4,0,0,0},
 {"created_at","::trantor::Date","timestamp",0,0,0,0},
 {"updated_at","::trantor::Date","timestamp",0,0,0,0},
-{"status","std::string","varchar(50)",50,0,0,0}
+{"is_deleted","int8_t","tinyint(1)",1,0,0,0}
 };
 const std::string &Permission::getColumnName(size_t index) noexcept(false)
 {
@@ -57,17 +53,13 @@ Permission::Permission(const Row &r, const ssize_t indexOffset) noexcept
         {
             tenantId_=std::make_shared<uint32_t>(r["tenant_id"].as<uint32_t>());
         }
-        if(!r["menu_id"].isNull())
+        if(!r["menu_path"].isNull())
         {
-            menuId_=std::make_shared<uint32_t>(r["menu_id"].as<uint32_t>());
+            menuPath_=std::make_shared<std::string>(r["menu_path"].as<std::string>());
         }
         if(!r["permission_name"].isNull())
         {
             permissionName_=std::make_shared<std::string>(r["permission_name"].as<std::string>());
-        }
-        if(!r["permission_category_id"].isNull())
-        {
-            permissionCategoryId_=std::make_shared<uint32_t>(r["permission_category_id"].as<uint32_t>());
         }
         if(!r["created_at"].isNull())
         {
@@ -113,15 +105,15 @@ Permission::Permission(const Row &r, const ssize_t indexOffset) noexcept
                 updatedAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
             }
         }
-        if(!r["status"].isNull())
+        if(!r["is_deleted"].isNull())
         {
-            status_=std::make_shared<std::string>(r["status"].as<std::string>());
+            isDeleted_=std::make_shared<int8_t>(r["is_deleted"].as<int8_t>());
         }
     }
     else
     {
         size_t offset = (size_t)indexOffset;
-        if(offset + 8 > r.size())
+        if(offset + 7 > r.size())
         {
             LOG_FATAL << "Invalid SQL result for this model";
             return;
@@ -140,7 +132,7 @@ Permission::Permission(const Row &r, const ssize_t indexOffset) noexcept
         index = offset + 2;
         if(!r[index].isNull())
         {
-            menuId_=std::make_shared<uint32_t>(r[index].as<uint32_t>());
+            menuPath_=std::make_shared<std::string>(r[index].as<std::string>());
         }
         index = offset + 3;
         if(!r[index].isNull())
@@ -148,11 +140,6 @@ Permission::Permission(const Row &r, const ssize_t indexOffset) noexcept
             permissionName_=std::make_shared<std::string>(r[index].as<std::string>());
         }
         index = offset + 4;
-        if(!r[index].isNull())
-        {
-            permissionCategoryId_=std::make_shared<uint32_t>(r[index].as<uint32_t>());
-        }
-        index = offset + 5;
         if(!r[index].isNull())
         {
             auto timeStr = r[index].as<std::string>();
@@ -175,7 +162,7 @@ Permission::Permission(const Row &r, const ssize_t indexOffset) noexcept
                 createdAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
             }
         }
-        index = offset + 6;
+        index = offset + 5;
         if(!r[index].isNull())
         {
             auto timeStr = r[index].as<std::string>();
@@ -198,10 +185,10 @@ Permission::Permission(const Row &r, const ssize_t indexOffset) noexcept
                 updatedAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
             }
         }
-        index = offset + 7;
+        index = offset + 6;
         if(!r[index].isNull())
         {
-            status_=std::make_shared<std::string>(r[index].as<std::string>());
+            isDeleted_=std::make_shared<int8_t>(r[index].as<int8_t>());
         }
     }
 
@@ -209,7 +196,7 @@ Permission::Permission(const Row &r, const ssize_t indexOffset) noexcept
 
 Permission::Permission(const Json::Value &pJson, const std::vector<std::string> &pMasqueradingVector) noexcept(false)
 {
-    if(pMasqueradingVector.size() != 8)
+    if(pMasqueradingVector.size() != 7)
     {
         LOG_ERROR << "Bad masquerading vector";
         return;
@@ -235,7 +222,7 @@ Permission::Permission(const Json::Value &pJson, const std::vector<std::string> 
         dirtyFlag_[2] = true;
         if(!pJson[pMasqueradingVector[2]].isNull())
         {
-            menuId_=std::make_shared<uint32_t>((uint32_t)pJson[pMasqueradingVector[2]].asUInt64());
+            menuPath_=std::make_shared<std::string>(pJson[pMasqueradingVector[2]].asString());
         }
     }
     if(!pMasqueradingVector[3].empty() && pJson.isMember(pMasqueradingVector[3]))
@@ -251,7 +238,25 @@ Permission::Permission(const Json::Value &pJson, const std::vector<std::string> 
         dirtyFlag_[4] = true;
         if(!pJson[pMasqueradingVector[4]].isNull())
         {
-            permissionCategoryId_=std::make_shared<uint32_t>((uint32_t)pJson[pMasqueradingVector[4]].asUInt64());
+            auto timeStr = pJson[pMasqueradingVector[4]].asString();
+            struct tm stm;
+            memset(&stm,0,sizeof(stm));
+            auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
+            time_t t = mktime(&stm);
+            size_t decimalNum = 0;
+            if(p)
+            {
+                if(*p=='.')
+                {
+                    std::string decimals(p+1,&timeStr[timeStr.length()]);
+                    while(decimals.length()<6)
+                    {
+                        decimals += "0";
+                    }
+                    decimalNum = (size_t)atol(decimals.c_str());
+                }
+                createdAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
+            }
         }
     }
     if(!pMasqueradingVector[5].empty() && pJson.isMember(pMasqueradingVector[5]))
@@ -276,7 +281,7 @@ Permission::Permission(const Json::Value &pJson, const std::vector<std::string> 
                     }
                     decimalNum = (size_t)atol(decimals.c_str());
                 }
-                createdAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
+                updatedAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
             }
         }
     }
@@ -285,33 +290,7 @@ Permission::Permission(const Json::Value &pJson, const std::vector<std::string> 
         dirtyFlag_[6] = true;
         if(!pJson[pMasqueradingVector[6]].isNull())
         {
-            auto timeStr = pJson[pMasqueradingVector[6]].asString();
-            struct tm stm;
-            memset(&stm,0,sizeof(stm));
-            auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
-            time_t t = mktime(&stm);
-            size_t decimalNum = 0;
-            if(p)
-            {
-                if(*p=='.')
-                {
-                    std::string decimals(p+1,&timeStr[timeStr.length()]);
-                    while(decimals.length()<6)
-                    {
-                        decimals += "0";
-                    }
-                    decimalNum = (size_t)atol(decimals.c_str());
-                }
-                updatedAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
-            }
-        }
-    }
-    if(!pMasqueradingVector[7].empty() && pJson.isMember(pMasqueradingVector[7]))
-    {
-        dirtyFlag_[7] = true;
-        if(!pJson[pMasqueradingVector[7]].isNull())
-        {
-            status_=std::make_shared<std::string>(pJson[pMasqueradingVector[7]].asString());
+            isDeleted_=std::make_shared<int8_t>((int8_t)pJson[pMasqueradingVector[6]].asInt64());
         }
     }
 }
@@ -334,12 +313,12 @@ Permission::Permission(const Json::Value &pJson) noexcept(false)
             tenantId_=std::make_shared<uint32_t>((uint32_t)pJson["tenant_id"].asUInt64());
         }
     }
-    if(pJson.isMember("menu_id"))
+    if(pJson.isMember("menu_path"))
     {
         dirtyFlag_[2]=true;
-        if(!pJson["menu_id"].isNull())
+        if(!pJson["menu_path"].isNull())
         {
-            menuId_=std::make_shared<uint32_t>((uint32_t)pJson["menu_id"].asUInt64());
+            menuPath_=std::make_shared<std::string>(pJson["menu_path"].asString());
         }
     }
     if(pJson.isMember("permission_name"))
@@ -350,17 +329,9 @@ Permission::Permission(const Json::Value &pJson) noexcept(false)
             permissionName_=std::make_shared<std::string>(pJson["permission_name"].asString());
         }
     }
-    if(pJson.isMember("permission_category_id"))
-    {
-        dirtyFlag_[4]=true;
-        if(!pJson["permission_category_id"].isNull())
-        {
-            permissionCategoryId_=std::make_shared<uint32_t>((uint32_t)pJson["permission_category_id"].asUInt64());
-        }
-    }
     if(pJson.isMember("created_at"))
     {
-        dirtyFlag_[5]=true;
+        dirtyFlag_[4]=true;
         if(!pJson["created_at"].isNull())
         {
             auto timeStr = pJson["created_at"].asString();
@@ -386,7 +357,7 @@ Permission::Permission(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("updated_at"))
     {
-        dirtyFlag_[6]=true;
+        dirtyFlag_[5]=true;
         if(!pJson["updated_at"].isNull())
         {
             auto timeStr = pJson["updated_at"].asString();
@@ -410,12 +381,12 @@ Permission::Permission(const Json::Value &pJson) noexcept(false)
             }
         }
     }
-    if(pJson.isMember("status"))
+    if(pJson.isMember("is_deleted"))
     {
-        dirtyFlag_[7]=true;
-        if(!pJson["status"].isNull())
+        dirtyFlag_[6]=true;
+        if(!pJson["is_deleted"].isNull())
         {
-            status_=std::make_shared<std::string>(pJson["status"].asString());
+            isDeleted_=std::make_shared<int8_t>((int8_t)pJson["is_deleted"].asInt64());
         }
     }
 }
@@ -423,7 +394,7 @@ Permission::Permission(const Json::Value &pJson) noexcept(false)
 void Permission::updateByMasqueradedJson(const Json::Value &pJson,
                                             const std::vector<std::string> &pMasqueradingVector) noexcept(false)
 {
-    if(pMasqueradingVector.size() != 8)
+    if(pMasqueradingVector.size() != 7)
     {
         LOG_ERROR << "Bad masquerading vector";
         return;
@@ -448,7 +419,7 @@ void Permission::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[2] = true;
         if(!pJson[pMasqueradingVector[2]].isNull())
         {
-            menuId_=std::make_shared<uint32_t>((uint32_t)pJson[pMasqueradingVector[2]].asUInt64());
+            menuPath_=std::make_shared<std::string>(pJson[pMasqueradingVector[2]].asString());
         }
     }
     if(!pMasqueradingVector[3].empty() && pJson.isMember(pMasqueradingVector[3]))
@@ -464,7 +435,25 @@ void Permission::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[4] = true;
         if(!pJson[pMasqueradingVector[4]].isNull())
         {
-            permissionCategoryId_=std::make_shared<uint32_t>((uint32_t)pJson[pMasqueradingVector[4]].asUInt64());
+            auto timeStr = pJson[pMasqueradingVector[4]].asString();
+            struct tm stm;
+            memset(&stm,0,sizeof(stm));
+            auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
+            time_t t = mktime(&stm);
+            size_t decimalNum = 0;
+            if(p)
+            {
+                if(*p=='.')
+                {
+                    std::string decimals(p+1,&timeStr[timeStr.length()]);
+                    while(decimals.length()<6)
+                    {
+                        decimals += "0";
+                    }
+                    decimalNum = (size_t)atol(decimals.c_str());
+                }
+                createdAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
+            }
         }
     }
     if(!pMasqueradingVector[5].empty() && pJson.isMember(pMasqueradingVector[5]))
@@ -489,7 +478,7 @@ void Permission::updateByMasqueradedJson(const Json::Value &pJson,
                     }
                     decimalNum = (size_t)atol(decimals.c_str());
                 }
-                createdAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
+                updatedAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
             }
         }
     }
@@ -498,33 +487,7 @@ void Permission::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[6] = true;
         if(!pJson[pMasqueradingVector[6]].isNull())
         {
-            auto timeStr = pJson[pMasqueradingVector[6]].asString();
-            struct tm stm;
-            memset(&stm,0,sizeof(stm));
-            auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
-            time_t t = mktime(&stm);
-            size_t decimalNum = 0;
-            if(p)
-            {
-                if(*p=='.')
-                {
-                    std::string decimals(p+1,&timeStr[timeStr.length()]);
-                    while(decimals.length()<6)
-                    {
-                        decimals += "0";
-                    }
-                    decimalNum = (size_t)atol(decimals.c_str());
-                }
-                updatedAt_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
-            }
-        }
-    }
-    if(!pMasqueradingVector[7].empty() && pJson.isMember(pMasqueradingVector[7]))
-    {
-        dirtyFlag_[7] = true;
-        if(!pJson[pMasqueradingVector[7]].isNull())
-        {
-            status_=std::make_shared<std::string>(pJson[pMasqueradingVector[7]].asString());
+            isDeleted_=std::make_shared<int8_t>((int8_t)pJson[pMasqueradingVector[6]].asInt64());
         }
     }
 }
@@ -546,12 +509,12 @@ void Permission::updateByJson(const Json::Value &pJson) noexcept(false)
             tenantId_=std::make_shared<uint32_t>((uint32_t)pJson["tenant_id"].asUInt64());
         }
     }
-    if(pJson.isMember("menu_id"))
+    if(pJson.isMember("menu_path"))
     {
         dirtyFlag_[2] = true;
-        if(!pJson["menu_id"].isNull())
+        if(!pJson["menu_path"].isNull())
         {
-            menuId_=std::make_shared<uint32_t>((uint32_t)pJson["menu_id"].asUInt64());
+            menuPath_=std::make_shared<std::string>(pJson["menu_path"].asString());
         }
     }
     if(pJson.isMember("permission_name"))
@@ -562,17 +525,9 @@ void Permission::updateByJson(const Json::Value &pJson) noexcept(false)
             permissionName_=std::make_shared<std::string>(pJson["permission_name"].asString());
         }
     }
-    if(pJson.isMember("permission_category_id"))
-    {
-        dirtyFlag_[4] = true;
-        if(!pJson["permission_category_id"].isNull())
-        {
-            permissionCategoryId_=std::make_shared<uint32_t>((uint32_t)pJson["permission_category_id"].asUInt64());
-        }
-    }
     if(pJson.isMember("created_at"))
     {
-        dirtyFlag_[5] = true;
+        dirtyFlag_[4] = true;
         if(!pJson["created_at"].isNull())
         {
             auto timeStr = pJson["created_at"].asString();
@@ -598,7 +553,7 @@ void Permission::updateByJson(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("updated_at"))
     {
-        dirtyFlag_[6] = true;
+        dirtyFlag_[5] = true;
         if(!pJson["updated_at"].isNull())
         {
             auto timeStr = pJson["updated_at"].asString();
@@ -622,12 +577,12 @@ void Permission::updateByJson(const Json::Value &pJson) noexcept(false)
             }
         }
     }
-    if(pJson.isMember("status"))
+    if(pJson.isMember("is_deleted"))
     {
-        dirtyFlag_[7] = true;
-        if(!pJson["status"].isNull())
+        dirtyFlag_[6] = true;
+        if(!pJson["is_deleted"].isNull())
         {
-            status_=std::make_shared<std::string>(pJson["status"].asString());
+            isDeleted_=std::make_shared<int8_t>((int8_t)pJson["is_deleted"].asInt64());
         }
     }
 }
@@ -676,25 +631,30 @@ void Permission::setTenantIdToNull() noexcept
     dirtyFlag_[1] = true;
 }
 
-const uint32_t &Permission::getValueOfMenuId() const noexcept
+const std::string &Permission::getValueOfMenuPath() const noexcept
 {
-    static const uint32_t defaultValue = uint32_t();
-    if(menuId_)
-        return *menuId_;
+    static const std::string defaultValue = std::string();
+    if(menuPath_)
+        return *menuPath_;
     return defaultValue;
 }
-const std::shared_ptr<uint32_t> &Permission::getMenuId() const noexcept
+const std::shared_ptr<std::string> &Permission::getMenuPath() const noexcept
 {
-    return menuId_;
+    return menuPath_;
 }
-void Permission::setMenuId(const uint32_t &pMenuId) noexcept
+void Permission::setMenuPath(const std::string &pMenuPath) noexcept
 {
-    menuId_ = std::make_shared<uint32_t>(pMenuId);
+    menuPath_ = std::make_shared<std::string>(pMenuPath);
     dirtyFlag_[2] = true;
 }
-void Permission::setMenuIdToNull() noexcept
+void Permission::setMenuPath(std::string &&pMenuPath) noexcept
 {
-    menuId_.reset();
+    menuPath_ = std::make_shared<std::string>(std::move(pMenuPath));
+    dirtyFlag_[2] = true;
+}
+void Permission::setMenuPathToNull() noexcept
+{
+    menuPath_.reset();
     dirtyFlag_[2] = true;
 }
 
@@ -725,28 +685,6 @@ void Permission::setPermissionNameToNull() noexcept
     dirtyFlag_[3] = true;
 }
 
-const uint32_t &Permission::getValueOfPermissionCategoryId() const noexcept
-{
-    static const uint32_t defaultValue = uint32_t();
-    if(permissionCategoryId_)
-        return *permissionCategoryId_;
-    return defaultValue;
-}
-const std::shared_ptr<uint32_t> &Permission::getPermissionCategoryId() const noexcept
-{
-    return permissionCategoryId_;
-}
-void Permission::setPermissionCategoryId(const uint32_t &pPermissionCategoryId) noexcept
-{
-    permissionCategoryId_ = std::make_shared<uint32_t>(pPermissionCategoryId);
-    dirtyFlag_[4] = true;
-}
-void Permission::setPermissionCategoryIdToNull() noexcept
-{
-    permissionCategoryId_.reset();
-    dirtyFlag_[4] = true;
-}
-
 const ::trantor::Date &Permission::getValueOfCreatedAt() const noexcept
 {
     static const ::trantor::Date defaultValue = ::trantor::Date();
@@ -761,12 +699,12 @@ const std::shared_ptr<::trantor::Date> &Permission::getCreatedAt() const noexcep
 void Permission::setCreatedAt(const ::trantor::Date &pCreatedAt) noexcept
 {
     createdAt_ = std::make_shared<::trantor::Date>(pCreatedAt);
-    dirtyFlag_[5] = true;
+    dirtyFlag_[4] = true;
 }
 void Permission::setCreatedAtToNull() noexcept
 {
     createdAt_.reset();
-    dirtyFlag_[5] = true;
+    dirtyFlag_[4] = true;
 }
 
 const ::trantor::Date &Permission::getValueOfUpdatedAt() const noexcept
@@ -783,39 +721,34 @@ const std::shared_ptr<::trantor::Date> &Permission::getUpdatedAt() const noexcep
 void Permission::setUpdatedAt(const ::trantor::Date &pUpdatedAt) noexcept
 {
     updatedAt_ = std::make_shared<::trantor::Date>(pUpdatedAt);
-    dirtyFlag_[6] = true;
+    dirtyFlag_[5] = true;
 }
 void Permission::setUpdatedAtToNull() noexcept
 {
     updatedAt_.reset();
-    dirtyFlag_[6] = true;
+    dirtyFlag_[5] = true;
 }
 
-const std::string &Permission::getValueOfStatus() const noexcept
+const int8_t &Permission::getValueOfIsDeleted() const noexcept
 {
-    static const std::string defaultValue = std::string();
-    if(status_)
-        return *status_;
+    static const int8_t defaultValue = int8_t();
+    if(isDeleted_)
+        return *isDeleted_;
     return defaultValue;
 }
-const std::shared_ptr<std::string> &Permission::getStatus() const noexcept
+const std::shared_ptr<int8_t> &Permission::getIsDeleted() const noexcept
 {
-    return status_;
+    return isDeleted_;
 }
-void Permission::setStatus(const std::string &pStatus) noexcept
+void Permission::setIsDeleted(const int8_t &pIsDeleted) noexcept
 {
-    status_ = std::make_shared<std::string>(pStatus);
-    dirtyFlag_[7] = true;
+    isDeleted_ = std::make_shared<int8_t>(pIsDeleted);
+    dirtyFlag_[6] = true;
 }
-void Permission::setStatus(std::string &&pStatus) noexcept
+void Permission::setIsDeletedToNull() noexcept
 {
-    status_ = std::make_shared<std::string>(std::move(pStatus));
-    dirtyFlag_[7] = true;
-}
-void Permission::setStatusToNull() noexcept
-{
-    status_.reset();
-    dirtyFlag_[7] = true;
+    isDeleted_.reset();
+    dirtyFlag_[6] = true;
 }
 
 void Permission::updateId(const uint64_t id)
@@ -827,12 +760,11 @@ const std::vector<std::string> &Permission::insertColumns() noexcept
 {
     static const std::vector<std::string> inCols={
         "tenant_id",
-        "menu_id",
+        "menu_path",
         "permission_name",
-        "permission_category_id",
         "created_at",
         "updated_at",
-        "status"
+        "is_deleted"
     };
     return inCols;
 }
@@ -852,9 +784,9 @@ void Permission::outputArgs(drogon::orm::internal::SqlBinder &binder) const
     }
     if(dirtyFlag_[2])
     {
-        if(getMenuId())
+        if(getMenuPath())
         {
-            binder << getValueOfMenuId();
+            binder << getValueOfMenuPath();
         }
         else
         {
@@ -874,17 +806,6 @@ void Permission::outputArgs(drogon::orm::internal::SqlBinder &binder) const
     }
     if(dirtyFlag_[4])
     {
-        if(getPermissionCategoryId())
-        {
-            binder << getValueOfPermissionCategoryId();
-        }
-        else
-        {
-            binder << nullptr;
-        }
-    }
-    if(dirtyFlag_[5])
-    {
         if(getCreatedAt())
         {
             binder << getValueOfCreatedAt();
@@ -894,7 +815,7 @@ void Permission::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[6])
+    if(dirtyFlag_[5])
     {
         if(getUpdatedAt())
         {
@@ -905,11 +826,11 @@ void Permission::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[7])
+    if(dirtyFlag_[6])
     {
-        if(getStatus())
+        if(getIsDeleted())
         {
-            binder << getValueOfStatus();
+            binder << getValueOfIsDeleted();
         }
         else
         {
@@ -945,10 +866,6 @@ const std::vector<std::string> Permission::updateColumns() const
     {
         ret.push_back(getColumnName(6));
     }
-    if(dirtyFlag_[7])
-    {
-        ret.push_back(getColumnName(7));
-    }
     return ret;
 }
 
@@ -967,9 +884,9 @@ void Permission::updateArgs(drogon::orm::internal::SqlBinder &binder) const
     }
     if(dirtyFlag_[2])
     {
-        if(getMenuId())
+        if(getMenuPath())
         {
-            binder << getValueOfMenuId();
+            binder << getValueOfMenuPath();
         }
         else
         {
@@ -989,17 +906,6 @@ void Permission::updateArgs(drogon::orm::internal::SqlBinder &binder) const
     }
     if(dirtyFlag_[4])
     {
-        if(getPermissionCategoryId())
-        {
-            binder << getValueOfPermissionCategoryId();
-        }
-        else
-        {
-            binder << nullptr;
-        }
-    }
-    if(dirtyFlag_[5])
-    {
         if(getCreatedAt())
         {
             binder << getValueOfCreatedAt();
@@ -1009,7 +915,7 @@ void Permission::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[6])
+    if(dirtyFlag_[5])
     {
         if(getUpdatedAt())
         {
@@ -1020,11 +926,11 @@ void Permission::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[7])
+    if(dirtyFlag_[6])
     {
-        if(getStatus())
+        if(getIsDeleted())
         {
-            binder << getValueOfStatus();
+            binder << getValueOfIsDeleted();
         }
         else
         {
@@ -1051,13 +957,13 @@ Json::Value Permission::toJson() const
     {
         ret["tenant_id"]=Json::Value();
     }
-    if(getMenuId())
+    if(getMenuPath())
     {
-        ret["menu_id"]=getValueOfMenuId();
+        ret["menu_path"]=getValueOfMenuPath();
     }
     else
     {
-        ret["menu_id"]=Json::Value();
+        ret["menu_path"]=Json::Value();
     }
     if(getPermissionName())
     {
@@ -1066,14 +972,6 @@ Json::Value Permission::toJson() const
     else
     {
         ret["permission_name"]=Json::Value();
-    }
-    if(getPermissionCategoryId())
-    {
-        ret["permission_category_id"]=getValueOfPermissionCategoryId();
-    }
-    else
-    {
-        ret["permission_category_id"]=Json::Value();
     }
     if(getCreatedAt())
     {
@@ -1091,13 +989,13 @@ Json::Value Permission::toJson() const
     {
         ret["updated_at"]=Json::Value();
     }
-    if(getStatus())
+    if(getIsDeleted())
     {
-        ret["status"]=getValueOfStatus();
+        ret["is_deleted"]=getValueOfIsDeleted();
     }
     else
     {
-        ret["status"]=Json::Value();
+        ret["is_deleted"]=Json::Value();
     }
     return ret;
 }
@@ -1106,7 +1004,7 @@ Json::Value Permission::toMasqueradedJson(
     const std::vector<std::string> &pMasqueradingVector) const
 {
     Json::Value ret;
-    if(pMasqueradingVector.size() == 8)
+    if(pMasqueradingVector.size() == 7)
     {
         if(!pMasqueradingVector[0].empty())
         {
@@ -1132,9 +1030,9 @@ Json::Value Permission::toMasqueradedJson(
         }
         if(!pMasqueradingVector[2].empty())
         {
-            if(getMenuId())
+            if(getMenuPath())
             {
-                ret[pMasqueradingVector[2]]=getValueOfMenuId();
+                ret[pMasqueradingVector[2]]=getValueOfMenuPath();
             }
             else
             {
@@ -1154,9 +1052,9 @@ Json::Value Permission::toMasqueradedJson(
         }
         if(!pMasqueradingVector[4].empty())
         {
-            if(getPermissionCategoryId())
+            if(getCreatedAt())
             {
-                ret[pMasqueradingVector[4]]=getValueOfPermissionCategoryId();
+                ret[pMasqueradingVector[4]]=getCreatedAt()->toDbStringLocal();
             }
             else
             {
@@ -1165,9 +1063,9 @@ Json::Value Permission::toMasqueradedJson(
         }
         if(!pMasqueradingVector[5].empty())
         {
-            if(getCreatedAt())
+            if(getUpdatedAt())
             {
-                ret[pMasqueradingVector[5]]=getCreatedAt()->toDbStringLocal();
+                ret[pMasqueradingVector[5]]=getUpdatedAt()->toDbStringLocal();
             }
             else
             {
@@ -1176,24 +1074,13 @@ Json::Value Permission::toMasqueradedJson(
         }
         if(!pMasqueradingVector[6].empty())
         {
-            if(getUpdatedAt())
+            if(getIsDeleted())
             {
-                ret[pMasqueradingVector[6]]=getUpdatedAt()->toDbStringLocal();
+                ret[pMasqueradingVector[6]]=getValueOfIsDeleted();
             }
             else
             {
                 ret[pMasqueradingVector[6]]=Json::Value();
-            }
-        }
-        if(!pMasqueradingVector[7].empty())
-        {
-            if(getStatus())
-            {
-                ret[pMasqueradingVector[7]]=getValueOfStatus();
-            }
-            else
-            {
-                ret[pMasqueradingVector[7]]=Json::Value();
             }
         }
         return ret;
@@ -1215,13 +1102,13 @@ Json::Value Permission::toMasqueradedJson(
     {
         ret["tenant_id"]=Json::Value();
     }
-    if(getMenuId())
+    if(getMenuPath())
     {
-        ret["menu_id"]=getValueOfMenuId();
+        ret["menu_path"]=getValueOfMenuPath();
     }
     else
     {
-        ret["menu_id"]=Json::Value();
+        ret["menu_path"]=Json::Value();
     }
     if(getPermissionName())
     {
@@ -1230,14 +1117,6 @@ Json::Value Permission::toMasqueradedJson(
     else
     {
         ret["permission_name"]=Json::Value();
-    }
-    if(getPermissionCategoryId())
-    {
-        ret["permission_category_id"]=getValueOfPermissionCategoryId();
-    }
-    else
-    {
-        ret["permission_category_id"]=Json::Value();
     }
     if(getCreatedAt())
     {
@@ -1255,13 +1134,13 @@ Json::Value Permission::toMasqueradedJson(
     {
         ret["updated_at"]=Json::Value();
     }
-    if(getStatus())
+    if(getIsDeleted())
     {
-        ret["status"]=getValueOfStatus();
+        ret["is_deleted"]=getValueOfIsDeleted();
     }
     else
     {
-        ret["status"]=Json::Value();
+        ret["is_deleted"]=Json::Value();
     }
     return ret;
 }
@@ -1278,9 +1157,9 @@ bool Permission::validateJsonForCreation(const Json::Value &pJson, std::string &
         if(!validJsonOfField(1, "tenant_id", pJson["tenant_id"], err, true))
             return false;
     }
-    if(pJson.isMember("menu_id"))
+    if(pJson.isMember("menu_path"))
     {
-        if(!validJsonOfField(2, "menu_id", pJson["menu_id"], err, true))
+        if(!validJsonOfField(2, "menu_path", pJson["menu_path"], err, true))
             return false;
     }
     if(pJson.isMember("permission_name"))
@@ -1288,24 +1167,19 @@ bool Permission::validateJsonForCreation(const Json::Value &pJson, std::string &
         if(!validJsonOfField(3, "permission_name", pJson["permission_name"], err, true))
             return false;
     }
-    if(pJson.isMember("permission_category_id"))
-    {
-        if(!validJsonOfField(4, "permission_category_id", pJson["permission_category_id"], err, true))
-            return false;
-    }
     if(pJson.isMember("created_at"))
     {
-        if(!validJsonOfField(5, "created_at", pJson["created_at"], err, true))
+        if(!validJsonOfField(4, "created_at", pJson["created_at"], err, true))
             return false;
     }
     if(pJson.isMember("updated_at"))
     {
-        if(!validJsonOfField(6, "updated_at", pJson["updated_at"], err, true))
+        if(!validJsonOfField(5, "updated_at", pJson["updated_at"], err, true))
             return false;
     }
-    if(pJson.isMember("status"))
+    if(pJson.isMember("is_deleted"))
     {
-        if(!validJsonOfField(7, "status", pJson["status"], err, true))
+        if(!validJsonOfField(6, "is_deleted", pJson["is_deleted"], err, true))
             return false;
     }
     return true;
@@ -1314,7 +1188,7 @@ bool Permission::validateMasqueradedJsonForCreation(const Json::Value &pJson,
                                                     const std::vector<std::string> &pMasqueradingVector,
                                                     std::string &err)
 {
-    if(pMasqueradingVector.size() != 8)
+    if(pMasqueradingVector.size() != 7)
     {
         err = "Bad masquerading vector";
         return false;
@@ -1376,14 +1250,6 @@ bool Permission::validateMasqueradedJsonForCreation(const Json::Value &pJson,
                   return false;
           }
       }
-      if(!pMasqueradingVector[7].empty())
-      {
-          if(pJson.isMember(pMasqueradingVector[7]))
-          {
-              if(!validJsonOfField(7, pMasqueradingVector[7], pJson[pMasqueradingVector[7]], err, true))
-                  return false;
-          }
-      }
     }
     catch(const Json::LogicError &e)
     {
@@ -1409,9 +1275,9 @@ bool Permission::validateJsonForUpdate(const Json::Value &pJson, std::string &er
         if(!validJsonOfField(1, "tenant_id", pJson["tenant_id"], err, false))
             return false;
     }
-    if(pJson.isMember("menu_id"))
+    if(pJson.isMember("menu_path"))
     {
-        if(!validJsonOfField(2, "menu_id", pJson["menu_id"], err, false))
+        if(!validJsonOfField(2, "menu_path", pJson["menu_path"], err, false))
             return false;
     }
     if(pJson.isMember("permission_name"))
@@ -1419,24 +1285,19 @@ bool Permission::validateJsonForUpdate(const Json::Value &pJson, std::string &er
         if(!validJsonOfField(3, "permission_name", pJson["permission_name"], err, false))
             return false;
     }
-    if(pJson.isMember("permission_category_id"))
-    {
-        if(!validJsonOfField(4, "permission_category_id", pJson["permission_category_id"], err, false))
-            return false;
-    }
     if(pJson.isMember("created_at"))
     {
-        if(!validJsonOfField(5, "created_at", pJson["created_at"], err, false))
+        if(!validJsonOfField(4, "created_at", pJson["created_at"], err, false))
             return false;
     }
     if(pJson.isMember("updated_at"))
     {
-        if(!validJsonOfField(6, "updated_at", pJson["updated_at"], err, false))
+        if(!validJsonOfField(5, "updated_at", pJson["updated_at"], err, false))
             return false;
     }
-    if(pJson.isMember("status"))
+    if(pJson.isMember("is_deleted"))
     {
-        if(!validJsonOfField(7, "status", pJson["status"], err, false))
+        if(!validJsonOfField(6, "is_deleted", pJson["is_deleted"], err, false))
             return false;
     }
     return true;
@@ -1445,7 +1306,7 @@ bool Permission::validateMasqueradedJsonForUpdate(const Json::Value &pJson,
                                                   const std::vector<std::string> &pMasqueradingVector,
                                                   std::string &err)
 {
-    if(pMasqueradingVector.size() != 8)
+    if(pMasqueradingVector.size() != 7)
     {
         err = "Bad masquerading vector";
         return false;
@@ -1489,11 +1350,6 @@ bool Permission::validateMasqueradedJsonForUpdate(const Json::Value &pJson,
       if(!pMasqueradingVector[6].empty() && pJson.isMember(pMasqueradingVector[6]))
       {
           if(!validJsonOfField(6, pMasqueradingVector[6], pJson[pMasqueradingVector[6]], err, false))
-              return false;
-      }
-      if(!pMasqueradingVector[7].empty() && pJson.isMember(pMasqueradingVector[7]))
-      {
-          if(!validJsonOfField(7, pMasqueradingVector[7], pJson[pMasqueradingVector[7]], err, false))
               return false;
       }
     }
@@ -1545,11 +1401,19 @@ bool Permission::validJsonOfField(size_t index,
             {
                 return true;
             }
-            if(!pJson.isUInt())
+            if(!pJson.isString())
             {
                 err="Type error in the "+fieldName+" field";
                 return false;
             }
+            if(pJson.isString() && std::strlen(pJson.asCString()) > 255)
+            {
+                err="String length exceeds limit for the " +
+                    fieldName +
+                    " field (the maximum value is 255)";
+                return false;
+            }
+
             break;
         case 3:
             if(pJson.isNull())
@@ -1575,7 +1439,7 @@ bool Permission::validJsonOfField(size_t index,
             {
                 return true;
             }
-            if(!pJson.isUInt())
+            if(!pJson.isString())
             {
                 err="Type error in the "+fieldName+" field";
                 return false;
@@ -1597,30 +1461,11 @@ bool Permission::validJsonOfField(size_t index,
             {
                 return true;
             }
-            if(!pJson.isString())
+            if(!pJson.isInt())
             {
                 err="Type error in the "+fieldName+" field";
                 return false;
             }
-            break;
-        case 7:
-            if(pJson.isNull())
-            {
-                return true;
-            }
-            if(!pJson.isString())
-            {
-                err="Type error in the "+fieldName+" field";
-                return false;
-            }
-            if(pJson.isString() && std::strlen(pJson.asCString()) > 50)
-            {
-                err="String length exceeds limit for the " +
-                    fieldName +
-                    " field (the maximum value is 50)";
-                return false;
-            }
-
             break;
         default:
             err="Internal error in the server";
@@ -1667,92 +1512,6 @@ void Permission::getTenant(const DbClientPtr &clientPtr,
                     else
                     {
                         rcb(Tenant(r[0]));
-                    }
-               }
-               >> ecb;
-}
-Menu Permission::getMenu(const DbClientPtr &clientPtr) const {
-    static const std::string sql = "select * from menu where menu_id = ?";
-    Result r(nullptr);
-    {
-        auto binder = *clientPtr << sql;
-        binder << *menuId_ << Mode::Blocking >>
-            [&r](const Result &result) { r = result; };
-        binder.exec();
-    }
-    if (r.size() == 0)
-    {
-        throw UnexpectedRows("0 rows found");
-    }
-    else if (r.size() > 1)
-    {
-        throw UnexpectedRows("Found more than one row");
-    }
-    return Menu(r[0]);
-}
-
-void Permission::getMenu(const DbClientPtr &clientPtr,
-                         const std::function<void(Menu)> &rcb,
-                         const ExceptionCallback &ecb) const
-{
-    static const std::string sql = "select * from menu where menu_id = ?";
-    *clientPtr << sql
-               << *menuId_
-               >> [rcb = std::move(rcb), ecb](const Result &r){
-                    if (r.size() == 0)
-                    {
-                        ecb(UnexpectedRows("0 rows found"));
-                    }
-                    else if (r.size() > 1)
-                    {
-                        ecb(UnexpectedRows("Found more than one row"));
-                    }
-                    else
-                    {
-                        rcb(Menu(r[0]));
-                    }
-               }
-               >> ecb;
-}
-PermissionCategory Permission::getPermissionCategory(const DbClientPtr &clientPtr) const {
-    static const std::string sql = "select * from permission_category where category_id = ?";
-    Result r(nullptr);
-    {
-        auto binder = *clientPtr << sql;
-        binder << *permissionCategoryId_ << Mode::Blocking >>
-            [&r](const Result &result) { r = result; };
-        binder.exec();
-    }
-    if (r.size() == 0)
-    {
-        throw UnexpectedRows("0 rows found");
-    }
-    else if (r.size() > 1)
-    {
-        throw UnexpectedRows("Found more than one row");
-    }
-    return PermissionCategory(r[0]);
-}
-
-void Permission::getPermissionCategory(const DbClientPtr &clientPtr,
-                                       const std::function<void(PermissionCategory)> &rcb,
-                                       const ExceptionCallback &ecb) const
-{
-    static const std::string sql = "select * from permission_category where category_id = ?";
-    *clientPtr << sql
-               << *permissionCategoryId_
-               >> [rcb = std::move(rcb), ecb](const Result &r){
-                    if (r.size() == 0)
-                    {
-                        ecb(UnexpectedRows("0 rows found"));
-                    }
-                    else if (r.size() > 1)
-                    {
-                        ecb(UnexpectedRows("Found more than one row"));
-                    }
-                    else
-                    {
-                        rcb(PermissionCategory(r[0]));
                     }
                }
                >> ecb;

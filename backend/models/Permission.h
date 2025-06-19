@@ -38,8 +38,6 @@ namespace drogon_model
 {
 namespace saas_restaurant
 {
-class Menu;
-class PermissionCategory;
 class Role;
 class RolePermission;
 class Tenant;
@@ -51,12 +49,11 @@ class Permission
     {
         static const std::string _permission_id;
         static const std::string _tenant_id;
-        static const std::string _menu_id;
+        static const std::string _menu_path;
         static const std::string _permission_name;
-        static const std::string _permission_category_id;
         static const std::string _created_at;
         static const std::string _updated_at;
-        static const std::string _status;
+        static const std::string _is_deleted;
     };
 
     static const int primaryKeyNumber;
@@ -125,14 +122,15 @@ class Permission
     void setTenantId(const uint32_t &pTenantId) noexcept;
     void setTenantIdToNull() noexcept;
 
-    /**  For column menu_id  */
-    ///Get the value of the column menu_id, returns the default value if the column is null
-    const uint32_t &getValueOfMenuId() const noexcept;
+    /**  For column menu_path  */
+    ///Get the value of the column menu_path, returns the default value if the column is null
+    const std::string &getValueOfMenuPath() const noexcept;
     ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-    const std::shared_ptr<uint32_t> &getMenuId() const noexcept;
-    ///Set the value of the column menu_id
-    void setMenuId(const uint32_t &pMenuId) noexcept;
-    void setMenuIdToNull() noexcept;
+    const std::shared_ptr<std::string> &getMenuPath() const noexcept;
+    ///Set the value of the column menu_path
+    void setMenuPath(const std::string &pMenuPath) noexcept;
+    void setMenuPath(std::string &&pMenuPath) noexcept;
+    void setMenuPathToNull() noexcept;
 
     /**  For column permission_name  */
     ///Get the value of the column permission_name, returns the default value if the column is null
@@ -143,15 +141,6 @@ class Permission
     void setPermissionName(const std::string &pPermissionName) noexcept;
     void setPermissionName(std::string &&pPermissionName) noexcept;
     void setPermissionNameToNull() noexcept;
-
-    /**  For column permission_category_id  */
-    ///Get the value of the column permission_category_id, returns the default value if the column is null
-    const uint32_t &getValueOfPermissionCategoryId() const noexcept;
-    ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-    const std::shared_ptr<uint32_t> &getPermissionCategoryId() const noexcept;
-    ///Set the value of the column permission_category_id
-    void setPermissionCategoryId(const uint32_t &pPermissionCategoryId) noexcept;
-    void setPermissionCategoryIdToNull() noexcept;
 
     /**  For column created_at  */
     ///Get the value of the column created_at, returns the default value if the column is null
@@ -171,18 +160,17 @@ class Permission
     void setUpdatedAt(const ::trantor::Date &pUpdatedAt) noexcept;
     void setUpdatedAtToNull() noexcept;
 
-    /**  For column status  */
-    ///Get the value of the column status, returns the default value if the column is null
-    const std::string &getValueOfStatus() const noexcept;
+    /**  For column is_deleted  */
+    ///Get the value of the column is_deleted, returns the default value if the column is null
+    const int8_t &getValueOfIsDeleted() const noexcept;
     ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-    const std::shared_ptr<std::string> &getStatus() const noexcept;
-    ///Set the value of the column status
-    void setStatus(const std::string &pStatus) noexcept;
-    void setStatus(std::string &&pStatus) noexcept;
-    void setStatusToNull() noexcept;
+    const std::shared_ptr<int8_t> &getIsDeleted() const noexcept;
+    ///Set the value of the column is_deleted
+    void setIsDeleted(const int8_t &pIsDeleted) noexcept;
+    void setIsDeletedToNull() noexcept;
 
 
-    static size_t getColumnNumber() noexcept {  return 8;  }
+    static size_t getColumnNumber() noexcept {  return 7;  }
     static const std::string &getColumnName(size_t index) noexcept(false);
 
     Json::Value toJson() const;
@@ -192,14 +180,6 @@ class Permission
     void getTenant(const drogon::orm::DbClientPtr &clientPtr,
                    const std::function<void(Tenant)> &rcb,
                    const drogon::orm::ExceptionCallback &ecb) const;
-    Menu getMenu(const drogon::orm::DbClientPtr &clientPtr) const;
-    void getMenu(const drogon::orm::DbClientPtr &clientPtr,
-                 const std::function<void(Menu)> &rcb,
-                 const drogon::orm::ExceptionCallback &ecb) const;
-    PermissionCategory getPermissionCategory(const drogon::orm::DbClientPtr &clientPtr) const;
-    void getPermissionCategory(const drogon::orm::DbClientPtr &clientPtr,
-                               const std::function<void(PermissionCategory)> &rcb,
-                               const drogon::orm::ExceptionCallback &ecb) const;
     std::vector<std::pair<Role,RolePermission>> getRoles(const drogon::orm::DbClientPtr &clientPtr) const;
     void getRoles(const drogon::orm::DbClientPtr &clientPtr,
                   const std::function<void(std::vector<std::pair<Role,RolePermission>>)> &rcb,
@@ -221,12 +201,11 @@ class Permission
     void updateId(const uint64_t id);
     std::shared_ptr<uint32_t> permissionId_;
     std::shared_ptr<uint32_t> tenantId_;
-    std::shared_ptr<uint32_t> menuId_;
+    std::shared_ptr<std::string> menuPath_;
     std::shared_ptr<std::string> permissionName_;
-    std::shared_ptr<uint32_t> permissionCategoryId_;
     std::shared_ptr<::trantor::Date> createdAt_;
     std::shared_ptr<::trantor::Date> updatedAt_;
-    std::shared_ptr<std::string> status_;
+    std::shared_ptr<int8_t> isDeleted_;
     struct MetaData
     {
         const std::string colName_;
@@ -238,7 +217,7 @@ class Permission
         const bool notNull_;
     };
     static const std::vector<MetaData> metaData_;
-    bool dirtyFlag_[8]={ false };
+    bool dirtyFlag_[7]={ false };
   public:
     static const std::string &sqlForFindingByPrimaryKey()
     {
@@ -265,7 +244,7 @@ class Permission
         }
         if(dirtyFlag_[2])
         {
-            sql += "menu_id,";
+            sql += "menu_path,";
             ++parametersCount;
         }
         if(dirtyFlag_[3])
@@ -273,26 +252,21 @@ class Permission
             sql += "permission_name,";
             ++parametersCount;
         }
-        if(dirtyFlag_[4])
-        {
-            sql += "permission_category_id,";
-            ++parametersCount;
-        }
         sql += "created_at,";
         ++parametersCount;
-        if(!dirtyFlag_[5])
+        if(!dirtyFlag_[4])
         {
             needSelection=true;
         }
         sql += "updated_at,";
         ++parametersCount;
-        if(!dirtyFlag_[6])
+        if(!dirtyFlag_[5])
         {
             needSelection=true;
         }
-        if(dirtyFlag_[7])
+        if(dirtyFlag_[6])
         {
-            sql += "status,";
+            sql += "is_deleted,";
             ++parametersCount;
         }
         needSelection=true;
@@ -325,6 +299,10 @@ class Permission
             sql.append("?,");
 
         }
+        else
+        {
+            sql +="default,";
+        }
         if(dirtyFlag_[5])
         {
             sql.append("?,");
@@ -335,15 +313,6 @@ class Permission
             sql +="default,";
         }
         if(dirtyFlag_[6])
-        {
-            sql.append("?,");
-
-        }
-        else
-        {
-            sql +="default,";
-        }
-        if(dirtyFlag_[7])
         {
             sql.append("?,");
 

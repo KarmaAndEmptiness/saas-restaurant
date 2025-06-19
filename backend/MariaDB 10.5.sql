@@ -134,22 +134,6 @@ CREATE TABLE `saas_restaurant`.`member_level`  (
   PRIMARY KEY (`level_id`)
 );
 
-CREATE TABLE `saas_restaurant`.`menu`  (
-  `menu_id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '菜单ID',
-  `tenant_id` int UNSIGNED NULL COMMENT '租户ID',
-  `parent_id` int UNSIGNED NULL COMMENT '父级ID',
-  `permission_id` int UNSIGNED NULL COMMENT '权限ID',
-  `menu_name` varchar(255) NULL COMMENT '菜单名称',
-  `menu_type` varchar(50) NULL COMMENT '菜单类型',
-  `path` varchar(255) NULL COMMENT '前端路由路径',
-  `icon` varchar(255) NULL COMMENT '前端菜单图标',
-  `sort` int UNSIGNED NULL COMMENT '同级菜单排序',
-  `is_visible` tinyint(1) UNSIGNED NULL DEFAULT 1 COMMENT '是否显示',
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  PRIMARY KEY (`menu_id`)
-);
-
 CREATE TABLE `saas_restaurant`.`order_table`  (
   `order_id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '订单ID',
   `tenant_id` int UNSIGNED NULL COMMENT '租户ID',
@@ -171,20 +155,12 @@ CREATE TABLE `saas_restaurant`.`order_table`  (
 CREATE TABLE `saas_restaurant`.`permission`  (
   `permission_id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '权限ID',
   `tenant_id` int UNSIGNED NULL COMMENT '租户ID',
-  `menu_id` int UNSIGNED NULL COMMENT '菜单ID',
+  `menu_path` varchar(255) NULL COMMENT '菜单路径',
   `permission_name` varchar(255) NULL COMMENT '权限名称',
-  `permission_category_id` int UNSIGNED NULL COMMENT '权限分类ID',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  `status` varchar(50) NULL COMMENT '权限状态',
+  `is_deleted` tinyint(1) NULL COMMENT '软删除标记',
   PRIMARY KEY (`permission_id`)
-);
-
-CREATE TABLE `saas_restaurant`.`permission_category`  (
-  `category_id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '权限分类ID',
-  `tenant_id` int UNSIGNED NULL COMMENT '租户ID',
-  `category_name` varchar(255) NULL COMMENT '权限分类名称',
-  PRIMARY KEY (`category_id`)
 );
 
 CREATE TABLE `saas_restaurant`.`role`  (
@@ -208,6 +184,13 @@ CREATE TABLE `saas_restaurant`.`role_permission`  (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `is_deleted` tinyint(1) NULL COMMENT '软删除标记（0：未删除，1：已删除）',
   PRIMARY KEY (`role_permission_id`)
+);
+
+CREATE TABLE `saas_restaurant`.`system_administrator`  (
+  `admin_id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '系统管理员ID',
+  `username` varchar(255) NULL COMMENT '用户名',
+  `password` varchar(255) NULL COMMENT '密码',
+  PRIMARY KEY (`admin_id`)
 );
 
 CREATE TABLE `saas_restaurant`.`tenant`  (
@@ -272,15 +255,9 @@ ALTER TABLE `saas_restaurant`.`marketing_campaign` ADD CONSTRAINT `FK_marketing_
 ALTER TABLE `saas_restaurant`.`member` ADD CONSTRAINT `FK_member_tenant_id` FOREIGN KEY (`tenant_id`) REFERENCES `saas_restaurant`.`tenant` (`tenant_id`);
 ALTER TABLE `saas_restaurant`.`member` ADD CONSTRAINT `FK_member_level_id` FOREIGN KEY (`level_id`) REFERENCES `saas_restaurant`.`member_level` (`level_id`);
 ALTER TABLE `saas_restaurant`.`member_level` ADD CONSTRAINT `FK_member_level_tenant_id` FOREIGN KEY (`tenant_id`) REFERENCES `saas_restaurant`.`tenant` (`tenant_id`);
-ALTER TABLE `saas_restaurant`.`menu` ADD CONSTRAINT `FK_menu_tenant_id` FOREIGN KEY (`tenant_id`) REFERENCES `saas_restaurant`.`tenant` (`tenant_id`);
-ALTER TABLE `saas_restaurant`.`menu` ADD CONSTRAINT `FK_menu_parent_id` FOREIGN KEY (`parent_id`) REFERENCES `saas_restaurant`.`menu` (`menu_id`);
-ALTER TABLE `saas_restaurant`.`menu` ADD CONSTRAINT `FK_menu_permission_id` FOREIGN KEY (`permission_id`) REFERENCES `saas_restaurant`.`permission` (`permission_id`);
 ALTER TABLE `saas_restaurant`.`order_table` ADD CONSTRAINT `FK_ordertable_user_id` FOREIGN KEY (`user_id`) REFERENCES `saas_restaurant`.`user` (`user_id`);
 ALTER TABLE `saas_restaurant`.`order_table` ADD CONSTRAINT `FK_ordertable_tenant_id` FOREIGN KEY (`tenant_id`) REFERENCES `saas_restaurant`.`tenant` (`tenant_id`);
 ALTER TABLE `saas_restaurant`.`permission` ADD CONSTRAINT `FK_permission_tenant_id` FOREIGN KEY (`tenant_id`) REFERENCES `saas_restaurant`.`tenant` (`tenant_id`);
-ALTER TABLE `saas_restaurant`.`permission` ADD CONSTRAINT `FK_permission_menu_id` FOREIGN KEY (`menu_id`) REFERENCES `saas_restaurant`.`menu` (`menu_id`);
-ALTER TABLE `saas_restaurant`.`permission` ADD CONSTRAINT `FK_permission_permission_category_id` FOREIGN KEY (`permission_category_id`) REFERENCES `saas_restaurant`.`permission_category` (`category_id`);
-ALTER TABLE `saas_restaurant`.`permission_category` ADD CONSTRAINT `FK_permission_category_tenant_id` FOREIGN KEY (`tenant_id`) REFERENCES `saas_restaurant`.`tenant` (`tenant_id`);
 ALTER TABLE `saas_restaurant`.`role` ADD CONSTRAINT `FK_role_tenant_id` FOREIGN KEY (`tenant_id`) REFERENCES `saas_restaurant`.`tenant` (`tenant_id`);
 ALTER TABLE `saas_restaurant`.`role_permission` ADD CONSTRAINT `FK_role_permission_tenant_id` FOREIGN KEY (`tenant_id`) REFERENCES `saas_restaurant`.`tenant` (`tenant_id`);
 ALTER TABLE `saas_restaurant`.`role_permission` ADD CONSTRAINT `FK_role_permission_role_id` FOREIGN KEY (`role_id`) REFERENCES `saas_restaurant`.`role` (`role_id`);
