@@ -163,13 +163,21 @@ class Request {
     return this.instance.get(url, { params, ...config })
   }
 
-  public post<T = any>(url: string, data?: object, config?: RequestConfig): Promise<T> {
+  public post<T = any>(url: string, data?: object,isTenant?:boolean, config?: RequestConfig): Promise<T> {
 
+    if(isTenant)
+    {
+      return this.instance.post(url, data, config)
+    }
     const tenant_id= localStorage.getItem("tenant_id")
     return this.instance.post(url, {...data,tenant_id:tenant_id?+tenant_id:null}, config)
   }
 
-  public put<T = any>(url: string, data?: object, config?: RequestConfig): Promise<T> {
+  public put<T = any>(url: string, data?: object,isTenant?:boolean, config?: RequestConfig): Promise<T> {
+    if(isTenant)
+    {
+      return this.instance.put(url, data, config)
+    }
     const tenant_id= localStorage.getItem("tenant_id")
     return this.instance.put(url, {...data,tenant_id:tenant_id?+tenant_id:null}, config)
   }
