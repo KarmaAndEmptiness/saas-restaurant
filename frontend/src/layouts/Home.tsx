@@ -4,11 +4,7 @@ import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import logo from "../../public/favicon.png";
 import { getUserInfo, type UserInfo } from "@/apis/profile";
-import {
-  getRolePermissionsByRoleId,
-  getPermission,
-  type PermissionType,
-} from "@/apis/admin/role";
+import { getRolePermissionsByRoleId, getPermission } from "@/apis/admin/role";
 const baseurl = import.meta.env.VITE_API_BASE_URL;
 interface Navigation {
   name: string;
