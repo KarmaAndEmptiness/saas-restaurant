@@ -66,6 +66,8 @@ void RestfulRolePermissionCtrlBase::getOneByRoleId(const HttpRequestPtr &req,
     list.resize(0);
     for (auto &obj : rolePermissions)
     {
+        if (obj.getValueOfIsDeleted())
+            continue;
         list.append(makeJson(req, obj));
     }
     ret["data"] = list;

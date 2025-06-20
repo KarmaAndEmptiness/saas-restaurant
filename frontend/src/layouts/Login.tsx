@@ -18,12 +18,16 @@ function Login() {
     setIsLoading(true);
 
     try {
+      // 在登录前清除所有旧的状态
+      localStorage.clear();
+
       if (loginType === "admin") {
         const data = await tenantAdminLogin({ username, password });
         if (data.token) {
           localStorage.setItem("token", data.token);
           localStorage.setItem("roles", JSON.stringify(data.roles));
-          navigate("/home");
+          // 系统管理员直接跳转到租户管理
+          navigate("/home/tenant");
         } else {
           setError("无效的响应");
         }
@@ -35,7 +39,7 @@ function Login() {
           localStorage.setItem("tenant_id", data.tenant_id);
           localStorage.setItem("roles", JSON.stringify(data.roles));
           localStorage.setItem("roles_id", JSON.stringify(data.roles_id));
-          navigate("/home");
+          navigate("/home/staff");
         } else {
           setError("无效的响应");
         }

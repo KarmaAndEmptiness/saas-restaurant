@@ -1,27 +1,64 @@
 import { useState, useCallback, useEffect } from "react";
 import { Disclosure, Menu } from "@headlessui/react";
 import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import logo from "../../public/favicon.png";
 import { getUserInfo, type UserInfo } from "@/apis/profile";
-
+import {
+  getRolePermissionsByRoleId,
+  getPermission,
+  type PermissionType,
+} from "@/apis/admin/role";
 const baseurl = import.meta.env.VITE_API_BASE_URL;
 interface Navigation {
   name: string;
   path: string;
+  permission?: string[]; // 改为字符串数组
 }
 
 const navs: Navigation[] = [
-  { name: "员工管理", path: "/home/staff" },
-  { name: "角色管理", path: "/home/role" },
-  { name: "菜品管理", path: "/home/goods" },
-  { name: "分店管理", path: "/home/branch" },
-  { name: "客户下单", path: "/home/place-order" },
-  { name: "订单列表", path: "/home/order-list" },
-  { name: "会员管理", path: "/home/member" },
-  { name: "库存管理", path: "/home/inventory" },
-  { name: "报表中心", path: "/home/report" },
-  { name: "会员营销", path: "/home/campaign" },
+  { name: "员工管理", path: "/home/staff", permission: ["user_admin"] },
+  { name: "角色管理", path: "/home/role", permission: ["user_admin"] },
+  {
+    name: "菜品管理",
+    path: "/home/goods",
+    permission: ["user_admin", "front_admin", "kitchen_admin"],
+  },
+  {
+    name: "分店管理",
+    path: "/home/branch",
+    permission: ["user_admin", "front_admin"],
+  },
+  {
+    name: "客户下单",
+    path: "/home/place-order",
+    permission: ["user_admin", "front_admin"],
+  },
+  {
+    name: "订单列表",
+    path: "/home/order-list",
+    permission: ["user_admin", "front_admin", "kitchen_admin"],
+  },
+  {
+    name: "会员管理",
+    path: "/home/member",
+    permission: ["user_admin", "front_admin"],
+  },
+  {
+    name: "库存管理",
+    path: "/home/inventory",
+    permission: ["user_admin", "inventory_admin"],
+  },
+  {
+    name: "报表中心",
+    path: "/home/report",
+    permission: ["user_admin", "accounts_admin"],
+  },
+  {
+    name: "会员营销",
+    path: "/home/campaign",
+    permission: ["user_admin", "marketing_admin"],
+  },
 ];
 
 const adminNavs: Navigation[] = [
@@ -42,37 +79,106 @@ function classNames(...classes: string[]) {
 }
 
 function Home() {
-  const [currentNav, setCurrentNav] = useState(navs[0]);
+  const [currentNav, setCurrentNav] = useState<Navigation | null>(null);
   const [userInfo, setUserInfo] = useState<UserInfo>();
   const [displayNavs, setDisplayNavs] = useState<Navigation[]>([]);
+  const [userPermissions, setUserPermissions] = useState<string[]>([]);
+  const navigate = useNavigate();
 
   const handleNavClick = useCallback((item: Navigation) => {
     if (item.path === "/") {
-      localStorage.removeItem("token");
+      // 清除所有本地存储和状态
+      localStorage.clear();
+      setCurrentNav(null);
+      setUserInfo(undefined);
+      setDisplayNavs([]);
+      setUserPermissions([]);
       return;
     }
     setCurrentNav(item);
   }, []);
 
+  // 将获取权限的逻辑抽离成独立函数
+  const fetchUserPermissions = useCallback(async () => {
+    try {
+      const roles_id = JSON.parse(localStorage.getItem("roles_id") || "[]");
+      const permissions = new Set<string>();
+
+      for (const roleId of roles_id) {
+        const rolePermissions = await getRolePermissionsByRoleId(roleId);
+        console.log("role_id", roleId);
+        console.log("rolePermissions", rolePermissions);
+        for (const rp of rolePermissions) {
+          const permission = await getPermission(rp.permission_id);
+          if (permission.permission_code) {
+            permissions.add(permission.permission_code);
+          }
+        }
+      }
+
+      setUserPermissions(Array.from(permissions));
+    } catch (error) {
+      console.error("获取权限失败:", error);
+    }
+  }, []);
+
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
-        const data = await getUserInfo(localStorage.getItem("user_id") || "");
+        const userId = localStorage.getItem("user_id");
+        if (!userId) return;
+
+        const data = await getUserInfo(userId);
         setUserInfo(data);
       } catch (error) {
         console.error("获取用户信息失败:", error);
       }
     };
-    fetchUserInfo();
 
-    // 获取角色信息并设置导航菜单
-    const roles = JSON.parse(localStorage.getItem("roles") || "[]");
-    if (roles.includes("system_admin")) {
-      setDisplayNavs(adminNavs);
-    } else {
-      setDisplayNavs(navs);
+    // 检查是否有token，如果没有则不执行获取操作
+    const token = localStorage.getItem("token");
+    if (token) {
+      fetchUserInfo();
+      fetchUserPermissions();
     }
-  }, []);
+  }, [fetchUserPermissions]);
+
+  useEffect(() => {
+    // 根据用户权限过滤导航菜单
+    const roles = JSON.parse(localStorage.getItem("roles") || "[]");
+    let filteredNavs: Navigation[] = [];
+    if (roles.includes("system_admin")) {
+      filteredNavs = adminNavs;
+      setDisplayNavs(adminNavs);
+      // 如果当前不在租户管理页面，则重定向
+      if (window.location.pathname === "/home") {
+        navigate("/home/tenant");
+      }
+    } else {
+      filteredNavs = navs.filter(
+        (nav) =>
+          !nav.permission ||
+          nav.permission.some((p) => userPermissions.includes(p))
+      );
+      setDisplayNavs(filteredNavs);
+      // 如果在根路径，则重定向到第一个可用的导航项
+      if (
+        window.location.pathname === "/home/staff" &&
+        filteredNavs.length > 0
+      ) {
+        navigate(filteredNavs[0].path);
+      }
+    }
+
+    // 设置当前导航
+    const currentPath = window.location.pathname;
+    const currentNavItem = filteredNavs.find((nav) => nav.path === currentPath);
+    if (currentNavItem) {
+      setCurrentNav(currentNavItem);
+    } else if (filteredNavs.length > 0) {
+      setCurrentNav(filteredNavs[0]);
+    }
+  }, [userPermissions, navigate]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -202,7 +308,7 @@ function Home() {
       <header className="bg-white shadow">
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
           <h1 className="text-lg font-semibold text-gray-900">
-            {currentNav.name}
+            {currentNav?.name}
           </h1>
         </div>
       </header>
