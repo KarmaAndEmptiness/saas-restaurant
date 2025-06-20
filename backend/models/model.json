@@ -14,7 +14,7 @@
     //user: User name
     "user": "root",
     //password or passwd: Password
-    "password": "",
+    "password": "holaworld.2025",
     //client_encoding: The character set used by drogon_ctl. it is empty string by default which 
     //means use the default character set.
     //"client_encoding": "",
