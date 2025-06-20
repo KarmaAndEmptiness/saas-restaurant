@@ -34,10 +34,10 @@ function TenantModal({
   useEffect(() => {
     if (mode === "edit" && tenant) {
       setFormData({
-        tenant_name: tenant.tenant_name,
-        email: tenant.email,
-        phone: tenant.phone,
-        status: tenant.status,
+        tenant_name: tenant.tenant_name || "",
+        email: tenant.email || "",
+        phone: tenant.phone || "",
+        status: tenant.status || "活跃", // 确保始终有默认值
       });
     } else if (mode === "create") {
       setFormData(initialFormData);
@@ -77,7 +77,6 @@ function TenantModal({
         await updateTenant(tenant.tenant_id, updatedData);
       }
       handleClose();
-      window.location.reload();
     } catch (error) {
       console.error("操作失败:", error);
     }

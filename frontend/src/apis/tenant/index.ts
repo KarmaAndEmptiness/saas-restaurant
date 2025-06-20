@@ -24,7 +24,7 @@ export const createTenant = (data:TenantType) => {
 
 //更新租户
 export const updateTenant = (tenantId:number,data:TenantType) => {
-  return http.put('/api/tenant/'+tenantId,{...data,tenant_id:tenantId});
+  return http.put('/api/tenant/'+tenantId,{...data,tenant_id:tenantId},true);
 }
 
 //删除租户
