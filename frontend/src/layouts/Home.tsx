@@ -63,15 +63,45 @@ const navs: Navigation[] = [
 
 const adminNavs: Navigation[] = [
   { name: "租户管理", path: "/home/tenant" },
-  ...navs,
+  // ...navs,
 ];
 
 const userNavs: Navigation[] = [
-  { name: "个人信息", path: "/home/profile" },
-  { name: "设置", path: "/home/setting" },
-  { name: "日志管理", path: "/home/log" },
-  { name: "预警管理", path: "/home/warning" },
-  { name: "退出", path: "/" },
+  {
+    name: "个人信息",
+    path: "/home/profile",
+    permission: [
+      "user_admin",
+      "front_admin",
+      "inventory_admin",
+      "marketing_admin",
+      "accounts_admin",
+      "kitchen_admin",
+    ],
+  },
+  {
+    name: "设置",
+    path: "/home/setting",
+    permission: [
+      "user_admin",
+      "front_admin",
+      "inventory_admin",
+      "marketing_admin",
+      "accounts_admin",
+      "kitchen_admin",
+    ],
+  },
+  {
+    name: "日志管理",
+    path: "/home/log",
+    permission: ["user_admin"],
+  },
+  {
+    name: "预警管理",
+    path: "/home/warning",
+    permission: ["user_admin"],
+  },
+  { name: "退出", path: "/" }, // 退出不需要权限控制
 ];
 
 function classNames(...classes: string[]) {
@@ -121,6 +151,18 @@ function Home() {
       console.error("获取权限失败:", error);
     }
   }, []);
+
+  const getFilteredUserNavs = useCallback(() => {
+    const roles = JSON.parse(localStorage.getItem("roles") || "[]");
+    if (roles.includes("system_admin")) {
+      return userNavs;
+    }
+    return userNavs.filter(
+      (nav) =>
+        !nav.permission ||
+        nav.permission.some((p) => userPermissions.includes(p))
+    );
+  }, [userPermissions]);
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -243,7 +285,7 @@ function Home() {
                       />
                     </Menu.Button>
                     <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5">
-                      {userNavs.map((item) => (
+                      {getFilteredUserNavs().map((item) => (
                         <Menu.Item key={item.name}>
                           {({ active }) => (
                             <NavLink
