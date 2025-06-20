@@ -151,7 +151,7 @@ function Home() {
   const getFilteredUserNavs = useCallback(() => {
     const roles = JSON.parse(localStorage.getItem("roles") || "[]");
     if (roles.includes("system_admin")) {
-      return userNavs;
+      return userNavs.filter((nav) => nav.path !== "/home/profile");
     }
     return userNavs.filter(
       (nav) =>
