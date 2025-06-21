@@ -77,6 +77,7 @@ function Goods() {
     setLoading(true);
     try {
       if (selectedItem) {
+        console.log(formData);
         await updateDish(selectedItem.dish_id, formData as Dish);
       } else {
         formData.dish_category_id = formData.dish_category_id

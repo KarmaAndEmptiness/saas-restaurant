@@ -139,7 +139,7 @@ void RestfulDishCtrlBase::updateOne(const HttpRequestPtr &req,
             else if (count == 0)
             {
                 Json::Value ret;
-                ret["code"] = k200OK;
+                ret["code"] = k404NotFound;
                 ret["message"] = "No resources are updated";
                 auto resp = HttpResponse::newHttpJsonResponse(ret);
                 (*callbackPtr)(resp);
