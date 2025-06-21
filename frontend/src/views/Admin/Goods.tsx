@@ -56,11 +56,9 @@ function Goods() {
     const file = e.target.files?.[0];
     if (file) {
       try {
-        const previewUrl = URL.createObjectURL(file);
-        setImagePreview(previewUrl);
-
         const uploadResult = await uploadFile({ file });
-
+        // Only set the preview and form data after successful upload
+        setImagePreview(baseurl + uploadResult.file_url);
         setFormData((prev) => ({
           ...prev,
           cover_img: uploadResult.file_url,
