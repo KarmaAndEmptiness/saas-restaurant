@@ -19,7 +19,7 @@ export const getTenants = () => {
 
 //添加租户
 export const createTenant = (data:TenantType) => {
-  return http.post('/api/tenant',{...data,is_deleted:0});
+  return http.post('/api/tenant',{...data,is_deleted:0},true);
 }
 
 //更新租户

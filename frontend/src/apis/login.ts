@@ -21,10 +21,10 @@ export interface tenantLoginResponse extends tenantAdminLoginResponse
 }
 //租户管理员登录
 export const tenantAdminLogin = (data:TenantAdminLoginParam) => {
-  return http.post<tenantAdminLoginResponse>('/api/tenant/admin/login', data);
+  return http.post<tenantAdminLoginResponse>('/api/tenant/admin/login', data,true);
 }
 
 //租户登录
 export const tenantLogin = (data: TenantLoginParam) => {
-  return http.post<tenantLoginResponse>('/api/tenant/login', data);
+  return http.post<tenantLoginResponse>('/api/tenant/login', data,true);
 }

@@ -436,8 +436,7 @@ void RestfulUserCtrlBase::create(const HttpRequestPtr &req,
                 ret["code"] = k200OK;
                 ret["message"] = "ok";
                 ret["data"]["user_id"] = newObject.getPrimaryKey();
-                (*callbackPtr)(HttpResponse::newHttpJsonResponse(
-                    makeJson(req, newObject)));
+                (*callbackPtr)(HttpResponse::newHttpJsonResponse(ret));
             },
             [callbackPtr](const DrogonDbException &e)
             {

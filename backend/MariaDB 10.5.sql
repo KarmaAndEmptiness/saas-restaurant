@@ -156,6 +156,7 @@ CREATE TABLE `saas_restaurant`.`permission`  (
   `permission_id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '权限ID',
   `tenant_id` int UNSIGNED NULL COMMENT '租户ID',
   `menu_path` varchar(255) NULL COMMENT '菜单路径',
+  `permission_code` varchar(255) NULL COMMENT '权限代码',
   `permission_name` varchar(255) NULL COMMENT '权限名称',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
