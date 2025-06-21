@@ -44,13 +44,14 @@ function TenantModal({
     }
   }, [tenant, mode]);
 
-  useEffect(() => {
-    if (mode === "token" && tenant?.tenant_id) {
-      getToken(tenant.tenant_id).then((response) => {
-        setToken(response.data);
-      });
-    }
-  }, [mode, tenant]);
+  // useEffect(() => {
+  //   if (mode === "token" && tenant?.tenant_id) {
+  //     getToken(tenant.tenant_id).then((response) => {
+  //       // 修改这里，使用 response.data.token 而不是 response.data
+  //       setToken(response.token);
+  //     });
+  //   }
+  // }, [mode, tenant]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,11 +59,13 @@ function TenantModal({
       if (mode === "create") {
         // 先创建租户
         const createdTenant = await createTenant(formData as TenantType);
+        console.log(createdTenant);
         // 然后获取token
-        if (createdTenant.data?.tenant_id) {
-          const tokenResponse = await getToken(createdTenant.data.tenant_id);
+        if (createdTenant.tenant_id) {
+          const tokenResponse = await getToken(createdTenant.tenant_id);
+          console.log(tokenResponse);
           // 更新租户的token
-          await updateTenant(createdTenant.data.tenant_id, {
+          await updateTenant(createdTenant.tenant_id, {
             ...formData,
             tenant_token: tokenResponse.token,
           } as TenantType);
@@ -104,7 +107,8 @@ function TenantModal({
             <div>
               <div className="mt-2 p-4 bg-gray-50 rounded">
                 <p className="text-sm text-gray-500 break-all">
-                  {tenant?.tenant_token}
+                  {tenant?.tenant_token}{" "}
+                  {/* 使用 token 状态而不是 tenant?.tenant_token */}
                 </p>
               </div>
               <div className="flex justify-end mt-4">
